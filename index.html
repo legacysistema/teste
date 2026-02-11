@@ -3,1717 +3,765 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Legacy CRM - Enterprise Modern</title>
+    <title>Legacy CRM - Enterprise Suite</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
  
     <style>
         :root {
-            /* Modern Palette */
-            --primary: #3b82f6;       
-            --primary-dark: #1d4ed8;
-            --primary-light: #dbeafe;
+            /* Enterprise Palette - Dark Blue Theme */
+            --primary: #2563eb;       
+            --primary-dark: #1e40af;
+            --primary-light: #eff6ff;
             
-            --secondary: #64748b;     
+            --secondary: #475569;     
             --surface-100: #ffffff;
-            --surface-200: #f8fafc;
-            --surface-300: #f1f5f9;
+            --surface-200: #f1f5f9;
+            --surface-300: #e2e8f0;
             
             --text-main: #0f172a;
             --text-muted: #64748b;
+            --border: #cbd5e1;
             
-            --border: #e2e8f0;
-            
-            --success: #10b981;
-            --success-bg: #d1fae5;
-            --danger: #ef4444;
+            --success: #16a34a;
+            --success-bg: #dcfce7;
+            --danger: #dc2626;
             --danger-bg: #fee2e2;
-            --warning: #f59e0b;
-            --warning-bg: #fef3c7;
+            --warning: #ca8a04;
+            --warning-bg: #fef9c3;
 
-            /* Effects */
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            --shadow-card: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            
-            --radius-sm: 6px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
-
-            --glass: rgba(255, 255, 255, 0.85);
-            --glass-border: rgba(255, 255, 255, 0.5);
+            /* UI Constants */
+            --sidebar-width: 280px;
+            --header-height: 70px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; outline: none; }
         
         body { 
-            background-color: var(--surface-300); 
+            background-color: var(--surface-200); 
             color: var(--text-main); 
             height: 100vh; 
             display: flex; 
             overflow: hidden; 
-            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
-            background-size: cover;
-            background-attachment: fixed;
         }
 
-        /* Utility Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* --- Auth States Handling --- */
+        /* Se estiver assinando (publico), esconde login e app principal */
+        body.signing-mode #login-overlay,
+        body.signing-mode #intro-overlay,
+        body.signing-mode aside,
+        body.signing-mode main { display: none !important; }
+        
+        body.signing-mode #signing-page-overlay { display: block !important; }
 
-        /* Auth States */
+        /* Estados Normais de Autenticação */
         body.not-authenticated main, 
         body.not-authenticated aside,
-        body.not-authenticated #intro-overlay,
-        body.not-authenticated #toast-container { display: none !important; }
+        body.not-authenticated #intro-overlay { display: none !important; }
+        
         body.authenticated #login-overlay { display: none; }
 
-        /* ================= LOGIN MODERN ================= */
+        /* --- Login Moderno --- */
         #login-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            z-index: 10000;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        .login-card {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 48px;
-            border-radius: 24px;
-            width: 100%; max-width: 440px;
-            box-shadow: var(--shadow-card);
-            text-align: left;
-            position: relative;
-            border: 1px solid rgba(255,255,255,0.2);
-            animation: floatUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        @keyframes floatUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        .login-header { text-align: center; margin-bottom: 32px; }
-        .login-icon { 
-            font-size: 3rem; 
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            margin-bottom: 12px; display: inline-block;
-        }
-        .login-title { font-size: 1.75rem; font-weight: 800; color: #1e293b; letter-spacing: -0.5px; }
-        .login-subtitle { color: #64748b; font-size: 0.95rem; margin-top: 4px; }
-
-        .login-input {
-            width: 100%; padding: 14px 16px;
-            background-color: #f8fafc; border: 1px solid #e2e8f0;
-            border-radius: 12px; font-size: 1rem; color: #334155;
-            transition: all 0.2s; margin-bottom: 20px;
-        }
-        .login-input:focus {
-            background-color: #fff; border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-        }
-        .login-form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: #475569; }
-
-        .btn-login-action {
-            width: 100%; padding: 16px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white; font-weight: 600; font-size: 1.05rem;
-            border: none; border-radius: 12px; cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-        }
-        .btn-login-action:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4); }
-
-        .login-error {
-            background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
-            padding: 12px; border-radius: 8px; font-size: 0.9rem;
-            margin-bottom: 20px; display: none; text-align: center;
-        }
-
-        /* ================= INTRO LOADER ================= */
-        #intro-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #0f172a;
-            z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.6s ease-out, visibility 0.6s;
+            display: flex; align-items: center; justify-content: center; z-index: 10000;
+            background-image: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
         }
-        .cube-header-wrapper { width: 64px; height: 64px; perspective: 900px; display: flex; align-items: center; justify-content: center; }
-        .cube-scale-up { transform: scale(2.5); }
-        .cube-header { width: 42px; height: 42px; position: relative; transform-style: preserve-3d; animation: rotateCubeHeader 10s linear infinite; }
-        .cube-header .cube-face {
-            position: absolute; width: 42px; height: 42px;
-            background: linear-gradient(135deg, rgba(59,130,246,0.35), rgba(30,64,175,0.35));
-            border: 1px solid rgba(147,197,253,0.9);
-            box-shadow: 0 0 18px rgba(59,130,246,0.85), inset 0 0 12px rgba(255,255,255,0.25);
-            backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center;
-            color: #e0ecff; font-size: 15px;
+        .login-card {
+            background: white; width: 100%; max-width: 400px; padding: 40px;
+            border-radius: var(--radius-lg); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            animation: slideUp 0.5s ease-out;
         }
-        .face-front  { transform: rotateY(0deg) translateZ(21px); }
-        .face-back   { transform: rotateY(180deg) translateZ(21px); }
-        .face-right  { transform: rotateY(90deg) translateZ(21px); }
-        .face-left   { transform: rotateY(-90deg) translateZ(21px); }
-        .face-top    { transform: rotateX(90deg) translateZ(21px); }
-        .face-bottom { transform: rotateX(-90deg) translateZ(21px); }
-        @keyframes rotateCubeHeader { 0% { transform: rotateX(22deg) rotateY(0deg); } 100% { transform: rotateX(22deg) rotateY(360deg); } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* ================= LAYOUT PRINCIPAL ================= */
+        /* --- Sidebar & Layout --- */
         aside {
-            width: 260px; background: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(20px);
-            color: white; border-right: 1px solid rgba(255,255,255,0.1);
+            width: var(--sidebar-width); background: #0f172a; color: white;
             display: flex; flex-direction: column; z-index: 20;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.1);
         }
         .brand {
-            padding: 30px 25px; font-size: 1.2rem; font-weight: 800;
-            display: flex; align-items: center; gap: 12px;
-            background: linear-gradient(to bottom, rgba(255,255,255,0.05), transparent);
+            height: var(--header-height); display: flex; align-items: center; padding: 0 24px;
+            font-size: 1.25rem; font-weight: 700; color: white; border-bottom: 1px solid rgba(255,255,255,0.1);
+            gap: 12px;
         }
-        .nav-menu { padding: 20px 15px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+        .brand i { color: var(--primary); }
+
+        .nav-menu { padding: 20px 16px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
         .nav-btn {
-            width: 100%; padding: 14px 20px; background: transparent; border: none;
-            color: #94a3b8; text-align: left; cursor: pointer; font-size: 0.95rem; font-weight: 500;
-            display: flex; align-items: center; gap: 15px; transition: all 0.2s;
-            border-radius: 12px;
+            width: 100%; padding: 12px 16px; background: transparent; border: none;
+            color: #94a3b8; text-align: left; cursor: pointer; font-size: 0.9rem; font-weight: 500;
+            display: flex; align-items: center; gap: 12px; border-radius: var(--radius-md);
+            transition: all 0.2s;
         }
-        .nav-btn i { width: 20px; font-size: 1.1rem; }
-        .nav-btn:hover { background: rgba(255,255,255,0.08); color: #e2e8f0; }
-        .nav-btn.active { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.15)); color: #93c5fd; border-left: 3px solid var(--primary); }
-        .user-menu {
-            margin-top: auto; padding: 20px 25px; border-top: 1px solid rgba(255,255,255,0.1);
-            display: flex; align-items: center; gap: 12px;
-        }
-        .user-avatar {
-            width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-weight: 700; font-size: 0.95rem; color: white;
-        }
-        .user-info { flex: 1; }
-        .user-name { font-weight: 600; font-size: 0.9rem; }
-        .user-role { font-size: 0.8rem; color: #94a3b8; }
-        .btn-logout {
-            background: rgba(239,68,68,0.15); color: #fca5a5; border: none;
-            padding: 8px 12px; border-radius: 8px; cursor: pointer;
-            font-size: 0.85rem; transition: all 0.2s;
-        }
-        .btn-logout:hover { background: rgba(239,68,68,0.25); color: #fef2f2; }
+        .nav-btn:hover { background: rgba(255,255,255,0.05); color: white; }
+        .nav-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
 
-        main {
-            flex: 1; display: flex; flex-direction: column; overflow: hidden;
-            background: var(--surface-200);
-        }
+        main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--surface-200); }
 
-        /* ================= HEADER ================= */
+        /* --- Header & Views --- */
         header {
-            background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border);
-            padding: 20px 40px; display: flex; align-items: center; justify-content: space-between;
-            box-shadow: var(--shadow-sm);
+            height: var(--header-height); background: white; border-bottom: 1px solid var(--border);
+            padding: 0 32px; display: flex; align-items: center; justify-content: space-between;
         }
-        header h1 { font-size: 1.6rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; }
+        .view { flex: 1; padding: 32px; overflow-y: auto; display: none; }
+        .view.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* ================= VIEWS ================= */
-        .view {
-            flex: 1; padding: 40px; overflow-y: auto; display: none;
-        }
-        .view.active { display: block; }
-
-        /* ================= BUTTONS ================= */
+        /* --- Components: Buttons & Cards --- */
         .btn {
-            padding: 12px 24px; border: none; border-radius: 10px; font-weight: 600;
-            cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 10px;
-            transition: all 0.2s; box-shadow: var(--shadow-sm);
+            padding: 10px 20px; border: none; border-radius: var(--radius-md); font-weight: 600;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem;
+            transition: transform 0.1s;
         }
-        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
-        .btn-success:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
-        .btn-danger:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        .btn-secondary { background: var(--surface-300); color: var(--text-main); }
-        .btn-secondary:hover { background: #e2e8f0; }
-
-        /* ================= CARDS ================= */
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-secondary { background: white; border: 1px solid var(--border); color: var(--text-main); }
+        
         .card {
-            background: white; border-radius: 16px; padding: 30px;
-            box-shadow: var(--shadow-md); border: 1px solid var(--border);
-            margin-bottom: 24px;
+            background: white; border-radius: var(--radius-lg); padding: 24px;
+            box-shadow: var(--shadow-card); margin-bottom: 24px; border: 1px solid var(--border);
         }
-        .card-title {
-            font-size: 1.3rem; font-weight: 700; color: var(--text-main);
-            margin-bottom: 20px; display: flex; align-items: center; gap: 12px;
+        
+        /* --- Forms & Tables --- */
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; margin-bottom: 6px; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); }
+        .form-input, .form-select, .form-textarea {
+            width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+            border-radius: var(--radius-md); font-size: 0.95rem; transition: border 0.2s;
         }
+        .form-input:focus { border-color: var(--primary); ring: 2px var(--primary-light); }
 
-        /* ================= FORMS ================= */
-        .form-group { margin-bottom: 24px; }
-        .form-group label {
-            display: block; margin-bottom: 8px; font-weight: 600;
-            font-size: 0.9rem; color: var(--text-main);
-        }
-        .form-input, .form-textarea, .form-select {
-            width: 100%; padding: 12px 16px; border: 1px solid var(--border);
-            border-radius: 10px; font-size: 1rem; color: var(--text-main);
-            background: var(--surface-100); transition: all 0.2s;
-        }
-        .form-input:focus, .form-textarea:focus, .form-select:focus {
-            border-color: var(--primary); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-        }
-        .form-textarea { resize: vertical; min-height: 120px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th { text-align: left; padding: 12px 16px; background: var(--surface-200); color: var(--text-muted); font-weight: 600; }
+        td { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+        tr:hover td { background: var(--surface-300); }
 
-        /* ================= TABLES ================= */
-        .table-container { overflow-x: auto; }
-        table {
-            width: 100%; border-collapse: collapse; background: white;
-            border-radius: 12px; overflow: hidden;
-        }
-        thead {
-            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-        }
-        th {
-            text-align: left; padding: 16px 20px; font-weight: 700;
-            font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;
-            color: var(--text-muted); border-bottom: 2px solid var(--border);
-        }
-        td {
-            padding: 16px 20px; border-bottom: 1px solid var(--border);
-            color: var(--text-main); font-size: 0.95rem;
-        }
-        tbody tr { transition: background 0.15s; }
-        tbody tr:hover { background: var(--surface-200); }
+        /* --- Dashboard Stats --- */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; margin-bottom: 32px; }
+        .stat-card { background: white; padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border); display: flex; flex-direction: column; }
+        .stat-value { font-size: 2rem; font-weight: 700; color: var(--text-main); margin: 8px 0; }
+        .stat-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        .badge {
-            padding: 6px 12px; border-radius: 20px; font-size: 0.8rem;
-            font-weight: 600; display: inline-block;
-        }
-        .badge-success { background: var(--success-bg); color: var(--success); }
-        .badge-warning { background: var(--warning-bg); color: var(--warning); }
-        .badge-danger { background: var(--danger-bg); color: var(--danger); }
-        .badge-info { background: var(--primary-light); color: var(--primary); }
-
-        /* ================= STATS CARDS ================= */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-card {
-            background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
-            backdrop-filter: blur(10px);
-            padding: 24px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5);
-            box-shadow: var(--shadow-md);
-        }
-        .stat-icon {
-            width: 48px; height: 48px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.4rem; margin-bottom: 16px;
-        }
-        .stat-value { font-size: 2rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
-        .stat-label { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
-
-        /* ================= TOAST ================= */
-        #toast-container {
-            position: fixed; top: 20px; right: 20px; z-index: 9998;
-            display: flex; flex-direction: column; gap: 12px; pointer-events: none;
-        }
-        .toast {
-            background: white; padding: 16px 20px; border-radius: 12px;
-            box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 12px;
-            min-width: 300px; animation: slideIn 0.3s ease-out;
-            border-left: 4px solid var(--primary); pointer-events: all;
-        }
-        .toast.success { border-left-color: var(--success); }
-        .toast.error { border-left-color: var(--danger); }
-        @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
-        /* ================= MODALS ================= */
-        .modal-overlay {
+        /* --- Modals (New Implementation) --- */
+        .modal-backdrop {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
-            z-index: 1000; display: flex; align-items: center; justify-content: center;
+            z-index: 50; display: none; align-items: center; justify-content: center;
         }
-        .modal {
-            background: white; border-radius: 20px; padding: 40px;
-            max-width: 600px; width: 90%; box-shadow: var(--shadow-card);
-            animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        .modal-backdrop.open { display: flex; }
+        .modal-content {
+            background: white; width: 90%; max-width: 500px;
+            border-radius: var(--radius-lg); padding: 32px;
+            box-shadow: var(--shadow-modal); position: relative;
+            animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        @keyframes modalPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
-        .modal-title { font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
-        .modal-close {
-            background: var(--surface-200); border: none; width: 36px; height: 36px;
-            border-radius: 50%; cursor: pointer; display: flex; align-items: center;
-            justify-content: center; transition: all 0.2s;
-        }
-        .modal-close:hover { background: var(--border); }
+        @keyframes modalPop { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        /* ================= CONTRACT EDITOR ================= */
+        /* --- Contract Editor & Signing --- */
         #contract-editor {
-            border: 1px solid var(--border); border-radius: 12px;
-            padding: 24px; min-height: 400px; background: white;
-            font-size: 1rem; line-height: 1.6;
+            min-height: 500px; padding: 40px; border: 1px solid var(--border);
+            background: white; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
         }
-        [contenteditable]:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
-
-        /* ================= SIGNING PAGE ================= */
-        #signing-page-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 10001; overflow-y: auto; display: none;
-        }
-        .signing-page-container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
-        .signing-page-header {
-            text-align: center; padding: 30px 0; border-bottom: 2px solid var(--border);
-            margin-bottom: 40px;
-        }
-        .signing-page-title { font-size: 2rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px; }
-        .signing-page-subtitle { color: var(--text-muted); font-size: 1.1rem; }
-        .contract-body {
-            background: white; padding: 40px; border-radius: 16px;
-            box-shadow: var(--shadow-md); margin-bottom: 40px;
-            border: 1px solid var(--border);
-        }
-        .signature-section {
-            background: var(--surface-200); padding: 30px; border-radius: 16px;
-            border: 2px dashed var(--border);
-        }
-        .signature-canvas {
-            border: 2px solid var(--border); border-radius: 12px;
-            background: white; width: 100%; cursor: crosshair;
-            touch-action: none;
-        }
-        .signature-actions {
-            display: flex; gap: 12px; margin-top: 20px; justify-content: center;
-        }
-
-        /* ================= RESPONSIVE ================= */
-        @media (max-width: 768px) {
-            aside { width: 70px; }
-            .brand { padding: 20px 10px; font-size: 0; }
-            .brand i { font-size: 1.5rem; }
-            .nav-btn { padding: 12px; justify-content: center; }
-            .nav-btn span { display: none; }
-            .user-menu { padding: 15px 10px; flex-direction: column; }
-            .user-info { display: none; }
-            header { padding: 20px; }
-            .view { padding: 20px; }
-        }
+        
+        /* Signing Page Specifics */
+        .signing-container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        .signing-paper { background: white; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-radius: 4px; }
     </style>
 </head>
 <body class="not-authenticated">
 
-<!-- ================= LOGIN OVERLAY ================= -->
-<div id="login-overlay">
-    <div class="login-card">
-        <div class="login-header">
-            <i class="fas fa-cube login-icon"></i>
-            <div class="login-title">Legacy CRM</div>
-            <div class="login-subtitle">Enterprise Contract Management</div>
+    <div id="login-overlay">
+        <div class="login-card">
+            <h2 style="margin-bottom: 8px; color: var(--text-main);">Bem-vindo</h2>
+            <p style="color: var(--text-muted); margin-bottom: 24px;">Acesse o Legacy CRM Enterprise</p>
+            <div id="login-error" style="color: var(--danger); font-size: 0.9rem; margin-bottom: 16px; display:none;"></div>
+            <form onsubmit="authManager.login(event)">
+                <div class="form-group">
+                    <label class="form-label">Email Corporativo</label>
+                    <input type="email" id="login-email" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Senha de Acesso</label>
+                    <input type="password" id="login-password" class="form-input" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;">Entrar no Sistema</button>
+            </form>
         </div>
-        
-        <div class="login-error" id="login-error"></div>
-        
-        <form id="login-form" onsubmit="authManager.login(event)">
-            <div class="login-form-group">
-                <label for="login-email">Email</label>
-                <input type="email" id="login-email" class="login-input" placeholder="seu@email.com" required>
-            </div>
-            <div class="login-form-group">
-                <label for="login-password">Senha</label>
-                <input type="password" id="login-password" class="login-input" placeholder="••••••••" required>
-            </div>
-            <button type="submit" class="btn-login-action">
-                <span id="login-btn-text">Entrar</span>
+    </div>
+
+    <div id="modal-client" class="modal-backdrop">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 20px;">Novo Cliente</h3>
+            <form id="form-client" onsubmit="clientManager.submitForm(event)">
+                <div class="form-group">
+                    <label class="form-label">Nome Completo *</label>
+                    <input type="text" name="name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">CPF / CNPJ</label>
+                    <input type="text" name="doc" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Telefone (WhatsApp)</label>
+                    <input type="text" name="phone" class="form-input">
+                </div>
+                <div class="form-group" style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+                    <div>
+                        <label class="form-label">Endereço</label>
+                        <input type="text" name="address" class="form-input">
+                    </div>
+                    <div>
+                        <label class="form-label">Cidade</label>
+                        <input type="text" name="city" class="form-input">
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;">
+                    <button type="button" class="btn btn-secondary" onclick="ui.closeModal('modal-client')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <aside>
+        <div class="brand"><i class="fas fa-cube"></i> Legacy CRM</div>
+        <div class="nav-menu">
+            <button class="nav-btn active" onclick="app.nav('dashboard')"><i class="fas fa-chart-pie"></i> Visão Geral</button>
+            <button class="nav-btn" onclick="app.nav('clients')"><i class="fas fa-users"></i> Carteira de Clientes</button>
+            <button class="nav-btn" onclick="app.nav('create')"><i class="fas fa-file-signature"></i> Novo Contrato</button>
+            <button class="nav-btn" onclick="app.nav('history')"><i class="fas fa-history"></i> Histórico & Status</button>
+            <button class="nav-btn" onclick="app.nav('templates')"><i class="fas fa-layer-group"></i> Modelos</button>
+            <button class="nav-btn" onclick="app.nav('config')"><i class="fas fa-sliders-h"></i> Configurações</button>
+        </div>
+        <div style="padding: 20px;">
+            <button class="btn btn-danger" onclick="authManager.logout()" style="width: 100%; justify-content: center; font-size: 0.8rem;">
+                <i class="fas fa-sign-out-alt"></i> Sair
             </button>
-        </form>
-        
-        <div style="text-align:center; margin-top:20px; color:#64748b; font-size:0.85rem;">
-            🔐 Sistema protegido com Supabase Auth
         </div>
-    </div>
-</div>
+    </aside>
 
-<!-- ================= INTRO LOADER ================= -->
-<div id="intro-overlay">
-    <div class="cube-header-wrapper cube-scale-up">
-        <div class="cube-header">
-            <div class="cube-face face-front"><i class="fas fa-file-contract"></i></div>
-            <div class="cube-face face-back"><i class="fas fa-users"></i></div>
-            <div class="cube-face face-right"><i class="fas fa-signature"></i></div>
-            <div class="cube-face face-left"><i class="fas fa-chart-line"></i></div>
-            <div class="cube-face face-top"><i class="fas fa-shield-alt"></i></div>
-            <div class="cube-face face-bottom"><i class="fas fa-database"></i></div>
-        </div>
-    </div>
-    <div style="margin-top:40px; color:#93c5fd; font-size:0.9rem; letter-spacing:2px;">CARREGANDO SISTEMA</div>
-</div>
+    <main>
+        <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
 
-<!-- ================= SIDEBAR ================= -->
-<aside>
-    <div class="brand">
-        <i class="fas fa-cube"></i>
-        <span>Legacy CRM</span>
-    </div>
-    
-    <div class="nav-menu">
-        <button class="nav-btn active" onclick="app.nav('dashboard')">
-            <i class="fas fa-chart-line"></i>
-            <span>Dashboard</span>
-        </button>
-        <button class="nav-btn" onclick="app.nav('clients')">
-            <i class="fas fa-users"></i>
-            <span>Clientes</span>
-        </button>
-        <button class="nav-btn" onclick="app.nav('create')">
-            <i class="fas fa-file-contract"></i>
-            <span>Criar Contrato</span>
-        </button>
-        <button class="nav-btn" onclick="app.nav('history')">
-            <i class="fas fa-history"></i>
-            <span>Histórico</span>
-        </button>
-        <button class="nav-btn" onclick="app.nav('templates')">
-            <i class="fas fa-copy"></i>
-            <span>Templates</span>
-        </button>
-        <button class="nav-btn" onclick="app.nav('config')">
-            <i class="fas fa-cog"></i>
-            <span>Configurações</span>
-        </button>
-    </div>
-    
-    <div class="user-menu">
-        <div class="user-avatar" id="user-avatar">U</div>
-        <div class="user-info">
-            <div class="user-name" id="user-name">Usuário</div>
-            <div class="user-role">Administrador</div>
-        </div>
-        <button class="btn-logout" onclick="authManager.logout()" title="Sair">
-            <i class="fas fa-sign-out-alt"></i>
-        </button>
-    </div>
-</aside>
-
-<!-- ================= MAIN CONTENT ================= -->
-<main>
-    <!-- DASHBOARD VIEW -->
-    <div id="view-dashboard" class="view active">
-        <header>
-            <h1><i class="fas fa-chart-line"></i> Dashboard</h1>
-        </header>
-        
-        <div style="padding: 40px;">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white;">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-value" id="stat-clients">0</div>
-                    <div class="stat-label">Total de Clientes</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
-                        <i class="fas fa-file-signature"></i>
-                    </div>
-                    <div class="stat-value" id="stat-signed">0</div>
-                    <div class="stat-label">Contratos Assinados</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="stat-value" id="stat-pending">0</div>
-                    <div class="stat-label">Aguardando Assinatura</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white;">
-                        <i class="fas fa-copy"></i>
-                    </div>
-                    <div class="stat-value" id="stat-templates">0</div>
-                    <div class="stat-label">Templates Salvos</div>
-                </div>
-            </div>
+        <div id="view-dashboard" class="view active">
+            <header style="margin: -32px -32px 32px -32px; padding: 24px 32px; background: white; border-bottom: 1px solid var(--border);">
+                <h1>Dashboard Operacional</h1>
+            </header>
             
-            <div class="card">
-                <div class="card-title">
-                    <i class="fas fa-chart-bar"></i>
-                    Atividade Recente
+            <div class="stats-grid">
+                <div class="stat-card" style="border-left: 4px solid var(--primary);">
+                    <div class="stat-label">Clientes Ativos</div>
+                    <div class="stat-value" id="stat-clients">0</div>
                 </div>
-                <div id="recent-activity"></div>
+                <div class="stat-card" style="border-left: 4px solid var(--success);">
+                    <div class="stat-label">Contratos Assinados</div>
+                    <div class="stat-value" id="stat-signed">0</div>
+                </div>
+                <div class="stat-card" style="border-left: 4px solid var(--warning);">
+                    <div class="stat-label">Pendentes de Assinatura</div>
+                    <div class="stat-value" id="stat-pending">0</div>
+                </div>
+                <div class="stat-card" style="border-left: 4px solid var(--danger);">
+                    <div class="stat-label">Vencendo em 7 dias</div> <div class="stat-value" id="stat-expiring">0</div>
+                </div>
+            </div>
+
+            <div class="card" id="alert-panel" style="display: none; background: var(--warning-bg); border-color: var(--warning);">
+                <h3 style="color: #854d0e; margin-bottom: 15px;"><i class="fas fa-exclamation-triangle"></i> Atenção aos Prazos</h3>
+                <div id="expiration-list"></div>
+            </div>
+
+            <div class="card">
+                <h3>Atividade Recente</h3>
+                <div id="recent-activity" style="margin-top: 15px;"></div>
             </div>
         </div>
-    </div>
 
-    <!-- CLIENTS VIEW -->
-    <div id="view-clients" class="view">
-        <header>
-            <h1><i class="fas fa-users"></i> Gerenciar Clientes</h1>
-            <div>
-                <button class="btn btn-primary" onclick="clientManager.showAddForm()">
+        <div id="view-clients" class="view">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h1>Gestão de Clientes</h1>
+                <button class="btn btn-primary" onclick="clientManager.openModal()">
                     <i class="fas fa-plus"></i> Novo Cliente
                 </button>
             </div>
-        </header>
-        
-        <div style="padding: 40px;">
             <div class="card">
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th>Documento</th>
-                                <th>Telefone</th>
-                                <th>Cidade</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="clients-table-body"></tbody>
-                    </table>
-                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Contato</th>
+                            <th>Cidade</th>
+                            <th width="100">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clients-table-body"></tbody>
+                </table>
             </div>
         </div>
-    </div>
-
-    <!-- CREATE CONTRACT VIEW -->
-    <div id="view-create" class="view">
-        <header>
-            <h1><i class="fas fa-file-contract"></i> Criar Novo Contrato</h1>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn btn-success" id="btn-send-sign-link" onclick="signingLinkManager.generate()" style="display:none;">
-                    <i class="fab fa-whatsapp"></i> Gerar Link de Assinatura
-                </button>
-                <button class="btn btn-secondary" onclick="contractManager.loadTemplate()">
-                    <i class="fas fa-folder-open"></i> Carregar Template
-                </button>
-                <button class="btn btn-primary" onclick="contractManager.save()">
-                    <i class="fas fa-save"></i> Salvar Template
-                </button>
+<div id="view-create" class="view">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h1>Novo Contrato</h1>
+                <div style="display: gap: 10px;">
+                    <button class="btn btn-secondary" onclick="contractManager.loadTemplateModal()">
+                        <i class="fas fa-folder-open"></i> Templates
+                    </button>
+                    <button class="btn btn-primary" onclick="contractManager.saveTemplate()">
+                        <i class="fas fa-save"></i> Salvar como Modelo
+                    </button>
+                </div>
             </div>
-        </header>
-        
-        <div style="padding: 40px;">
+            
             <div class="card">
-                <div class="card-title">Informações do Cliente</div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                     <div class="form-group">
-                        <label>Cliente <span style="color:red;">*</span></label>
-                        <select id="client-select" class="form-select" onchange="contractManager.fillClientData()">
-                            <option value="">Selecione um cliente</option>
+                        <label class="form-label">Selecione o Cliente</label>
+                        <select id="contract-client-select" class="form-select" onchange="contractManager.fillClientData()">
+                            <option value="">-- Selecione --</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Nome Completo</label>
-                        <input type="text" id="client-name" class="form-input" placeholder="Nome do cliente">
+                        <label class="form-label">Validade da Proposta</label> <input type="date" id="contract-expires" class="form-input">
                     </div>
-                    <div class="form-group">
-                        <label>Documento (CPF/CNPJ)</label>
-                        <input type="text" id="client-doc" class="form-input" placeholder="000.000.000-00">
-                    </div>
-                    <div class="form-group">
-                        <label>Telefone</label>
-                        <input type="text" id="client-phone" class="form-input" placeholder="(00) 00000-0000">
-                    </div>
-                    <div class="form-group">
-                        <label>Endereço</label>
-                        <input type="text" id="client-address" class="form-input" placeholder="Rua, número">
-                    </div>
-                    <div class="form-group">
-                        <label>Cidade</label>
-                        <input type="text" id="client-city" class="form-input" placeholder="Cidade - UF">
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-success" style="width: 100%; justify-content: center;" onclick="signingLinkManager.generate()">
+                            <i class="fab fa-whatsapp"></i> Gerar Link de Assinatura
+                        </button>
                     </div>
                 </div>
-            </div>
-            
-            <div class="card">
-                <div class="card-title">Editor de Contrato</div>
+                
+                <input type="hidden" id="c-name"> <input type="hidden" id="c-doc"> 
+                <input type="hidden" id="c-address"> <input type="hidden" id="c-city">
+                
                 <div id="contract-editor" contenteditable="true">
-                    <p style="text-align: center; margin-bottom: 20px;"><strong>CONTRATO DE PRESTAÇÃO DE SERVIÇOS</strong></p>
-                    <p>Por este instrumento particular, de um lado <strong>{CLIENTE}</strong>, doravante denominado CONTRATANTE, e de outro lado a empresa <strong>{EMPRESA}</strong>, denominada CONTRATADA, têm entre si justo e acordado o seguinte:</p>
-                    <p><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços...</p>
-                    <p><strong>CLÁUSULA 2ª - DO VALOR:</strong> O valor total do contrato é de R$ {VALOR}...</p>
-                    <p style="margin-top: 40px;">Local e Data: {CIDADE}, {DATA}</p>
-                    <p style="margin-top: 60px; text-align: center;">_________________________________<br>Assinatura do Contratante</p>
+                    <h2 style="text-align: center;">CONTRATO DE PRESTAÇÃO DE SERVIÇOS</h2>
+                    <p><br></p>
+                    <p><strong>CONTRATANTE:</strong> {CLIENTE}, inscrito no CPF/CNPJ {DOCUMENTO}, residente em {ENDERECO}, {CIDADE}.</p>
+                    <p><br></p>
+                    <p><strong>CLÁUSULA 1:</strong> O presente contrato tem como objeto...</p>
+                    <p><br></p>
+                    <p style="text-align: center; margin-top: 50px;">_________________________________</p>
+                    <p style="text-align: center;">Assinatura do Contratante</p>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- HISTORY VIEW -->
-    <div id="view-history" class="view">
-        <header>
-            <h1><i class="fas fa-history"></i> Histórico de Contratos</h1>
-        </header>
-        
-        <div style="padding: 40px;">
-            <div class="card">
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Cliente</th>
-                                <th>Tipo</th>
-                                <th>Status</th>
-                                <th>Criado em</th>
-                                <th>Assinado em</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-table-body"></tbody>
-                    </table>
-                </div>
+        <div id="view-history" class="view">
+            <h1>Histórico de Documentos</h1>
+            <div class="card" style="margin-top: 24px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Criado em</th>
+                            <th>Validade</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body"></tbody>
+                </table>
             </div>
         </div>
-    </div>
 
-    <!-- TEMPLATES VIEW -->
-    <div id="view-templates" class="view">
-        <header>
-            <h1><i class="fas fa-copy"></i> Modelos de Contratos</h1>
-        </header>
-        
-        <div style="padding: 40px;">
-            <div class="card">
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nome do Template</th>
-                                <th>Tipo de Contrato</th>
-                                <th>Criado em</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="templates-table-body"></tbody>
-                    </table>
+        <div id="view-templates" class="view"><h1>Modelos</h1><div class="card" id="templates-list"></div></div>
+        <div id="view-config" class="view"><h1>Configurações</h1><div class="card"><p>Configurações da empresa aqui.</p></div></div>
+    </main>
+
+    <div id="signing-page-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; overflow-y: auto; z-index: 20000;">
+        <div class="signing-container">
+            <div style="text-align: center; margin-bottom: 30px; padding-top: 40px;">
+                <h1 style="color: var(--primary-dark);">Assinatura Digital</h1>
+                <p style="color: var(--text-muted);" id="sp-client-name">Carregando documento...</p>
+            </div>
+
+            <div id="document-to-print" class="signing-paper">
+                <div id="sp-contract-body"></div>
+                
+                <div id="sp-signature-result" style="display: none; margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px;">
+                    <p>Assinado Digitalmente por: <strong id="sp-signer-name"></strong></p>
+                    <p>Data: <span id="sp-signed-date"></span></p>
+                    <p>IP: <span id="sp-signed-ip">Registrado</span></p>
+                    <img id="sp-signature-img" style="max-height: 100px; margin-top: 10px;" />
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- CONFIG VIEW -->
-    <div id="view-config" class="view">
-        <header>
-            <h1><i class="fas fa-cog"></i> Configurações</h1>
-        </header>
-        
-        <div style="padding: 40px;">
-            <div class="card">
-                <div class="card-title">Configurações do Sistema</div>
-                <div class="form-group">
-                    <label>Nome da Empresa</label>
-                    <input type="text" id="config-empresa" class="form-input" placeholder="Nome da sua empresa">
-                </div>
-                <div class="form-group">
-                    <label>CNPJ</label>
-                    <input type="text" id="config-cnpj" class="form-input" placeholder="00.000.000/0000-00">
-                </div>
-                <div class="form-group">
-                    <label>Endereço</label>
-                    <input type="text" id="config-endereco" class="form-input" placeholder="Endereço completo">
-                </div>
-                <button class="btn btn-primary" onclick="configManager.save()">
-                    <i class="fas fa-save"></i> Salvar Configurações
-                </button>
-            </div>
-            
-            <div class="card">
-                <div class="card-title">Backup e Restauração</div>
-                <div style="display: flex; gap: 12px;">
-                    <button class="btn btn-secondary" onclick="backupSystem.export()">
-                        <i class="fas fa-download"></i> Exportar Dados
-                    </button>
-                    <label class="btn btn-secondary" style="margin: 0;">
-                        <i class="fas fa-upload"></i> Importar Dados
-                        <input type="file" accept=".json" onchange="backupSystem.handleFile(this)" style="display:none;">
-                    </label>
+            <div id="sp-action-area" class="card" style="margin-top: 30px; border: 2px dashed var(--primary);">
+                <h3 style="margin-bottom: 15px;">Desenhe sua assinatura abaixo:</h3>
+                <canvas id="sp-canvas" style="width: 100%; height: 200px; background: #fff; border: 1px solid #ccc; cursor: crosshair; touch-action: none;"></canvas>
+                <div style="display: flex; gap: 15px; margin-top: 15px; justify-content: center;">
+                    <button class="btn btn-secondary" onclick="signingPage.clear()">Limpar</button>
+                    <button class="btn btn-success" onclick="signingPage.submit()">Confirmar Assinatura</button>
                 </div>
             </div>
-        </div>
-    </div>
-</main>
 
-<!-- ================= TOAST CONTAINER ================= -->
-<div id="toast-container"></div>
-
-<!-- ================= SIGNING PAGE OVERLAY ================= -->
-<div id="signing-page-overlay">
-    <div class="signing-page-container">
-        <div class="signing-page-header">
-            <div class="signing-page-title">Assinatura Digital de Contrato</div>
-            <div class="signing-page-subtitle" id="sp-subtitle"></div>
-        </div>
-        
-        <div class="contract-body" id="sp-contract-body"></div>
-        
-        <div class="signature-section">
-            <h3 style="margin-bottom: 20px; color: var(--text-main);">
-                <i class="fas fa-signature"></i> Assine aqui:
-            </h3>
-            <canvas id="sp-canvas" class="signature-canvas" width="600" height="200"></canvas>
-            <div class="signature-actions">
-                <button class="btn btn-secondary" onclick="signingPage.clear()">
-                    <i class="fas fa-eraser"></i> Limpar
-                </button>
-                <button class="btn btn-primary" onclick="signingPage.submit()">
-                    <i class="fas fa-check"></i> Confirmar Assinatura
+            <div id="sp-success-area" style="display: none; text-align: center; margin-top: 40px; padding-bottom: 40px;">
+                <div style="color: var(--success); font-size: 1.5rem; margin-bottom: 20px;">
+                    <i class="fas fa-check-circle"></i> Documento Assinado com Sucesso!
+                </div>
+                <button class="btn btn-primary" onclick="signingPage.downloadPDF()">
+                    <i class="fas fa-file-pdf"></i> Baixar Cópia Assinada (PDF)
                 </button>
             </div>
         </div>
     </div>
-</div>
 
 <script>
-// ================= SUPABASE INICIALIZAÇÃO =================
-// 🔴 ATENÇÃO: SUBSTITUIR PELOS SEUS VALORES REAIS DO SUPABASE
+// CONFIGURAÇÃO SUPABASE
 const SUPABASE_URL = 'https://rjyxkouegrropsarrhje.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqeXhrb3VlZ3Jyb3BzYXJyaGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NjYxNjcsImV4cCI6MjA4NTE0MjE2N30.UjNPnVBVhQcUSirXeWZ3RmYmAhDMqqbbVUChG_Mv57U';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqeXhrb3VlZ3Jyb3BzYXJyaGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NjYxNjcsImV4cCI6MjA4NTE0MjE2N30.UjNPnVBVhQcUSirXeWZ3RmYmAhDMqqbbVUChG_Mv57U';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let supabaseClient;
-try {
-    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('✅ Supabase inicializado com sucesso');
-} catch(e) {
-    console.error('❌ Erro ao inicializar Supabase:', e);
-}
+// UTILS
+const ui = {
+    toast: (msg, type='info') => {
+        const d = document.createElement('div');
+        d.style.cssText = `padding: 12px 20px; background: white; border-left: 4px solid var(--${type}); border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-size: 0.9rem; animation: fadeIn 0.3s;`;
+        d.innerHTML = `<strong>${type.toUpperCase()}:</strong> ${msg}`;
+        document.getElementById('toast-container').appendChild(d);
+        setTimeout(() => d.remove(), 4000);
+    },
+    openModal: (id) => {
+        document.getElementById(id).classList.add('open');
+    },
+    closeModal: (id) => {
+        document.getElementById(id).classList.remove('open');
+    }
+};
 
-// ================= AUTHENTICATION MANAGER =================
+// AUTH & ROUTING
 const authManager = {
     init: async () => {
-        if (!supabaseClient) {
-            console.error('Supabase não inicializado');
-            return;
-        }
-
-        // Verifica sessão existente
-        const { data: { session } } = await supabaseClient.auth.getSession();
+        // 1. Checa se é link de assinatura (PRIORIDADE MÁXIMA)
+        const params = new URLSearchParams(window.location.search);
+        const signId = params.get('sign');
         
-        if (session) {
-            authManager.onAuthSuccess(session.user);
-        } else {
-            document.body.classList.remove('authenticated');
-            document.body.classList.add('not-authenticated');
+        if (signId) {
+            document.body.className = 'signing-mode'; // CSS esconde tudo exceto a assinatura
+            signingPage.init(signId);
+            return; 
         }
 
-        // Listener para mudanças de autenticação
-        supabaseClient.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' && session) {
-                authManager.onAuthSuccess(session.user);
-            } else if (event === 'SIGNED_OUT') {
-                authManager.onLogout();
-            }
-        });
+        // 2. Fluxo Normal de Admin
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            authManager.enterApp();
+        } else {
+            document.body.className = 'not-authenticated';
+        }
     },
-
     login: async (e) => {
         e.preventDefault();
-        
         const email = document.getElementById('login-email').value;
-        const password = document.getElementById('login-password').value;
-        const errorDiv = document.getElementById('login-error');
-        const btnText = document.getElementById('login-btn-text');
-        
-        btnText.textContent = 'Verificando...';
-        errorDiv.style.display = 'none';
-
-        try {
-            const { data, error } = await supabaseClient.auth.signInWithPassword({
-                email: email,
-                password: password,
-            });
-
-            if (error) throw error;
-
-            authManager.onAuthSuccess(data.user);
-            
-        } catch (error) {
-            errorDiv.textContent = error.message || 'Erro ao fazer login';
-            errorDiv.style.display = 'block';
-            btnText.textContent = 'Entrar';
+        const pass = document.getElementById('login-password').value;
+        const { error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+        if (error) {
+            document.getElementById('login-error').innerText = 'Credenciais inválidas.';
+            document.getElementById('login-error').style.display = 'block';
+        } else {
+            authManager.enterApp();
         }
     },
-
-    onAuthSuccess: (user) => {
-        console.log('✅ Usuário autenticado:', user.email);
-        
-        // Atualiza UI
-        document.getElementById('user-name').textContent = user.email.split('@')[0];
-        document.getElementById('user-avatar').textContent = user.email[0].toUpperCase();
-        
-        // Mostra intro e depois o sistema
-        document.getElementById('intro-overlay').style.display = 'flex';
-        
-        setTimeout(() => {
-            document.body.classList.remove('not-authenticated');
-            document.body.classList.add('authenticated');
-            document.getElementById('intro-overlay').style.opacity = '0';
-            
-            setTimeout(() => {
-                document.getElementById('intro-overlay').style.display = 'none';
-            }, 600);
-            
-            // Carrega dados iniciais
-            app.init();
-        }, 2000);
+    enterApp: () => {
+        document.body.className = 'authenticated';
+        app.loadData();
     },
-
     logout: async () => {
-        const { error } = await supabaseClient.auth.signOut();
-        if (error) console.error('Erro ao sair:', error);
-    },
-
-    onLogout: () => {
-        document.body.classList.remove('authenticated');
-        document.body.classList.add('not-authenticated');
+        await supabaseClient.auth.signOut();
         location.reload();
     }
 };
 
-// ================= APP CORE =================
-const app = {
-    init: async () => {
-        await clientManager.loadFromSupabase();
-        await contractManager.loadHistory();
-        await contractManager.loadTemplates();
-        clientManager.populateSelect();
-        dashboard.update();
-    },
+// DATA MANAGERS
+const db = { clients: [], contracts: [] };
 
+const app = {
     nav: (viewId) => {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('view-'+viewId).classList.add('active');
+        // Simple logic to find button, optimization omitted for brevity
+        event.target.closest('.nav-btn')?.classList.add('active');
+    },
+    loadData: async () => {
+        // Carregar Clientes
+        let { data: clients } = await supabaseClient.from('signature_requests').select('*').eq('is_client_record', true);
+        db.clients = clients || [];
+        clientManager.render();
         
-        document.getElementById('view-' + viewId).classList.add('active');
-        event.target.closest('.nav-btn').classList.add('active');
+        // Carregar Contratos
+        let { data: contracts } = await supabaseClient.from('signature_requests').select('*').eq('is_client_record', false).order('created_at', {ascending: false});
+        db.contracts = contracts || [];
         
-        // Mostra botão "Gerar Link" apenas na view create
-        const btnSendLink = document.getElementById('btn-send-sign-link');
-        if (btnSendLink) {
-            btnSendLink.style.display = (viewId === 'create') ? 'inline-flex' : 'none';
-        }
+        dashboard.update();
+        contractManager.renderHistory();
+        contractManager.populateSelect();
     }
 };
 
-// ================= DATABASE (FALLBACK LOCAL) =================
-const db = {
-    clients: [],
-    
-    loadClients: () => {
-        const stored = localStorage.getItem('crm_clients');
-        db.clients = stored ? JSON.parse(stored) : [];
-    },
-    
-    saveClients: () => {
-        localStorage.setItem('crm_clients', JSON.stringify(db.clients));
-    },
-    
-    addClient: (client) => {
-        client.id = Date.now().toString();
-        db.clients.push(client);
-        db.saveClients();
-        return client;
-    },
-    
-    deleteClient: (id) => {
-        db.clients = db.clients.filter(c => c.id !== id);
-        db.saveClients();
-    }
-};
-
-// ================= CLIENT MANAGER =================
 const clientManager = {
-    loadFromSupabase: async () => {
-        try {
-            // Busca clientes únicos da tabela signature_requests onde is_client_record = true
-            const { data, error } = await supabaseClient
-                .from('signature_requests')
-                .select('*')
-                .eq('is_client_record', true)
-                .order('created_at', { ascending: false });
+    openModal: () => {
+        document.getElementById('form-client').reset();
+        ui.openModal('modal-client');
+    },
+    submitForm: async (e) => {
+        e.preventDefault();
+        const f = new FormData(e.target);
+        const clientData = {
+            client_name: f.get('name'),
+            client_document: f.get('doc'),
+            client_email: f.get('email'),
+            client_phone: f.get('phone'),
+            client_address: f.get('address'),
+            client_city: f.get('city'),
+            is_client_record: true,
+            status: 'pending',
+            contract_html: 'FICHA_CADASTRAL' // Required field bypass
+        };
 
-            if (error) throw error;
-
-            // Converte para formato local
-            db.clients = data.map(row => ({
-                id: row.id,
-                name: row.client_name || '',
-                doc: row.client_document || '',
-                phone: row.client_phone || '',
-                address: row.client_address || '',
-                city: row.client_city || ''
-            }));
-
-            clientManager.render();
-            console.log(`✅ ${db.clients.length} clientes carregados do Supabase`);
-
-        } catch (error) {
-            console.error('Erro ao carregar clientes:', error);
-            ui.toast('Erro ao carregar clientes: ' + error.message, 'error');
-            // Fallback para localStorage
-            db.loadClients();
+        const { error } = await supabaseClient.from('signature_requests').insert([clientData]);
+        if(error) ui.toast('Erro ao salvar: ' + error.message, 'danger');
+        else {
+            ui.toast('Cliente salvo com sucesso!', 'success');
+            ui.closeModal('modal-client');
+            app.loadData(); // Recarrega tudo
         }
     },
-
     render: () => {
         const tbody = document.getElementById('clients-table-body');
-        if (!tbody) return;
-        
         tbody.innerHTML = db.clients.map(c => `
             <tr>
-                <td><strong>${c.name}</strong></td>
-                <td>${c.doc || '-'}</td>
-                <td>${c.phone || '-'}</td>
-                <td>${c.city || '-'}</td>
-                <td>
-                    <button class="btn btn-danger" onclick="clientManager.delete('${c.id}')" style="padding: 8px 16px; font-size: 0.85rem;">
-                        <i class="fas fa-trash"></i> Excluir
-                    </button>
-                </td>
+                <td><strong>${c.client_name}</strong><br><span style="font-size:0.8em; color:#666">${c.client_email || ''}</span></td>
+                <td>${c.client_phone || '-'}</td>
+                <td>${c.client_city || '-'}</td>
+                <td><button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button></td>
             </tr>
         `).join('');
-    },
-
-    populateSelect: () => {
-        const select = document.getElementById('client-select');
-        if (!select) return;
-        
-        select.innerHTML = '<option value="">Selecione um cliente</option>' +
-            db.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-    },
-
-    showAddForm: () => {
-        const name = prompt('Nome do cliente:');
-        if (!name) return;
-        
-        const doc = prompt('CPF/CNPJ:') || '';
-        const phone = prompt('Telefone:') || '';
-        const address = prompt('Endereço:') || '';
-        const city = prompt('Cidade:') || '';
-        
-        clientManager.add({ name, doc, phone, address, city });
-    },
-
-    add: async (clientData) => {
-        try {
-            // Insere no Supabase
-            const { data, error } = await supabaseClient
-                .from('signature_requests')
-                .insert([{
-                    client_name: clientData.name,
-                    client_document: clientData.doc,
-                    client_phone: clientData.phone,
-                    client_address: clientData.address,
-                    client_city: clientData.city,
-                    contract_html: '',
-                    is_client_record: true,
-                    status: 'pending'
-                }])
-                .select()
-                .single();
-
-            if (error) throw error;
-
-            // Adiciona localmente
-            db.clients.push({
-                id: data.id,
-                name: clientData.name,
-                doc: clientData.doc,
-                phone: clientData.phone,
-                address: clientData.address,
-                city: clientData.city
-            });
-
-            clientManager.render();
-            clientManager.populateSelect();
-            ui.toast('Cliente adicionado com sucesso!', 'success');
-
-        } catch (error) {
-            console.error('Erro ao adicionar cliente:', error);
-            ui.toast('Erro: ' + error.message, 'error');
-            
-            // Fallback local
-            db.addClient(clientData);
-            clientManager.render();
-            clientManager.populateSelect();
-        }
-    },
-
-    delete: async (id) => {
-        if (!confirm('Excluir este cliente?')) return;
-        
-        try {
-            const { error } = await supabaseClient
-                .from('signature_requests')
-                .delete()
-                .eq('id', id);
-
-            if (error) throw error;
-
-            db.clients = db.clients.filter(c => c.id !== id);
-            clientManager.render();
-            clientManager.populateSelect();
-            ui.toast('Cliente excluído!', 'success');
-
-        } catch (error) {
-            console.error('Erro ao excluir:', error);
-            ui.toast('Erro: ' + error.message, 'error');
-            
-            // Fallback local
-            db.deleteClient(id);
-            clientManager.render();
-            clientManager.populateSelect();
-        }
     }
 };
 
-// ================= CONTRACT MANAGER =================
 const contractManager = {
-    history: [],
-    templates: [],
-
+    populateSelect: () => {
+        const sel = document.getElementById('contract-client-select');
+        sel.innerHTML = '<option value="">-- Selecione o Cliente --</option>' + 
+            db.clients.map(c => `<option value="${c.id}">${c.client_name}</option>`).join('');
+    },
     fillClientData: () => {
-        const select = document.getElementById('client-select');
-        const clientId = select.value;
-        
-        if (!clientId) {
-            document.getElementById('client-name').value = '';
-            document.getElementById('client-doc').value = '';
-            document.getElementById('client-phone').value = '';
-            document.getElementById('client-address').value = '';
-            document.getElementById('client-city').value = '';
-            return;
-        }
-        
-        const client = db.clients.find(c => c.id === clientId);
-        if (client) {
-            document.getElementById('client-name').value = client.name || '';
-            document.getElementById('client-doc').value = client.doc || '';
-            document.getElementById('client-phone').value = client.phone || '';
-            document.getElementById('client-address').value = client.address || '';
-            document.getElementById('client-city').value = client.city || '';
+        const id = document.getElementById('contract-client-select').value;
+        const c = db.clients.find(x => x.id === id);
+        if(c) {
+            // Atualiza HTML do editor com replace simples
+            const editor = document.getElementById('contract-editor');
+            let html = editor.innerHTML;
+            html = html.replace('{CLIENTE}', c.client_name)
+                       .replace('{DOCUMENTO}', c.client_document || '...')
+                       .replace('{ENDERECO}', c.client_address || '...')
+                       .replace('{CIDADE}', c.client_city || '...');
+            editor.innerHTML = html;
+            // Guardar dados ocultos para usar no insert
+            document.getElementById('c-name').value = c.client_name;
         }
     },
-
-    save: async () => {
-        const templateName = prompt('Nome do template:');
-        if (!templateName) return;
-
-        const contractType = prompt('Tipo de contrato:') || 'Padrão';
-        const html = document.getElementById('contract-editor').innerHTML;
-
-        try {
-            const { data, error } = await supabaseClient
-                .from('signature_requests')
-                .insert([{
-                    template_name: templateName,
-                    contract_type: contractType,
-                    contract_html: html,
-                    is_template: true,
-                    client_name: 'Template',
-                    status: 'pending'
-                }])
-                .select()
-                .single();
-
-            if (error) throw error;
-
-            ui.toast('Template salvo com sucesso!', 'success');
-            await contractManager.loadTemplates();
-
-        } catch (error) {
-            console.error('Erro ao salvar template:', error);
-            ui.toast('Erro: ' + error.message, 'error');
-        }
-    },
-
-    loadTemplate: async () => {
-        if (contractManager.templates.length === 0) {
-            return ui.toast('Nenhum template disponível', 'error');
-        }
-
-        const list = contractManager.templates.map((t, i) => `${i + 1}. ${t.template_name}`).join('\n');
-        const choice = prompt('Escolha um template:\n\n' + list + '\n\nDigite o número:');
-        
-        if (!choice) return;
-        
-        const index = parseInt(choice) - 1;
-        if (index >= 0 && index < contractManager.templates.length) {
-            document.getElementById('contract-editor').innerHTML = contractManager.templates[index].contract_html;
-            ui.toast('Template carregado!', 'success');
-        }
-    },
-
-    loadHistory: async () => {
-        try {
-            const { data, error } = await supabaseClient
-                .from('signature_requests')
-                .select('*')
-                .eq('is_template', false)
-                .eq('is_client_record', false)
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-
-            contractManager.history = data || [];
-            contractManager.renderHistory();
-            console.log(`✅ ${contractManager.history.length} contratos carregados`);
-
-        } catch (error) {
-            console.error('Erro ao carregar histórico:', error);
-            contractManager.history = [];
-        }
-    },
-
     renderHistory: () => {
         const tbody = document.getElementById('history-table-body');
-        if (!tbody) return;
-
-        if (contractManager.history.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px;">Nenhum contrato encontrado</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = contractManager.history.map(h => {
-            let statusBadge = '';
-            if (h.status === 'signed') statusBadge = '<span class="badge badge-success">Assinado</span>';
-            else if (h.status === 'pending') statusBadge = '<span class="badge badge-warning">Pendente</span>';
-            else if (h.status === 'cancelled') statusBadge = '<span class="badge badge-danger">Cancelado</span>';
+        tbody.innerHTML = db.contracts.map(c => {
+            const statusMap = {
+                'signed': '<span style="color:green; font-weight:bold">Assinado</span>',
+                'pending': '<span style="color:orange">Pendente</span>',
+                'expired': '<span style="color:red">Vencido</span>'
+            };
+            // Checagem de validade visual
+            let validade = c.expires_at ? new Date(c.expires_at).toLocaleDateString('pt-BR') : '-';
             
             return `
-                <tr>
-                    <td><strong>${h.client_name}</strong></td>
-                    <td>${h.contract_type || '-'}</td>
-                    <td>${statusBadge}</td>
-                    <td>${new Date(h.created_at).toLocaleDateString('pt-BR')}</td>
-                    <td>${h.signed_at ? new Date(h.signed_at).toLocaleDateString('pt-BR') : '-'}</td>
-                    <td>
-                        <button class="btn btn-secondary" onclick="contractManager.viewContract('${h.id}')" style="padding: 8px 16px; font-size: 0.85rem;">
-                            <i class="fas fa-eye"></i> Ver
-                        </button>
-                    </td>
-                </tr>
-            `;
+            <tr>
+                <td>${c.client_name}</td>
+                <td>${new Date(c.created_at).toLocaleDateString('pt-BR')}</td>
+                <td>${validade}</td>
+                <td>${statusMap[c.status] || c.status}</td>
+                <td>
+                     <button class="btn btn-secondary" onclick="window.open('${window.location.origin + window.location.pathname}?sign=${c.id}', '_blank')"><i class="fas fa-link"></i></button>
+                </td>
+            </tr>`;
         }).join('');
-    },
+    }
+};
 
-    loadTemplates: async () => {
-        try {
-            const { data, error } = await supabaseClient
-                .from('signature_requests')
-                .select('*')
-                .eq('is_template', true)
-                .order('created_at', { ascending: false });
+const signingLinkManager = {
+    generate: async () => {
+        const clientName = document.getElementById('c-name').value;
+        if(!clientName) return ui.toast('Selecione um cliente primeiro', 'warning');
+        
+        const html = document.getElementById('contract-editor').innerHTML;
+        const expires = document.getElementById('contract-expires').value; // DATA DE VALIDADE
 
-            if (error) throw error;
+        const payload = {
+            client_name: clientName,
+            contract_html: html,
+            is_client_record: false,
+            status: 'pending',
+            expires_at: expires ? new Date(expires).toISOString() : null
+        };
 
-            contractManager.templates = data || [];
-            contractManager.renderTemplates();
-            console.log(`✅ ${contractManager.templates.length} templates carregados`);
-
-        } catch (error) {
-            console.error('Erro ao carregar templates:', error);
-            contractManager.templates = [];
+        const { data, error } = await supabaseClient.from('signature_requests').insert([payload]).select().single();
+        
+        if(error) {
+            ui.toast('Erro ao criar contrato: ' + error.message, 'danger');
+        } else {
+            const link = `${window.location.origin}${window.location.pathname}?sign=${data.id}`;
+            // Simular envio ou copiar
+            prompt("Link gerado com sucesso! Copie e envie ao cliente:", link);
+            app.loadData();
         }
-    },
+    }
+};
 
-    renderTemplates: () => {
-        const tbody = document.getElementById('templates-table-body');
-        if (!tbody) return;
+const dashboard = {
+    update: () => {
+        document.getElementById('stat-clients').innerText = db.clients.length;
+        document.getElementById('stat-signed').innerText = db.contracts.filter(c => c.status === 'signed').length;
+        document.getElementById('stat-pending').innerText = db.contracts.filter(c => c.status === 'pending').length;
+        
+        // Logica de Expiração (Próximos 7 dias e Pendentes)
+        const now = new Date();
+        const nextWeek = new Date();
+        nextWeek.setDate(now.getDate() + 7);
+        
+        const expiring = db.contracts.filter(c => {
+            if(!c.expires_at || c.status === 'signed') return false;
+            const d = new Date(c.expires_at);
+            return d > now && d <= nextWeek;
+        });
+        
+        document.getElementById('stat-expiring').innerText = expiring.length;
+        
+        if(expiring.length > 0) {
+            const alertPanel = document.getElementById('alert-panel');
+            alertPanel.style.display = 'block';
+            document.getElementById('expiration-list').innerHTML = expiring.map(c => 
+                `<div><strong>${c.client_name}</strong> vence dia ${new Date(c.expires_at).toLocaleDateString('pt-BR')}</div>`
+            ).join('');
+        }
+    }
+};
 
-        if (contractManager.templates.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px;">Nenhum template encontrado</td></tr>';
+// --- SIGNING PAGE LOGIC (PUBLIC) ---
+const signingPage = {
+    id: null,
+    canvas: null,
+    ctx: null,
+    
+    init: async (id) => {
+        signingPage.id = id;
+        
+        // Setup Canvas
+        signingPage.canvas = document.getElementById('sp-canvas');
+        signingPage.ctx = signingPage.canvas.getContext('2d');
+        signingPage.resizeCanvas();
+        window.addEventListener('resize', signingPage.resizeCanvas);
+        signingPage.addEvents();
+
+        // Load Data (PUBLIC READ assumed via Anon Key)
+        const { data, error } = await supabaseClient.from('signature_requests').select('*').eq('id', id).single();
+        
+        if(error || !data) {
+            alert('Documento não encontrado ou acesso restrito.');
             return;
         }
 
-        tbody.innerHTML = contractManager.templates.map(t => `
-            <tr>
-                <td><strong>${t.template_name}</strong></td>
-                <td>${t.contract_type || '-'}</td>
-                <td>${new Date(t.created_at).toLocaleDateString('pt-BR')}</td>
-                <td>
-                    <button class="btn btn-primary" onclick="contractManager.useTemplate('${t.id}')" style="padding: 8px 16px; font-size: 0.85rem; margin-right: 8px;">
-                        <i class="fas fa-check"></i> Usar
-                    </button>
-                    <button class="btn btn-danger" onclick="contractManager.deleteTemplate('${t.id}')" style="padding: 8px 16px; font-size: 0.85rem;">
-                        <i class="fas fa-trash"></i> Excluir
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-    },
+        document.getElementById('sp-client-name').innerText = data.client_name;
+        document.getElementById('sp-contract-body').innerHTML = data.contract_html;
 
-    useTemplate: (id) => {
-        const template = contractManager.templates.find(t => t.id === id);
-        if (template) {
-            app.nav('create');
-            setTimeout(() => {
-                document.getElementById('contract-editor').innerHTML = template.contract_html;
-                ui.toast('Template carregado!', 'success');
-            }, 100);
+        // Se já assinado
+        if(data.status === 'signed') {
+            document.getElementById('sp-action-area').style.display = 'none';
+            document.getElementById('sp-success-area').style.display = 'block';
+            document.getElementById('sp-signature-result').style.display = 'block';
+            document.getElementById('sp-signature-img').src = data.signature_data;
+            document.getElementById('sp-signed-date').innerText = new Date(data.signed_at).toLocaleString();
+            document.getElementById('sp-signer-name').innerText = data.client_name;
         }
     },
 
-    deleteTemplate: async (id) => {
-        if (!confirm('Excluir este template?')) return;
-
-        try {
-            const { error } = await supabaseClient
-                .from('signature_requests')
-                .delete()
-                .eq('id', id);
-
-            if (error) throw error;
-
-            ui.toast('Template excluído!', 'success');
-            await contractManager.loadTemplates();
-
-        } catch (error) {
-            console.error('Erro ao excluir template:', error);
-            ui.toast('Erro: ' + error.message, 'error');
-        }
+    resizeCanvas: () => {
+        const c = signingPage.canvas;
+        c.width = c.offsetWidth;
+        c.height = 200;
+        signingPage.ctx.lineWidth = 2;
+        signingPage.ctx.strokeStyle = '#000';
     },
 
-    viewContract: async (id) => {
-        const contract = contractManager.history.find(h => h.id === id);
-        if (!contract) return;
-
-        alert(`Cliente: ${contract.client_name}\nStatus: ${contract.status}\n\nContrato:\n\n${contract.contract_html.replace(/<[^>]*>/g, '')}`);
-    }
-};
-
-// ================= CONFIG MANAGER =================
-const configManager = {
-    load: async () => {
-        try {
-            const { data, error } = await supabaseClient
-                .from('configcontrato')
-                .select('*');
-
-            if (error) throw error;
-
-            if (data && data.length > 0) {
-                data.forEach(config => {
-                    const input = document.getElementById('config-' + config.config_key);
-                    if (input) {
-                        input.value = config.config_value || '';
-                    }
-                });
-            }
-
-        } catch (error) {
-            console.error('Erro ao carregar configurações:', error);
-        }
-    },
-
-    save: async () => {
-        const empresa = document.getElementById('config-empresa').value;
-        const cnpj = document.getElementById('config-cnpj').value;
-        const endereco = document.getElementById('config-endereco').value;
-
-        try {
-            // Upsert (insert ou update)
-            const configs = [
-                { config_key: 'empresa', config_value: empresa, description: 'Nome da Empresa' },
-                { config_key: 'cnpj', config_value: cnpj, description: 'CNPJ da Empresa' },
-                { config_key: 'endereco', config_value: endereco, description: 'Endereço da Empresa' }
-            ];
-
-            for (const config of configs) {
-                const { error } = await supabaseClient
-                    .from('configcontrato')
-                    .upsert(config, { onConflict: 'config_key' });
-
-                if (error) throw error;
-            }
-
-            ui.toast('Configurações salvas com sucesso!', 'success');
-
-        } catch (error) {
-            console.error('Erro ao salvar configurações:', error);
-            ui.toast('Erro: ' + error.message, 'error');
-        }
-    }
-};
-
-// ================= DASHBOARD =================
-const dashboard = {
-    update: () => {
-        // Total de clientes
-        document.getElementById('stat-clients').textContent = db.clients.length;
-        
-        // Contratos assinados
-        const signed = contractManager.history.filter(h => h.status === 'signed').length;
-        document.getElementById('stat-signed').textContent = signed;
-        
-        // Contratos pendentes
-        const pending = contractManager.history.filter(h => h.status === 'pending').length;
-        document.getElementById('stat-pending').textContent = pending;
-        
-        // Templates
-        document.getElementById('stat-templates').textContent = contractManager.templates.length;
-        
-        // Atividade recente
-        const recent = contractManager.history.slice(0, 5);
-        const activityDiv = document.getElementById('recent-activity');
-        
-        if (recent.length === 0) {
-            activityDiv.innerHTML = '<p style="text-align:center; color:#64748b; padding:20px;">Nenhuma atividade recente</p>';
-        } else {
-            activityDiv.innerHTML = recent.map(h => {
-                let icon = 'fa-file';
-                let color = '#3b82f6';
-                if (h.status === 'signed') { icon = 'fa-check-circle'; color = '#10b981'; }
-                else if (h.status === 'pending') { icon = 'fa-clock'; color = '#f59e0b'; }
-                
-                return `
-                    <div style="display:flex; align-items:center; gap:16px; padding:16px; border-bottom:1px solid var(--border);">
-                        <i class="fas ${icon}" style="font-size:1.5rem; color:${color};"></i>
-                        <div style="flex:1;">
-                            <strong>${h.client_name}</strong>
-                            <div style="font-size:0.85rem; color:#64748b;">${new Date(h.created_at).toLocaleString('pt-BR')}</div>
-                        </div>
-                        <span class="badge badge-${h.status === 'signed' ? 'success' : 'warning'}">${h.status === 'signed' ? 'Assinado' : 'Pendente'}</span>
-                    </div>
-                `;
-            }).join('');
-        }
-    }
-};
-
-// ================= UI UTILITIES =================
-const ui = {
-    toast: (message, type = 'info') => {
-        const container = document.getElementById('toast-container');
-        const toast = document.createElement('div');
-        toast.className = 'toast ' + type;
-        
-        let icon = 'fa-info-circle';
-        if (type === 'success') icon = 'fa-check-circle';
-        else if (type === 'error') icon = 'fa-exclamation-circle';
-        
-        toast.innerHTML = `
-            <i class="fas ${icon}"></i>
-            <span>${message}</span>
-        `;
-        
-        container.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
-    }
-};
-
-// ================= SIGNING LINK MANAGER =================
-const signingLinkManager = {
-    generate: async () => {
-        const clientName = document.getElementById('client-name').value;
-        const clientDoc = document.getElementById('client-doc').value;
-        const clientPhone = document.getElementById('client-phone').value;
-        const clientAddress = document.getElementById('client-address').value;
-        const clientCity = document.getElementById('client-city').value;
-        const contractHtml = document.getElementById('contract-editor').innerHTML;
-
-        if (!clientName) {
-            return ui.toast('Preencha o nome do cliente', 'error');
-        }
-
-        try {
-            // Insere no Supabase
-            const { data, error } = await supabaseClient
-                .from('signature_requests')
-                .insert([{
-                    client_name: clientName,
-                    client_document: clientDoc,
-                    client_phone: clientPhone,
-                    client_address: clientAddress,
-                    client_city: clientCity,
-                    contract_html: contractHtml,
-                    status: 'pending',
-                    is_client_record: false,
-                    is_template: false
-                }])
-                .select()
-                .single();
-
-            if (error) throw error;
-
-            const baseUrl = window.location.origin + window.location.pathname;
-            const signUrl = `${baseUrl}?sign=${data.id}`;
-            
-            const whatsappMsg = encodeURIComponent(`Olá ${clientName}! Segue o link para assinatura do contrato: ${signUrl}`);
-            const whatsappUrl = `https://wa.me/55${clientPhone.replace(/\D/g, '')}?text=${whatsappMsg}`;
-            
-            if (confirm('Link gerado! Deseja abrir o WhatsApp para enviar?')) {
-                window.open(whatsappUrl, '_blank');
-            } else {
-                prompt('Link de assinatura:', signUrl);
-            }
-
-            ui.toast('Link gerado com sucesso!', 'success');
-            await contractManager.loadHistory();
-
-        } catch (error) {
-            console.error('Erro ao gerar link:', error);
-            ui.toast('Erro: ' + error.message, 'error');
-        }
-    },
-
-    fetchAll: async () => {
-        await contractManager.loadHistory();
-    }
-};
-
-// ================= SIGNING PAGE =================
-const signingPage = {
-    contractId: null,
-    canvas: null,
-    ctx: null,
-    drawing: false,
-
-    init: async (contractId) => {
-        signingPage.contractId = contractId;
-        document.getElementById('signing-page-overlay').style.display = 'block';
-        document.body.style.overflow = 'hidden';
-
-        try {
-            const { data, error } = await supabaseClient
-                .from('signature_requests')
-                .select('*')
-                .eq('id', contractId)
-                .single();
-
-            if (error) throw error;
-
-            if (!data) {
-                document.getElementById('signing-page-overlay').innerHTML = `
-                    <div style="height:100vh; display:flex; align-items:center; justify-content:center; flex-direction:column;">
-                        <i class="fas fa-exclamation-circle" style="font-size:4rem; color:#ef4444; margin-bottom:20px;"></i>
-                        <h2>Contrato não encontrado.</h2>
-                    </div>
-                `;
-                return;
-            }
-
-            if (data.status === 'signed') {
-                document.getElementById('signing-page-overlay').innerHTML = `
-                    <div style="height:100vh; display:flex; align-items:center; justify-content:center; flex-direction:column;">
-                        <i class="fas fa-check-circle" style="font-size:4rem; color:#10b981; margin-bottom:20px;"></i>
-                        <h2>Este documento já foi assinado.</h2>
-                    </div>
-                `;
-                return;
-            }
-
-            document.getElementById('sp-contract-body').innerHTML = data.contract_html;
-            document.getElementById('sp-subtitle').innerText = `Contrato destinado a: ${data.client_name}`;
-
-        } catch (err) {
-            console.error(err);
-            ui.toast('Erro ao carregar contrato', 'error');
-        }
-
-        // Setup Canvas
-        const canvas = document.getElementById('sp-canvas');
-        signingPage.canvas = canvas;
-        signingPage.ctx = canvas.getContext('2d');
-        signingPage.setupCanvasEvents();
-    },
-
-    setupCanvasEvents: () => {
-        const canvas = signingPage.canvas;
-        const resize = () => {
-            canvas.width = canvas.offsetWidth;
-            canvas.height = 200;
-            signingPage.ctx.lineWidth = 3;
-            signingPage.ctx.lineCap = 'round';
-            signingPage.ctx.strokeStyle = '#000000';
-        };
-        resize();
-        window.addEventListener('resize', resize);
+    addEvents: () => {
+        let isDrawing = false;
+        const c = signingPage.canvas;
+        const ctx = signingPage.ctx;
 
         const getPos = (e) => {
-            const r = canvas.getBoundingClientRect();
-            return { 
-                x: (e.clientX || e.touches[0].clientX) - r.left, 
-                y: (e.clientY || e.touches[0].clientY) - r.top 
-            };
+            const rect = c.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
         };
 
-        const start = (e) => {
-            if(e.type === 'touchstart') e.preventDefault();
-            signingPage.drawing = true;
-            const p = getPos(e);
-            signingPage.ctx.beginPath();
-            signingPage.ctx.moveTo(p.x, p.y);
-        };
-        
-        const move = (e) => {
-            if(e.type === 'touchmove') e.preventDefault();
-            if (!signingPage.drawing) return;
-            const p = getPos(e);
-            signingPage.ctx.lineTo(p.x, p.y);
-            signingPage.ctx.stroke();
-        };
+        const start = (e) => { isDrawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); };
+        const move = (e) => { if(!isDrawing) return; e.preventDefault(); const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
+        const end = () => { isDrawing = false; };
 
-        const end = () => { signingPage.drawing = false; };
-
-        canvas.addEventListener('mousedown', start);
-        canvas.addEventListener('mousemove', move);
-        canvas.addEventListener('mouseup', end);
-        canvas.addEventListener('touchstart', start, {passive: false});
-        canvas.addEventListener('touchmove', move, {passive: false});
-        canvas.addEventListener('touchend', end);
+        c.addEventListener('mousedown', start); c.addEventListener('touchstart', start);
+        c.addEventListener('mousemove', move); c.addEventListener('touchmove', move);
+        c.addEventListener('mouseup', end); c.addEventListener('touchend', end);
     },
 
     clear: () => {
-        if (!signingPage.canvas) return;
-        signingPage.ctx.clearRect(0, 0, signingPage.canvas.width, signingPage.canvas.height);
+        signingPage.ctx.clearRect(0,0, signingPage.canvas.width, signingPage.canvas.height);
     },
 
     submit: async () => {
-        // Verifica se canvas está vazio
-        const blank = document.createElement('canvas');
-        blank.width = signingPage.canvas.width; 
-        blank.height = signingPage.canvas.height;
-        if (signingPage.canvas.toDataURL() === blank.toDataURL()) {
-            return alert('Por favor, assine no campo indicado.');
-        }
+        const signData = signingPage.canvas.toDataURL();
+        // Verificar se está vazio (lógica simples)
+        if(signData.length < 1000) return alert('Por favor, assine antes de confirmar.');
 
-        const signatureData = signingPage.canvas.toDataURL('image/png');
+        const { error } = await supabaseClient.from('signature_requests').update({
+            status: 'signed',
+            signature_data: signData,
+            signed_at: new Date().toISOString(),
+            ip_address: 'CLIENT_IP' // Supabase não pega IP no client-side direto, precisa de Edge Function, mas deixamos placeholder
+        }).eq('id', signingPage.id);
 
-        try {
-            const { error } = await supabaseClient
-                .from('signature_requests')
-                .update({
-                    status: 'signed',
-                    signature_data: signatureData,
-                    signed_at: new Date().toISOString()
-                })
-                .eq('id', signingPage.contractId);
-
-            if (error) throw error;
-
-            document.getElementById('signing-page-overlay').innerHTML = `
-                <div style="height:100vh; display:flex; align-items:center; justify-content:center; flex-direction:column; background:#f0fdf4;">
-                    <div style="width:80px; height:80px; background:#dcfce7; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:20px;">
-                        <i class="fas fa-check" style="font-size:2.5rem; color:#16a34a;"></i>
-                    </div>
-                    <h2 style="color:#166534; margin-bottom:10px;">Assinado com Sucesso!</h2>
-                    <p style="color:#15803d;">Obrigado. O documento foi registrado.</p>
-                </div>
-            `;
-
-        } catch (error) {
-            alert('Erro ao salvar assinatura: ' + error.message);
-        }
-    }
-};
-
-// ================= BACKUP SYSTEM =================
-const backupSystem = {
-    export: async () => {
-        try {
-            const { data: clients } = await supabaseClient
-                .from('signature_requests')
-                .select('*')
-                .eq('is_client_record', true);
-
-            const { data: contracts } = await supabaseClient
-                .from('signature_requests')
-                .select('*')
-                .eq('is_client_record', false)
-                .eq('is_template', false);
-
-            const { data: templates } = await supabaseClient
-                .from('signature_requests')
-                .select('*')
-                .eq('is_template', true);
-
-            const backup = {
-                version: '2.0',
-                date: new Date().toISOString(),
-                data: {
-                    clients: clients || [],
-                    contracts: contracts || [],
-                    templates: templates || []
-                }
-            };
-
-            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `backup-crm-${Date.now()}.json`;
-            a.click();
-            
-            ui.toast('Backup exportado com sucesso!', 'success');
-
-        } catch (error) {
-            console.error('Erro ao exportar backup:', error);
-            ui.toast('Erro ao exportar: ' + error.message, 'error');
-        }
+        if(error) alert('Erro ao salvar: ' + error.message);
+        else location.reload(); // Recarrega para mostrar estado de sucesso
     },
 
-    handleFile: (input) => {
-        const file = input.files[0];
-        if(!file) return;
-        
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            try {
-                const json = JSON.parse(e.target.result);
-                
-                if (json.data?.clients && json.data.clients.length > 0) {
-                    ui.toast(`Importando ${json.data.clients.length} registros...`, 'info');
-                    
-                    // Importa clientes
-                    for (const client of json.data.clients) {
-                        await supabaseClient
-                            .from('signature_requests')
-                            .upsert(client);
-                    }
-                    
-                    ui.toast('Backup importado com sucesso!', 'success');
-                    await clientManager.loadFromSupabase();
-                    await contractManager.loadHistory();
-                    await contractManager.loadTemplates();
-                }
-            } catch(err) { 
-                ui.toast('Arquivo de backup inválido.', 'error');
-            }
+    downloadPDF: () => {
+        const element = document.getElementById('document-to-print');
+        const opt = {
+            margin: 10,
+            filename: 'contrato_assinado.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
-        reader.readAsText(file);
+        html2pdf().set(opt).from(element).save();
     }
 };
 
-// ================= INITIALIZATION =================
+// Inicializa
 authManager.init();
-
-// Checagem de URL para modo de assinatura
-(function checkSigningMode() {
-    const params = new URLSearchParams(window.location.search);
-    const signId = params.get('sign');
-    if (signId) {
-        const waiter = setInterval(() => {
-            if (window.supabaseClient) {
-                clearInterval(waiter);
-                signingPage.init(signId);
-            }
-        }, 100);
-    }
-})();
-
-// Carrega configurações ao entrar na view de config
-setTimeout(() => {
-    const configNavBtn = document.querySelector('.nav-btn[onclick="app.nav(\'config\')"]');
-    if (configNavBtn) {
-        configNavBtn.addEventListener('click', configManager.load);
-    }
-}, 1000);
 
 </script>
 </body>
