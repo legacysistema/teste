@@ -192,1264 +192,2072 @@
 
         /* SIDEBAR */
         aside {
-            width: 280px; background: #1e293b; color: white;
-            display: flex; flex-direction: column; border-right: 1px solid #334155;
-            z-index: 20; transition: all 0.3s;
+            width: 270px; background-color: var(--bg-panel); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; flex-shrink: 0;
         }
-        .brand {
-            padding: 25px; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.5px;
-            border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.1);
+        .sidebar-brand {
+            padding: 25px 22px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 12px;
         }
-        .nav-menu { padding: 20px 0; flex: 1; }
-        .nav-btn {
-            width: 100%; padding: 15px 25px; background: transparent; border: none;
-            color: #94a3b8; text-align: left; cursor: pointer; font-size: 0.95rem; font-weight: 500;
-            display: flex; align-items: center; gap: 15px; transition: all 0.2s; border-left: 3px solid transparent;
+        .brand-icon { font-size: 1.55rem; color: var(--primary); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: #dbeafe; border-radius: 6px; }
+        .brand-label { font-size: 1.2rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; }
+        .sidebar-nav { padding: 18px 10px; overflow-y: auto; flex: 1; }
+        .nav-item {
+            padding: 13px 16px; margin-bottom: 4px; border-radius: 9px;
+            cursor: pointer; display: flex; align-items: center; gap: 12px;
+            color: var(--text-muted); font-size: 0.95rem; font-weight: 600;
+            transition: all 0.18s ease;
+            position: relative;
         }
-        .nav-btn:hover { color: white; background: rgba(255,255,255,0.05); }
-        .nav-btn.active { color: white; background: rgba(255,255,255,0.05); border-left-color: var(--primary); }
-        .nav-btn i { width: 20px; text-align: center; }
-        .sidebar-footer { padding: 20px; border-top: 1px solid #334155; }
-        .user-profile-mini {
-            display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding: 10px;
-            background: rgba(255,255,255,0.05); border-radius: 6px;
+        .nav-item:hover { background-color: #f8fafc; color: var(--text-main); }
+        .nav-item.active { background-color: #dbeafe; color: var(--primary); font-weight: 700; }
+        .nav-item i { width: 20px; }
+        .sidebar-footer {
+            padding: 18px 20px; border-top: 1px solid var(--border);
+            font-size: 0.8rem; color: var(--text-muted); display: flex;
+            align-items: center; justify-content: space-between;
         }
 
-        /* MAIN & COMPONENTS */
-        main { flex: 1; padding: 30px; overflow-y: auto; position: relative; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .page-title h1 { font-size: 1.6rem; font-weight: 700; color: #1e293b; }
-        .page-title p { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
+        /* 🔴 BADGE VERMELHO NO MENU VISÃO GERAL */
+        .nav-item-badge {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #ef4444;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 12px;
+            min-width: 20px;
+            text-align: center;
+            display: none;
+        }
+        .nav-item-badge.show {
+            display: block;
+            animation: badgePulse 2s infinite;
+        }
+        @keyframes badgePulse {
+            0%, 100% { transform: translateY(-50%) scale(1); }
+            50% { transform: translateY(-50%) scale(1.1); }
+        }
 
-        .card { background: var(--bg-panel); border-radius: var(--radius); box-shadow: var(--shadow-sm); border: 1px solid var(--border); padding: 25px; margin-bottom: 20px; }
-        .btn { padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: 500; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
-        .btn-primary { background: var(--primary); color: white; box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2); }
-        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
-        .btn-outline { background: white; border: 1px solid #cbd5e1; color: #475569; }
-        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
-        .btn-danger { background: #fee2e2; color: #ef4444; }
-        .btn-success { background: #dcfce7; color: #166534; } 
-        .btn-icon { padding: 8px; border-radius: 4px; }
-        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
-        
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 6px; font-size: 0.85rem; font-weight: 600; color: #475569; }
-        .form-control { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; outline: none; background: #f8fafc; }
-        .form-control:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        /* MAIN AREA */
+        main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .topbar {
+            height: 68px; background-color: var(--bg-panel); border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 30px;
+        }
+        .topbar-title { font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
+        .topbar-actions { display: flex; gap: 12px; }
+        .btn-top-action {
+            padding: 10px 18px; background-color: var(--primary); color: white;
+            border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+            border: none; transition: all 0.2s;
+        }
+        .btn-top-action:hover { background-color: var(--primary-dark); transform: translateY(-1px); }
+        .btn-logout { background: #f1f5f9; color: #64748b; }
+        .btn-logout:hover { background: #e2e8f0; color: #334155; transform: none; }
 
-        .table-container { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: white; min-height: 300px; }
+        .content { flex: 1; padding: 30px; overflow-y: auto; }
+        .view { display: none; }
+        .view.active { display: block; }
+
+        /* DASHBOARD */
+        .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 35px; }
+        .stat-card {
+            background: var(--bg-panel); border-radius: var(--radius); padding: 24px;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--border);
+        }
+        .stat-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; }
+        .stat-value { font-size: 2.2rem; font-weight: 800; color: var(--text-main); }
+        .stat-icon { float: right; font-size: 2rem; opacity: 0.25; }
+
+        .panel { background: var(--bg-panel); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
+        .panel-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 22px; color: var(--text-main); }
+
         table { width: 100%; border-collapse: collapse; }
-        th { background: #f8fafc; padding: 12px 20px; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 700; border-bottom: 1px solid var(--border); }
-        td { padding: 14px 20px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; color: #334155; vertical-align: middle; }
-        
-        /* Contrato & Editor */
-        .contract-wrapper { background: #e2e8f0; padding: 40px; border-radius: var(--radius); display: flex; justify-content: center; overflow-y: auto; max-height: 800px; }
-        .paper { width: 210mm; min-height: 297mm; background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.15); padding: 25mm 20mm; position: relative; color: #000; font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; white-space: pre-wrap; }
-        .paper-header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #000; }
-        
-        /* Tabs e Modais */
-        .tab-view { display: none; animation: fadeEffect 0.3s; }
-        .tab-view.active { display: block; }
-        @keyframes fadeEffect { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
-        .modal-content { background: white; width: 500px; border-radius: 12px; padding: 30px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); animation: slideUp 0.3s ease; }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        thead { background-color: #f8fafc; }
+        th {
+            padding: 14px 18px; text-align: left; font-size: 0.85rem;
+            font-weight: 700; color: var(--text-muted); text-transform: uppercase;
+            letter-spacing: 0.5px; border-bottom: 2px solid var(--border);
+        }
+        td {
+            padding: 16px 18px; border-bottom: 1px solid var(--border);
+            color: var(--text-main); font-size: 0.93rem;
+        }
+        tr:hover { background-color: #fafbfc; }
+        .badge {
+            display: inline-block; padding: 5px 12px; border-radius: 16px;
+            font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+        }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-active { background: #d1fae5; color: #065f46; }
+        .badge-signed { background: #dcfce7; color: #166534; }
 
-        @media print { body * { visibility: hidden; } .paper, .paper * { visibility: visible; } .paper { position: absolute; top: 0; left: 0; margin: 0; box-shadow: none; width: 100%; padding: 20mm; } .contract-wrapper { background: white; padding: 0; overflow: visible; } }
-        
-        /* Estilos Assinatura Digital */
-        .signature-box { margin-top: 40px; padding-top: 20px; border-top: 1px dashed #000; text-align: center; }
-        .signature-canvas { border: 1px solid #000; width: 100%; height: 160px; cursor: crosshair; }
-        .signature-actions { margin-top: 10px; display: flex; justify-content: center; gap: 10px; }
-        .signature-preview img { margin-top: 10px; max-width: 300px; }
-        .btn-whatsapp-sign { background: linear-gradient(135deg, #25d366, #128c7e); color: white; border: none; }
-        .btn-whatsapp-sign:hover { opacity: 0.9; transform: translateY(-1px); }
+        /* 🟢 BADGE VERDE ASSINADO NA TABELA */
+        .signed-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #dcfce7;
+            color: #166534;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .action-btn {
+            background: none; border: none; color: var(--primary);
+            font-size: 0.95rem; cursor: pointer; margin-right: 12px;
+            transition: color 0.2s;
+        }
+        .action-btn:hover { color: var(--primary-dark); }
+        .action-btn.delete { color: var(--danger); }
+
+        /* FORMS */
+        .form-group { margin-bottom: 22px; }
+        .form-group label {
+            display: block; font-size: 0.9rem; font-weight: 600;
+            color: var(--text-main); margin-bottom: 8px;
+        }
+        .form-control {
+            width: 100%; padding: 13px 16px; border: 1px solid var(--border);
+            border-radius: 8px; font-size: 0.95rem; color: var(--text-main);
+            background-color: #fafbfc; transition: all 0.2s; font-family: 'Inter', sans-serif;
+        }
+        .form-control:focus {
+            outline: none; border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            background-color: white;
+        }
+        textarea.form-control { min-height: 120px; resize: vertical; }
+        .btn {
+            padding: 13px 24px; border: none; border-radius: 8px;
+            font-size: 0.95rem; font-weight: 600; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: var(--primary-dark); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .btn-secondary { background-color: #e2e8f0; color: #475569; }
+        .btn-secondary:hover { background-color: #cbd5e1; }
+
+        /* MODAL DE LINK ASSINATURA */
+        #sign-link-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 5000;
+        }
+        .sign-link-content {
+            background: white;
+            border-radius: 14px;
+            width: 90%;
+            max-width: 520px;
+            padding: 35px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .sign-link-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        .sign-link-icon {
+            width: 48px; height: 48px;
+            background: #dcfce7;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #16a34a;
+            font-size: 1.3rem;
+        }
+        .sign-link-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+        .sign-link-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .sign-link-input-group input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: #f8fafc;
+        }
+        .btn-copy-link {
+            padding: 12px 20px;
+            background: #e2e8f0;
+            color: #475569;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-copy-link:hover { background: #cbd5e1; }
+        .btn-whatsapp-modal {
+            width: 100%;
+            padding: 14px;
+            background: #25D366;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-whatsapp-modal:hover { background: #20b858; }
+        .btn-close-modal {
+            width: 100%;
+            padding: 12px;
+            background: #f1f5f9;
+            color: #64748b;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-whatsapp-sign {
+            background: #25D366 !important;
+            color: white !important;
+        }
+        .btn-whatsapp-sign:hover {
+            background: #20b858 !important;
+        }
+
+        /* PÁGINA DE ASSINATURA (CLIENT) */
+        #signing-page-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #f1f5f9;
+            z-index: 9000;
+            display: none;
+            overflow-y: auto;
+            padding: 30px 20px;
+        }
+        .signing-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .signing-header {
+            background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+            color: white;
+            padding: 35px 40px;
+            text-align: center;
+        }
+        .signing-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        .signing-subtitle {
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+        .signing-body {
+            padding: 40px;
+        }
+        #sp-contract-body {
+            line-height: 1.8;
+            color: #334155;
+            font-size: 0.95rem;
+            margin-bottom: 35px;
+            padding: 25px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .signature-area {
+            border-top: 2px dashed #cbd5e1;
+            padding-top: 30px;
+        }
+        .signature-label {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 15px;
+        }
+        #sp-canvas {
+            width: 100%;
+            height: 160px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            background: white;
+            cursor: crosshair;
+            margin-bottom: 15px;
+        }
+        .signature-actions {
+            display: flex;
+            gap: 12px;
+        }
+        .btn-clear-sig {
+            flex: 1;
+            padding: 12px;
+            background: #f1f5f9;
+            color: #64748b;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-submit-sig {
+            flex: 2;
+            padding: 12px;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .btn-submit-sig:hover { background: #059669; }
+
+        /* 🔔 TOAST DE NOTIFICAÇÃO */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+        }
+        .toast {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            padding: 16px 20px;
+            min-width: 320px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-left: 4px solid #10b981;
+            opacity: 0;
+            transform: translateX(400px);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            pointer-events: auto;
+            cursor: pointer;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .toast-icon {
+            width: 42px;
+            height: 42px;
+            background: #dcfce7;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #16a34a;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        .toast-content {
+            flex: 1;
+        }
+        .toast-title {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 0.95rem;
+            margin-bottom: 3px;
+        }
+        .toast-message {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+        .toast-close {
+            width: 24px;
+            height: 24px;
+            background: #f1f5f9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.7rem;
+            color: #64748b;
+            flex-shrink: 0;
+        }
+        .toast-close:hover {
+            background: #e2e8f0;
+        }
+
+        /* 📋 MODAL DE CONFIRMAÇÃO DE ASSINATURA */
+        #signature-confirmation-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 8000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        #signature-confirmation-modal.show {
+            display: flex;
+            opacity: 1;
+        }
+        .confirmation-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            padding: 0;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+        #signature-confirmation-modal.show .confirmation-content {
+            transform: scale(1);
+        }
+        .confirmation-header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 16px 16px 0 0;
+        }
+        .confirmation-success-icon {
+            width: 70px;
+            height: 70px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 2rem;
+        }
+        .confirmation-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        .confirmation-subtitle {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+        .confirmation-body {
+            padding: 35px;
+        }
+        .confirmation-info {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .confirmation-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .confirmation-info-row:last-child {
+            border-bottom: none;
+        }
+        .confirmation-info-label {
+            font-weight: 600;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+        .confirmation-info-value {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 0.95rem;
+        }
+        .confirmation-signature-preview {
+            margin-bottom: 25px;
+        }
+        .confirmation-signature-label {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+        }
+        .confirmation-signature-img {
+            width: 100%;
+            max-height: 150px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            padding: 10px;
+        }
+        .confirmation-actions {
+            display: flex;
+            gap: 12px;
+        }
+        .btn-view-dashboard {
+            flex: 1;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-view-dashboard:hover {
+            background: var(--primary-dark);
+        }
+        .btn-close-confirmation {
+            flex: 1;
+            padding: 14px;
+            background: #f1f5f9;
+            color: #64748b;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* 📄 VISUALIZADOR DE DOCUMENTO ASSINADO */
+        #signed-document-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 7000;
+            padding: 20px;
+        }
+        .document-viewer-container {
+            background: white;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .document-viewer-header {
+            background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 12px 12px 0 0;
+        }
+        .document-viewer-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        .document-viewer-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-download-doc {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-download-doc:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .btn-close-viewer {
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-close-viewer:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .document-viewer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+            background: #f8fafc;
+        }
+        .document-content {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            line-height: 1.8;
+            color: #334155;
+        }
+        .document-signature-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #e2e8f0;
+        }
+        .document-signature-title {
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        .document-signature-display {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .signature-image {
+            max-width: 300px;
+            max-height: 120px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            background: white;
+        }
+        .signature-metadata {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+        .signature-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .signature-meta-icon {
+            color: #10b981;
+        }
     </style>
 </head>
 <body class="not-authenticated">
 
-    <div id="login-overlay">
-        <div class="login-card">
-            <div class="login-header">
-                <div class="login-icon"><i class="fas fa-file-signature"></i></div>
-                <h1 class="login-title">Legacy CRM</h1>
-                <p class="login-subtitle">Enterprise Edition 360</p>
-            </div>
-
-            <div id="login-error-msg" class="login-error"></div>
-
-            <div class="login-form-group">
-                <label>Email de Acesso</label>
-                <input type="email" id="login-email" class="login-input" placeholder="seu@email.com">
-            </div>
-
-            <div class="login-form-group">
-                <label>Senha</label>
-                <input type="password" id="login-password" class="login-input" placeholder="••••••••">
-            </div>
-
-            <button id="btn-do-login" class="btn-login-action" onclick="authManager.login()">Entrar no Sistema</button>
-
-            <div class="login-footer-badge">
-                <i class="fas fa-lock" style="margin-right: 5px;"></i> Sistema protegido e criptografado.
-            </div>
-        </div>
-    </div>
-
-    <div id="intro-overlay">
-        <div class="cube-header-wrapper cube-scale-up">
-            <div class="cube-header">
-                <div class="cube-face face-front"><i class="fas fa-chart-line"></i></div>
-                <div class="cube-face face-back"><i class="fas fa-users"></i></div>
-                <div class="cube-face face-right"><i class="fas fa-project-diagram"></i></div>
-                <div class="cube-face face-left"><i class="fas fa-wallet"></i></div>
-                <div class="cube-face face-top"><i class="fas fa-cube"></i></div>
-                <div class="cube-face face-bottom"><i class="fas fa-database"></i></div>
-            </div>
-        </div>
-        <h1 class="intro-title">Legacy Contracts</h1>
-        <p class="intro-subtitle">ENTERPRISE EDITION 360</p>
-        <div class="intro-loader"></div>
-        <p class="intro-text-loading">Autenticado. Carregando Módulos...</p>
-    </div>
-
-    <aside>
-        <div class="brand">
-            <i class="fas fa-file-signature" style="margin-right: 10px; color: #ffffff; font-size: 1.1rem; opacity: 0.9;"></i> Legacy Contract 
+<!-- LOGIN OVERLAY -->
+<div id="login-overlay">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="login-icon">🛡️</div>
+            <div class="login-title">Legacy CRM</div>
+            <div class="login-subtitle">Enterprise Contract Management</div>
         </div>
         
-        <div class="nav-menu">
-            <div style="padding: 0 20px;">
-                <div class="user-profile-mini">
-                    <div style="width: 32px; height: 32px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div style="font-size: 0.85rem;">
-                        <div style="font-weight: 600;" id="user-display-email">Usuário</div>
-                        <div style="font-size: 0.7rem; color: #94a3b8; display: flex; align-items: center; gap: 4px;">
-                            <span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%;"></span> Online
-                        </div>
-                    </div>
-                </div>
+        <div class="login-error" id="login-error">Credenciais inválidas. Tente novamente.</div>
+        
+        <form id="login-form">
+            <div class="login-form-group">
+                <label for="login-email">E-mail</label>
+                <input type="email" id="login-email" class="login-input" placeholder="seu@email.com" required>
             </div>
+            <div class="login-form-group">
+                <label for="login-password">Senha</label>
+                <input type="password" id="login-password" class="login-input" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn-login-action">Entrar no Sistema</button>
+        </form>
 
-            <button class="nav-btn active" onclick="app.nav('dashboard')"><i class="fas fa-chart-pie"></i> Visão Geral</button>
-            <button class="nav-btn" onclick="app.nav('clients')"><i class="fas fa-users"></i> Gestão de Clientes</button>
-            <button class="nav-btn" onclick="app.nav('create')"><i class="fas fa-plus-circle"></i> Novo Contrato</button>
-            <button class="nav-btn" onclick="app.nav('settings')"><i class="fas fa-cog"></i> Configurações & Logo</button>
+        <div class="login-footer-badge">
+            <i class="fas fa-shield-alt"></i> Sistema Protegido · Enterprise Edition
         </div>
-        <div class="sidebar-footer">
-            <button class="btn btn-outline" style="width: 100%; justify-content: center; font-size: 0.8rem; border-color: #475569; color: #cbd5e1; background: transparent; margin-bottom: 10px;" onclick="document.getElementById('backup-input').click()">
-                <i class="fas fa-cloud-upload-alt"></i> Importar Backup CRM
-            </button>
-            <button class="btn btn-danger" style="width: 100%; justify-content: center; font-size: 0.8rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);" onclick="authManager.logout()">
-                <i class="fas fa-sign-out-alt"></i> Sair do Sistema
-            </button>
-            <input type="file" id="backup-input" hidden accept=".json" onchange="backupSystem.handleFile(this)">
+    </div>
+</div>
+
+<!-- INTRO OVERLAY -->
+<div id="intro-overlay">
+    <div class="cube-header-wrapper cube-scale-up">
+        <div class="cube-header">
+            <div class="cube-face face-front"><i class="fas fa-file-contract"></i></div>
+            <div class="cube-face face-back"><i class="fas fa-chart-line"></i></div>
+            <div class="cube-face face-right"><i class="fas fa-users"></i></div>
+            <div class="cube-face face-left"><i class="fas fa-database"></i></div>
+            <div class="cube-face face-top"><i class="fas fa-shield-alt"></i></div>
+            <div class="cube-face face-bottom"><i class="fas fa-cogs"></i></div>
         </div>
-    </aside>
+    </div>
+    <div class="intro-title">Legacy CRM</div>
+    <div class="intro-subtitle">Enterprise Edition</div>
+    <div class="intro-loader"></div>
+</div>
+
+<!-- SIDEBAR -->
+<aside>
+    <div class="sidebar-brand">
+        <div class="brand-icon"><i class="fas fa-shield-alt"></i></div>
+        <div class="brand-label">Legacy CRM</div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-item active" onclick="app.nav('dashboard')">
+            <i class="fas fa-chart-line"></i> Visão Geral
+            <span class="nav-item-badge" id="pending-signatures-badge">0</span>
+        </div>
+        <div class="nav-item" onclick="app.nav('create')">
+            <i class="fas fa-file-contract"></i> Criar Contrato
+        </div>
+        <div class="nav-item" onclick="app.nav('clients')">
+            <i class="fas fa-users"></i> Clientes
+        </div>
+        <div class="nav-item" onclick="app.nav('templates')">
+            <i class="fas fa-file-alt"></i> Modelos
+        </div>
+        <div class="nav-item" onclick="app.nav('backup')">
+            <i class="fas fa-database"></i> Backup
+        </div>
+    </nav>
+    <div class="sidebar-footer">
+        <span><i class="fas fa-user-circle"></i> <span id="user-email-display">Admin</span></span>
+    </div>
+</aside>
+
+<!-- MAIN CONTENT -->
 <main>
-        
-        <section id="view-dashboard" class="tab-view active">
-            <header>
-                <div class="page-title">
-                    <h1>Dashboard</h1>
-                    <p>Histórico de contratos emitidos.</p>
+    <div class="topbar">
+        <div class="topbar-title">Dashboard</div>
+        <div class="topbar-actions">
+            <button class="btn-top-action btn-logout" onclick="auth.logout()">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </button>
+        </div>
+    </div>
+
+    <div class="content">
+        <!-- DASHBOARD -->
+        <div id="view-dashboard" class="view active">
+            <div class="stat-cards">
+                <div class="stat-card">
+                    <div class="stat-label">Total de Contratos</div>
+                    <div class="stat-value" id="stat-total">0</div>
+                    <i class="fas fa-file-contract stat-icon"></i>
                 </div>
-                <button class="btn btn-primary" onclick="app.nav('create')"><i class="fas fa-plus"></i> Emitir Contrato</button>
-            </header>
-            
-            <div class="card">
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Data Emissão</th>
-                                <th>Cliente</th>
-                                <th>Tipo/Doc</th>
-                                <th>Valor (R$)</th>
-                                <th style="text-align: center;">Status (Editável)</th>
-                                <th style="text-align: right;">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="contracts-list">
-                            <tr><td colspan="6" style="text-align:center; padding: 30px; color: #94a3b8;">Nenhum contrato gerado ainda.</td></tr>
-                        </tbody>
-                    </table>
+                <div class="stat-card">
+                    <div class="stat-label">Pendentes</div>
+                    <div class="stat-value" id="stat-pending">0</div>
+                    <i class="fas fa-hourglass-half stat-icon"></i>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Assinados</div>
+                    <div class="stat-value" id="stat-signed">0</div>
+                    <i class="fas fa-check-circle stat-icon"></i>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Ativos</div>
+                    <div class="stat-value" id="stat-active">0</div>
+                    <i class="fas fa-bolt stat-icon"></i>
                 </div>
             </div>
-        </section>
 
-        <section id="view-clients" class="tab-view">
-            <header>
-                <div class="page-title">
-                    <h1>Base de Clientes</h1>
-                    <p>Gerencie os dados cadastrais para seus contratos.</p>
-                </div>
-                <button class="btn btn-primary" onclick="clientManager.openModal()"><i class="fas fa-user-plus"></i> Novo Cliente</button>
-            </header>
-
-            <div class="card">
-                <div style="margin-bottom: 20px; display: flex; gap: 10px;">
-                    <input type="text" id="client-search" class="form-control" placeholder="Buscar por nome ou documento..." onkeyup="clientManager.render()">
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nome / Razão Social</th>
-                                <th>CPF / CNPJ</th>
-                                <th>Cidade</th>
-                                <th>Telefone</th>
-                                <th style="text-align: right;">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="clients-list"></tbody>
-                    </table>
-                </div>
+            <div class="panel">
+                <div class="panel-title">Contratos Recentes</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Tipo</th>
+                            <th>Valor</th>
+                            <th>Data</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contracts-tbody">
+                        <tr><td colspan="6" style="text-align:center; padding:40px; color:#94a3b8;">Nenhum contrato cadastrado</td></tr>
+                    </tbody>
+                </table>
             </div>
-        </section>
+        </div>
 
-        <section id="view-create" class="tab-view">
-            <header>
-                <div class="page-title">
-                    <h1>Novo Contrato</h1>
-                    <p>Preencha os dados e visualize em tempo real.</p>
-                </div>
-                <div style="display: flex; gap: 10px;" id="create-actions-wrapper">
-                    <button class="btn btn-outline" onclick="window.print()"><i class="fas fa-print"></i> Imprimir / PDF</button>
-                    <button class="btn btn-success" onclick="contractManager.sendWhatsApp()"><i class="fab fa-whatsapp"></i> Enviar</button>
-                    <button class="btn btn-primary" onclick="contractManager.saveHistory()"><i class="fas fa-save"></i> Salvar</button>
-                </div>
-            </header>
-
-            <div style="display: grid; grid-template-columns: 350px 1fr; gap: 30px;">
-                <div class="card" style="height: fit-content;">
-                    <h3 style="margin-bottom: 20px; font-size: 1rem; color: #1e293b;">Dados do Contrato</h3>
-                    
-                    <div class="form-group" style="background: #f0f9ff; padding: 10px; border-radius: 6px; border: 1px solid #bae6fd;">
-                        <label style="color: #0369a1;">Tipo de Contrato (Modelo)</label>
-                        <select id="contract-type-select" class="form-control" onchange="contractManager.changeTemplate()">
-                            </select>
+        <!-- CRIAR CONTRATO -->
+        <div id="view-create" class="view">
+            <div class="panel">
+                <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <div class="panel-title" style="margin: 0;">Novo Contrato</div>
+                    <div style="display: flex; gap: 10px;">
+                        <!-- Botão será injetado aqui pelo hookSendLinkButton -->
+                    </div>
+                </header>
+                <form id="contract-form">
+                    <div class="form-group">
+                        <label>Cliente</label>
+                        <select id="contract-client" class="form-control" required onchange="contracts.loadClientPhone()">
+                            <option value="">Selecione um cliente</option>
+                        </select>
                     </div>
                     <div class="form-group">
-                        <label>Selecionar Cliente Cadastrado</label>
-                        <select id="contract-client-select" class="form-control" onchange="contractManager.autoFill(this.value)">
-                            <option value="">-- Selecione --</option>
+                        <label>Tipo de Contrato</label>
+                        <input type="text" id="contract-type" class="form-control" placeholder="Ex: Prestação de Serviço, Locação..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>Valor (R$)</label>
+                        <input type="number" id="contract-value" class="form-control" placeholder="0.00" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Data de Início</label>
+                        <input type="date" id="contract-date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Modelo de Contrato</label>
+                        <select id="contract-template" class="form-control" required onchange="contracts.loadTemplate()">
+                            <option value="">Selecione um modelo</option>
                         </select>
-                        <small style="color: var(--primary); cursor: pointer; display: block; margin-top: 5px;" onclick="app.nav('clients')">+ Cadastrar novo cliente</small>
                     </div>
-<div class="form-group"><label>Nome do Cliente</label><input type="text" id="c-name" class="form-control"></div>
-                    <div class="form-group"><label>CPF / CNPJ</label><input type="text" id="c-doc" class="form-control"></div>
-                    <div class="form-group"><label>Endereço Completo</label><input type="text" id="c-address" class="form-control"></div>
-                    <div class="form-group"><label>Telefone</label><input type="text" id="c-phone" class="form-control"></div>
-                    
-                    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-
-                    <div class="form-group"><label>Descrição do Serviço</label><textarea id="c-service" class="form-control" rows="3"></textarea></div>
-                    <div class="form-grid">
-                        <div class="form-group"><label>Valor Total (R$)</label><input type="text" id="c-value" class="form-control"></div>
-                        <div class="form-group"><label>Forma Pagamento</label><input type="text" id="c-payment" class="form-control"></div>
+                    <div class="form-group">
+                        <label>Conteúdo do Contrato</label>
+                        <textarea id="contract-content" class="form-control" rows="12" required placeholder="Digite ou carregue o conteúdo do contrato..."></textarea>
                     </div>
-                    <div class="form-group"><label>Cláusulas Extras</label><textarea id="c-obs" class="form-control" rows="2"></textarea></div>
+                    <div style="display: flex; gap: 12px;">
+                        <button type="button" class="btn btn-secondary" onclick="app.nav('dashboard')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Contrato</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-                    <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="contractManager.updatePreview()">
-                        <i class="fas fa-sync-alt"></i> Atualizar Documento
+        <!-- CLIENTES -->
+        <div id="view-clients" class="view">
+            <div class="panel">
+                <div class="panel-title">Gerenciar Clientes</div>
+                <form id="client-form" style="margin-bottom: 30px;">
+                    <div class="form-group">
+                        <label>Nome Completo</label>
+                        <input type="text" id="client-name" class="form-control" placeholder="Nome do cliente" required>
+                    </div>
+                    <div class="form-group">
+                        <label>CPF / CNPJ</label>
+                        <input type="text" id="client-cpf" class="form-control" placeholder="000.000.000-00">
+                    </div>
+                    <div class="form-group">
+                        <label>E-mail</label>
+                        <input type="email" id="client-email" class="form-control" placeholder="email@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Telefone / WhatsApp</label>
+                        <input type="tel" id="client-phone" class="form-control" placeholder="(00) 00000-0000">
+                    </div>
+                    <div class="form-group">
+                        <label>Endereço</label>
+                        <input type="text" id="client-address" class="form-control" placeholder="Rua, número, bairro, cidade">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Adicionar Cliente</button>
+                </form>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>CPF/CNPJ</th>
+                            <th>Contato</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clients-tbody">
+                        <tr><td colspan="4" style="text-align:center; padding:40px; color:#94a3b8;">Nenhum cliente cadastrado</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MODELOS -->
+        <div id="view-templates" class="view">
+            <div class="panel">
+                <div class="panel-title">Modelos de Contrato</div>
+                <form id="template-form" style="margin-bottom: 30px;">
+                    <div class="form-group">
+                        <label>Nome do Modelo</label>
+                        <input type="text" id="template-name" class="form-control" placeholder="Ex: Contrato de Locação Residencial" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Conteúdo do Modelo</label>
+                        <textarea id="template-content" class="form-control" rows="10" required placeholder="Digite o conteúdo do modelo de contrato..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Salvar Modelo</button>
+                </form>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome do Modelo</th>
+                            <th>Data de Criação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="templates-tbody">
+                        <tr><td colspan="3" style="text-align:center; padding:40px; color:#94a3b8;">Nenhum modelo cadastrado</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- BACKUP -->
+        <div id="view-backup" class="view">
+            <div class="panel">
+                <div class="panel-title">Backup e Exportação</div>
+                <p style="color: #64748b; margin-bottom: 25px;">
+                    Exporte todos os dados do sistema para backup local. Isso inclui contratos, clientes e modelos.
+                </p>
+                <button class="btn btn-primary" onclick="backup.exportAll()">
+                    <i class="fas fa-download"></i> Exportar Todos os Dados
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- MODAL: LINK DE ASSINATURA -->
+<div id="sign-link-modal">
+    <div class="sign-link-content">
+        <div class="sign-link-header">
+            <div class="sign-link-icon">
+                <i class="fas fa-link"></i>
+            </div>
+            <div>
+                <div class="sign-link-title">Link de Assinatura Gerado</div>
+            </div>
+        </div>
+        <div class="sign-link-input-group">
+            <input type="text" id="sign-link-input" readonly>
+            <button class="btn-copy-link" onclick="signingLinkManager.copyLink()">
+                <i class="fas fa-copy"></i>
+            </button>
+        </div>
+        <button class="btn-whatsapp-modal" onclick="signingLinkManager.sendWhatsApp()">
+            <i class="fab fa-whatsapp" style="font-size: 1.3rem;"></i>
+            Enviar via WhatsApp
+        </button>
+        <button class="btn-close-modal" onclick="signingLinkManager.closeModal()">Fechar</button>
+    </div>
+</div>
+
+<!-- OVERLAY: PÁGINA DE ASSINATURA (CLIENTE) -->
+<div id="signing-page-overlay">
+    <div class="signing-container">
+        <div class="signing-header">
+            <div class="signing-title">📋 Assinatura Digital</div>
+            <div class="signing-subtitle" id="sp-subtitle">Leia o contrato abaixo e assine digitalmente</div>
+        </div>
+        <div class="signing-body">
+            <div id="sp-contract-body">Carregando contrato...</div>
+            <div class="signature-area">
+                <div class="signature-label">✍️ Assine no campo abaixo:</div>
+                <canvas id="sp-canvas"></canvas>
+                <div class="signature-actions">
+                    <button class="btn-clear-sig" onclick="signingPage.clear()">
+                        <i class="fas fa-eraser"></i> Limpar
+                    </button>
+                    <button class="btn-submit-sig" onclick="signingPage.submit()">
+                        <i class="fas fa-check"></i> Confirmar Assinatura
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-                <div class="contract-wrapper">
-                    <div id="paper-doc" class="paper" contenteditable="true">
-                        </div>
+<!-- 🔔 CONTAINER DE TOASTS -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- 📋 MODAL DE CONFIRMAÇÃO DE ASSINATURA -->
+<div id="signature-confirmation-modal">
+    <div class="confirmation-content">
+        <div class="confirmation-header">
+            <div class="confirmation-success-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            <div class="confirmation-title">Contrato Assinado!</div>
+            <div class="confirmation-subtitle">A assinatura foi registrada com sucesso</div>
+        </div>
+        <div class="confirmation-body">
+            <div class="confirmation-info">
+                <div class="confirmation-info-row">
+                    <span class="confirmation-info-label">Cliente:</span>
+                    <span class="confirmation-info-value" id="conf-client-name">-</span>
+                </div>
+                <div class="confirmation-info-row">
+                    <span class="confirmation-info-label">Data/Hora:</span>
+                    <span class="confirmation-info-value" id="conf-signed-at">-</span>
                 </div>
             </div>
-        </section>
+            <div class="confirmation-signature-preview">
+                <div class="confirmation-signature-label">Assinatura:</div>
+                <img id="conf-signature-img" class="confirmation-signature-img" src="" alt="Assinatura">
+            </div>
+            <div class="confirmation-actions">
+                <button class="btn-view-dashboard" onclick="signatureNotifications.goToDashboard()">
+                    <i class="fas fa-chart-line"></i> Ver no Dashboard
+                </button>
+                <button class="btn-close-confirmation" onclick="signatureNotifications.closeConfirmationModal()">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
-        <section id="view-settings" class="tab-view">
-            <header>
-                <div class="page-title">
-                    <h1>Configurações</h1>
-                    <p>Identidade visual e modelos de contrato.</p>
-                </div>
-            </header>
-
-            <div class="form-grid" style="grid-template-columns: 1fr 2fr;">
-                <div class="card">
-                    <h3 style="margin-bottom: 20px;">Logotipo da Empresa</h3>
-                    <div class="upload-box" onclick="document.getElementById('logo-upload').click()">
-                        <div id="logo-preview-area">
-                            <i class="fas fa-image"></i>
-                            <p style="font-size: 0.9rem; color: #64748b;">Clique para subir sua logo</p>
-                        </div>
-                        <img id="logo-img-tag" style="max-width: 100%; max-height: 100px; display: none; margin: 0 auto;">
+<!-- 📄 VISUALIZADOR DE DOCUMENTO ASSINADO -->
+<div id="signed-document-viewer">
+    <div class="document-viewer-container">
+        <div class="document-viewer-header">
+            <div class="document-viewer-title">
+                <i class="fas fa-file-contract"></i> Documento Assinado
+            </div>
+            <div class="document-viewer-actions">
+                <button class="btn-download-doc" onclick="documentViewer.download()">
+                    <i class="fas fa-download"></i> Baixar PDF
+                </button>
+                <button class="btn-close-viewer" onclick="documentViewer.close()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div class="document-viewer-body">
+            <div class="document-content">
+                <div id="viewer-contract-content">Carregando documento...</div>
+                <div class="document-signature-section" id="viewer-signature-section" style="display: none;">
+                    <div class="document-signature-title">
+                        <i class="fas fa-pen-fancy"></i> Assinatura Digital
                     </div>
-                    <input type="file" id="logo-upload" hidden accept="image/*" onchange="settingsManager.handleLogo(this)">
-                    
-                    <div class="form-group" style="margin-top: 20px;">
-                        <label>Nome da Empresa (Contratada)</label>
-                        <input type="text" id="company-name" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label>CNPJ da Empresa</label>
-                        <input type="text" id="company-cnpj" class="form-control">
-                    </div>
-                    <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="settingsManager.save()">Salvar Configurações</button>
-                </div>
-
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 style="margin:0;">Gerenciar Modelos Jurídicos</h3>
-                        <button class="btn btn-outline btn-sm" onclick="settingsManager.createNewTemplate()"><i class="fas fa-plus"></i> Novo Modelo</button>
-                    </div>
-
-                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 15px;">
-                        <div class="form-group" style="margin-bottom: 10px;">
-                            <label>Selecione o Modelo para Editar:</label>
-                            <div style="display: flex; gap: 10px;">
-                                <select id="settings-template-select" class="form-control" onchange="settingsManager.loadTemplateToEdit(this.value)"></select>
-                                <button id="btn-fav-toggle" class="btn btn-outline" title="Definir como Favorito/Padrão" onclick="settingsManager.toggleFavorite()">
-                                    <i class="far fa-star"></i>
-                                </button>
-                                <button class="btn btn-danger" title="Excluir Modelo" onclick="settingsManager.deleteTemplate()">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                    <div class="document-signature-display">
+                        <img id="viewer-signature-img" class="signature-image" src="" alt="Assinatura">
+                        <div class="signature-metadata">
+                            <div class="signature-meta-item">
+                                <i class="fas fa-user signature-meta-icon"></i>
+                                <span>Assinado por: <strong id="viewer-client-name">-</strong></span>
+                            </div>
+                            <div class="signature-meta-item">
+                                <i class="fas fa-calendar signature-meta-icon"></i>
+                                <span>Data: <strong id="viewer-signed-date">-</strong></span>
+                            </div>
+                            <div class="signature-meta-item">
+                                <i class="fas fa-clock signature-meta-icon"></i>
+                                <span>Hora: <strong id="viewer-signed-time">-</strong></span>
                             </div>
                         </div>
-                        <div class="form-group">
-                             <label>Nome do Modelo</label>
-                             <input type="text" id="template-name-edit" class="form-control">
-                        </div>
-                    </div>
-                    <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 10px;">
-                        Variáveis: [CLIENTE], [DOC], [ENDERECO], [SERVICO], [VALOR], [PAGAMENTO].
-                    </p>
-                    <textarea id="template-text" class="form-control" style="height: 400px; font-family: monospace; line-height: 1.5;"></textarea>
-                    <div style="text-align: right; margin-top: 15px;">
-                        <button class="btn btn-primary" onclick="settingsManager.saveTemplate()">Salvar Alterações no Modelo</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-    </main>
-    
-    <div id="client-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3>Cadastro de Cliente</h3>
-                <button class="btn-icon" style="border:none; background:transparent; cursor:pointer;" onclick="clientManager.closeModal()"><i class="fas fa-times"></i></button>
-            </div>
-            <form onsubmit="clientManager.save(event)">
-                <input type="hidden" id="modal-id">
-                <div class="form-group"><label>Nome / Razão Social</label><input type="text" id="modal-name" class="form-control" required></div>
-                <div class="form-grid">
-                    <div class="form-group"><label>CPF / CNPJ</label><input type="text" id="modal-doc" class="form-control"></div>
-                    <div class="form-group"><label>Telefone</label><input type="text" id="modal-phone" class="form-control"></div>
-                </div>
-                <div class="form-group"><label>Endereço Completo</label><input type="text" id="modal-address" class="form-control"></div>
-                <div class="form-group"><label>Cidade/UF</label><input type="text" id="modal-city" class="form-control"></div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Salvar Cliente</button>
-            </form>
-        </div>
-    </div>
-    
-    <div id="sign-link-modal" class="modal-overlay">
-        <div class="modal-content" style="max-width:480px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h3 style="margin:0;"><i class="fas fa-link" style="color:#2563eb; margin-right:8px;"></i>Link de Assinatura</h3>
-                <button class="btn-icon" style="border:none; background:transparent; cursor:pointer;" onclick="signingLinkManager.closeModal()"><i class="fas fa-times"></i></button>
-            </div>
-            <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:15px; margin-bottom:18px;">
-                <p style="font-size:0.8rem; color:#0369a1; font-weight:600; margin-bottom:8px;"><i class="fas fa-info-circle"></i> Link único gerado para este contrato:</p>
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <input type="text" id="sign-link-input" class="form-control" readonly style="font-size:0.8rem; background:#fff;">
-                    <button class="btn btn-outline btn-sm" onclick="signingLinkManager.copyLink()" title="Copiar"><i class="fas fa-copy"></i></button>
-                </div>
-            </div>
-            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:12px; margin-bottom:18px;">
-                <p style="font-size:0.8rem; color:#166534;"><i class="fas fa-check-circle"></i> Contrato salvo. O cliente assinará externamente e o status mudará automaticamente.</p>
-            </div>
-            <button class="btn btn-success" style="width:100%; justify-content:center;" onclick="signingLinkManager.sendWhatsApp()">
-                <i class="fab fa-whatsapp"></i> Enviar Link via WhatsApp
-            </button>
-        </div>
-    </div>
-    
-    <div id="signing-page-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#f1f5f9; z-index:99999; overflow-y:auto;">
-        <div style="max-width:800px; margin:0 auto; padding:40px 20px;">
-            <div style="background:white; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.12); padding:40px;">
-                <div style="text-align:center; margin-bottom:30px; padding-bottom:20px; border-bottom:2px solid #e2e8f0;">
-                    <i class="fas fa-file-signature" style="font-size:2.5rem; color:#2563eb; margin-bottom:10px; display:block;"></i>
-                    <h2 style="font-size:1.5rem; font-weight:700; color:#1e293b;">Assinatura de Contrato</h2>
-                    <p id="sp-subtitle" style="color:#64748b; margin-top:6px; font-size:0.9rem;">Leia o contrato abaixo e assine digitalmente.</p>
-                </div>
-                <div id="sp-contract-body" style="background:#fafafa; border:1px solid #e2e8f0; border-radius:8px; padding:30px; font-family:'Times New Roman',serif; font-size:12pt; line-height:1.7; white-space:pre-wrap; margin-bottom:30px; max-height:500px; overflow-y:auto;"></div>
-                <div style="border-top:2px dashed #000; padding-top:24px; text-align:center;">
-                    <p style="font-weight:600; margin-bottom:12px;">Assinatura do Contratante</p>
-                    <canvas id="sp-canvas" style="border:1.5px solid #334155; width:100%; height:160px; cursor:crosshair; border-radius:6px; background:#fff; display: block;"></canvas>
-                    <div style="margin-top:12px; display:flex; justify-content:center; gap:10px;">
-                        <button class="btn btn-outline btn-sm" onclick="signingPage.clear()"><i class="fas fa-eraser"></i> Limpar</button>
-                        <button class="btn btn-primary" onclick="signingPage.submit()"><i class="fas fa-check-circle"></i> Confirmar Assinatura</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
 <script>
-
+/* ================= SUPABASE CONFIG ================= */
 const SUPABASE_URL = 'https://rjyxkouegrropsarrhje.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqeXhrb3VlZ3Jyb3BzYXJyaGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NjYxNjcsImV4cCI6MjA4NTE0MjE2N30.UjNPnVBVhQcUSirXeWZ3RmYmAhDMqqbbVUChG_Mv57U';
 
 window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-       
-const authManager = {
+
+/* ================= AUTH MODULE ================= */
+const auth = {
+    currentUser: null,
+
     init: async () => {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        authManager.updateUI(session);
-        supabaseClient.auth.onAuthStateChange((event, session) => {
-            authManager.updateUI(session);
-        });
-    },
-
-    updateUI: (session) => {
-        const body = document.body;
-        const userDisplay = document.getElementById('user-display-email');
-        if (session) {
-            body.classList.remove('not-authenticated');
-            body.classList.add('authenticated');
-            if(userDisplay) userDisplay.innerText = session.user.email;
-            if (typeof app !== 'undefined' && !app.initialized) {
-                app.init(); 
-                app.initialized = true;
-            }
-        } else {
-            body.classList.remove('authenticated');
-            body.classList.add('not-authenticated');
+        const { data } = await window.supabaseClient.auth.getSession();
+        if (data.session) {
+            auth.currentUser = data.session.user;
+            auth.showApp();
         }
     },
 
-    login: async () => {
-        const email = document.getElementById('login-email').value;
-        const password = document.getElementById('login-password').value;
-        const errorMsg = document.getElementById('login-error-msg');
-        const btn = document.getElementById('btn-do-login');
-
-        if (!email || !password) {
-            errorMsg.innerText = 'Por favor, preencha email e senha.';
-            errorMsg.style.display = 'block';
-            return;
-        }
-
-        btn.innerText = 'Autenticando...';
-        btn.disabled = true;
-        errorMsg.style.display = 'none';
-
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
-
-        btn.innerText = 'Entrar no Sistema';
-        btn.disabled = false;
-
-        if (error) {
-            errorMsg.innerText = 'Erro de acesso: ' + (error.message === 'Invalid login credentials' ? 'Senha ou email incorretos.' : error.message);
-            errorMsg.style.display = 'block';
-        }
+    login: async (email, password) => {
+        const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        auth.currentUser = data.user;
+        auth.showApp();
     },
 
     logout: async () => {
-        if(confirm("Deseja realmente sair do sistema?")) {
-            await supabaseClient.auth.signOut();
-            window.location.reload(); 
-        }
-    }
-};
-
-authManager.init();
-
-const DB_CONFIG = { name: 'lg_crmDB', version: 8 };
-
-const db = {
-    clients: [], contracts: [], templates: [],
-    settings: { name: 'Minha Empresa Ltda', cnpj: '00.000.000/0001-00', logo: null },
-    saveClients: () => idbManager.saveCollection('clientscontrato', db.clients),
-    saveContracts: () => idbManager.saveCollection('contractscontrato', db.contracts),
-    saveTemplates: () => idbManager.saveCollection('templatescontrato', db.templates),
-    saveSettings: () => idbManager.saveSingle('configcontrato', 'settings', db.settings)
-};
-
-const idbManager = {
-    db: null,
-    open: () => {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_CONFIG.name, DB_CONFIG.version);
-            request.onupgradeneeded = (e) => {
-                const database = e.target.result;
-                if (!database.objectStoreNames.contains('clientscontrato')) database.createObjectStore('clientscontrato', { keyPath: 'id' });
-                if (!database.objectStoreNames.contains('contractscontrato')) database.createObjectStore('contractscontrato', { keyPath: 'id' });
-                if (!database.objectStoreNames.contains('templatescontrato')) database.createObjectStore('templatescontrato', { keyPath: 'id' });
-                if (!database.objectStoreNames.contains('configcontrato')) database.createObjectStore('configcontrato', { keyPath: 'key' });
-            };
-            request.onsuccess = (e) => {
-                idbManager.db = e.target.result;
-                resolve(idbManager.db);
-            };
-            request.onerror = (e) => reject('Erro IndexDB');
-        });
+        await window.supabaseClient.auth.signOut();
+        auth.currentUser = null;
+        document.body.classList.remove('authenticated');
+        document.body.classList.add('not-authenticated');
+        location.reload();
     },
-    loadAll: async () => {
-        if (!idbManager.db) await idbManager.open();
-        
-        const loadStore = (storeName) => {
-            return new Promise((resolve) => {
-                const tx = idbManager.db.transaction(storeName, 'readonly');
-                const req = tx.objectStore(storeName).getAll();
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => resolve([]);
-            });
-        };
 
-        db.clients = await loadStore('clientscontrato') || [];
-        db.contracts = await loadStore('contractscontrato') || [];
-        
-        const templates = await loadStore('templatescontrato');
-        if (templates && templates.length > 0) {
-            db.templates = templates;
-        } else {
-            db.templates = [{ id: 1, name: 'Modelo Padrão', content: getDefaultTemplate(), isFavorite: true }];
-            idbManager.saveCollection('templatescontrato', db.templates);
-        }
+    showApp: () => {
+        document.body.classList.remove('not-authenticated');
+        document.body.classList.add('authenticated');
 
-        return new Promise((resolve) => {
-            const tx = idbManager.db.transaction('configcontrato', 'readonly');
-            const req = tx.objectStore('configcontrato').get('settings');
-            req.onsuccess = () => {
-                if (req.result && req.result.data) db.settings = req.result.data;
-                resolve();
-            };
-            req.onerror = () => resolve();
-        });
-    },
-    saveCollection: (storeName, dataArray) => {
-        if (!idbManager.db) return;
-        const tx = idbManager.db.transaction(storeName, 'readwrite');
-        const store = tx.objectStore(storeName);
-        store.clear().onsuccess = () => { dataArray.forEach(item => store.put(item)); };
-    },
-    saveSingle: (storeName, key, data) => {
-        if (!idbManager.db) return;
-        const tx = idbManager.db.transaction(storeName, 'readwrite');
-        tx.objectStore(storeName).put({ key: key, data: data });
-    }
-};
-
-function getDefaultTemplate() {
-    return `CONTRATO DE PRESTAÇÃO DE SERVIÇOS\n\nCONTRATADA:\n[EMPRESA_NOME], CNPJ [EMPRESA_CNPJ].\n\nCONTRATANTE:\n[CLIENTE], CPF/CNPJ [DOC], endereço: [ENDERECO].\n\nOBJETO:\n[SERVICO]\n\nVALOR: R$ [VALOR] ([PAGAMENTO]).\n\nData: ____/____/______\n\n__________________________\nAssinatura`;
-}
-
-
-const app = {
-    initialized: false,
-    init: async () => {
-        try {
-            await idbManager.loadAll();
-            
-            clientManager.render();
-            settingsManager.init();
-            contractManager.renderHistory();
-            settingsManager.renderTemplateList();
-            contractManager.initCreate();
-
-            app.nav('dashboard');
-
-            setTimeout(() => {
-                const intro = document.getElementById('intro-overlay');
-                if(intro) {
-                    intro.style.opacity = '0';
-                    intro.style.visibility = 'hidden';
-                    setTimeout(() => intro.remove(), 1000);
-                }
-            }, 2500);
-
-        } catch (err) { console.error(err); }
-    },
-    nav: (viewId) => {
-        document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
-        document.getElementById(`view-${viewId}`).classList.add('active');
-        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-        const btnIndex = ['dashboard', 'clients', 'create', 'settings'].indexOf(viewId);
-        if(btnIndex >= 0) document.querySelectorAll('.nav-btn')[btnIndex].classList.add('active');
-        if(viewId === 'create') contractManager.initCreate();
-    }
-};
-
-const clientManager = {
-    openModal: (id = null) => {
-        document.getElementById('client-modal').style.display = 'flex';
-        document.getElementById('modal-id').value = id || '';
-        if(id) {
-            const c = db.clients.find(x => x.id == id);
-            if(c) {
-                document.getElementById('modal-name').value = c.name;
-                document.getElementById('modal-doc').value = c.doc;
-                document.getElementById('modal-phone').value = c.phone;
-                document.getElementById('modal-address').value = c.address;
-                document.getElementById('modal-city').value = c.city;
+        // Mostra intro por 2.5s
+        setTimeout(() => {
+            const intro = document.getElementById('intro-overlay');
+            if (intro) {
+                intro.style.opacity = '0';
+                intro.style.visibility = 'hidden';
             }
-        } else { document.querySelector('#client-modal form').reset(); }
-    },
-    closeModal: () => document.getElementById('client-modal').style.display = 'none',
-    save: (e) => {
-        e.preventDefault();
-        const id = document.getElementById('modal-id').value;
-        const client = {
-            id: id ? parseInt(id) : Date.now(),
-            name: document.getElementById('modal-name').value,
-            doc: document.getElementById('modal-doc').value,
-            phone: document.getElementById('modal-phone').value,
-            address: document.getElementById('modal-address').value,
-            city: document.getElementById('modal-city').value
-        };
-        if(id) {
-            const idx = db.clients.findIndex(x => x.id == id);
-            if(idx >= 0) db.clients[idx] = client;
-        } else { db.clients.push(client); }
-        
-        db.saveClients();
-        clientManager.closeModal();
-        clientManager.render();
-    },
-    delete: (id) => {
-        if(confirm('Excluir cliente?')) {
-            db.clients = db.clients.filter(c => c.id != id);
-            db.saveClients();
-            clientManager.render();
-        }
-    },
-    render: () => {
-        const term = document.getElementById('client-search').value.toLowerCase();
-        const tbody = document.getElementById('clients-list');
-        tbody.innerHTML = '';
-        const filtered = db.clients.filter(c => c.name.toLowerCase().includes(term) || (c.doc && c.doc.includes(term)));
-        
-        if(filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Nenhum cliente.</td></tr>'; return; }
+        }, 2500);
 
-        filtered.forEach(c => {
-            tbody.innerHTML += `<tr><td><strong>${c.name}</strong></td><td>${c.doc||'-'}</td><td>${c.city||'-'}</td><td>${c.phone||'-'}</td>
-            <td style="text-align:right;"><button class="btn btn-outline" onclick="clientManager.openModal(${c.id})"><i class="fas fa-edit"></i></button>
-            <button class="btn btn-danger" onclick="clientManager.delete(${c.id})"><i class="fas fa-trash"></i></button></td></tr>`;
-        });
+        document.getElementById('user-email-display').innerText = auth.currentUser.email;
+        app.init();
     }
 };
 
-const contractManager = {
-    currentTemplateContent: '',
-    initCreate: () => {
-        const selClient = document.getElementById('contract-client-select');
-        const currentVal = selClient.value;
-        selClient.innerHTML = '<option value="">-- Selecione o Cliente --</option>';
-        db.clients.sort((a,b)=>a.name.localeCompare(b.name)).forEach(c => {
-            selClient.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-        });
-        selClient.value = currentVal;
-
-        const selType = document.getElementById('contract-type-select');
-        selType.innerHTML = ''; 
-        
-        let favId = '';
-        db.templates.forEach(t => {
-            selType.innerHTML += `<option value="${t.id}">${t.name}${t.isFavorite?' (Padrão)':''}</option>`;
-            if(t.isFavorite) favId = t.id;
-        });
-        
-        if(favId) selType.value = favId;
-        else if(db.templates.length > 0) selType.value = db.templates[0].id;
-        
-        contractManager.changeTemplate();
-    },
-    changeTemplate: () => {
-        const id = document.getElementById('contract-type-select').value;
-        const tmpl = db.templates.find(t => t.id == id);
-        if(tmpl) { contractManager.currentTemplateContent = tmpl.content; contractManager.updatePreview(); }
-    },
-    autoFill: (id) => {
-        const c = db.clients.find(x => x.id == id);
-        if(c) {
-            document.getElementById('c-name').value = c.name;
-            document.getElementById('c-doc').value = c.doc || '';
-            document.getElementById('c-address').value = c.address ? `${c.address} - ${c.city||''}` : '';
-            document.getElementById('c-phone').value = c.phone || '';
-        }
-        contractManager.updatePreview();
-    },
-    updatePreview: () => {
-        let html = contractManager.currentTemplateContent || getDefaultTemplate();
-        let headerHTML = db.settings.logo ? `<div class="paper-header"><img src="${db.settings.logo}" class="paper-logo" style="display:block; margin:0 auto;"></div>` : '';
-
-        const map = {
-            '[EMPRESA_NOME]': db.settings.name, '[EMPRESA_CNPJ]': db.settings.cnpj,
-            '[CLIENTE]': document.getElementById('c-name').value || '_____',
-            '[DOC]': document.getElementById('c-doc').value || '_____',
-            '[ENDERECO]': document.getElementById('c-address').value || '_____',
-            '[SERVICO]': document.getElementById('c-service').value || '_____',
-            '[VALOR]': document.getElementById('c-value').value || '0,00',
-            '[PAGAMENTO]': document.getElementById('c-payment').value || '_____',
-            '[OBSERVACOES]': document.getElementById('c-obs').value || ''
-        };
-        for(let [key, val] of Object.entries(map)) { html = html.split(key).join(val); }
-        document.getElementById('paper-doc').innerHTML = headerHTML + html;
-        
-        // Re-inject signature canvas logic if needed (handled by signatureManager hook)
-        if(typeof signatureManager !== 'undefined' && signatureManager.init) signatureManager.init();
-    },
-    saveHistory: () => {
-        const name = document.getElementById('c-name').value;
-        if(!name) return alert('Informe o cliente.');
-        const tmpl = db.templates.find(t => t.id == document.getElementById('contract-type-select').value);
-        
-        // Novo ID gerado agora para uso futuro no link
-        const newId = Date.now();
-        
-        db.contracts.push({
-            id: newId, 
-            date: new Date().toISOString(), 
-            client: name,
-            doc: tmpl ? tmpl.name : 'Contrato', 
-            val: document.getElementById('c-value').value, 
-            status: 'Emitido',
-            content: document.getElementById('paper-doc').innerHTML
-        });
-        db.saveContracts();
-        contractManager.renderHistory();
-        alert('Contrato salvo!');
-        app.nav('dashboard');
-        return newId; // Retorna o ID para o gerador de link usar
-    },
-    updateStatus: (id, el) => {
-        const idx = db.contracts.findIndex(c => c.id == id);
-        if(idx >= 0) {
-            db.contracts[idx].status = el.value;
-            db.saveContracts();
-            // Cor visual
-            const map = {'Emitido':['#dcfce7','#166534'], 'Pendente':['#fef3c7','#92400e'], 'Assinado':['#dbeafe','#1e40af'], 'Cancelado':['#f1f5f9','#475569']};
-            const s = map[el.value] || map['Cancelado'];
-            el.style.backgroundColor = s[0]; el.style.color = s[1];
-        }
-    },
-    renderHistory: () => {
-        const tbody = document.getElementById('contracts-list');
-        tbody.innerHTML = '';
-        if(db.contracts.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px;">Vazio.</td></tr>'; return; }
-        const map = {'Emitido':['#dcfce7','#166534'], 'Pendente':['#fef3c7','#92400e'], 'Assinado':['#dbeafe','#1e40af'], 'Cancelado':['#f1f5f9','#475569']};
-        
-        [...db.contracts].reverse().forEach(c => {
-            const st = map[c.status] || map['Cancelado'];
-            tbody.innerHTML += `<tr>
-                <td>${new Date(c.date).toLocaleDateString()}</td><td><strong>${c.client}</strong></td><td>${c.doc}</td><td>R$ ${c.val}</td>
-                <td style="text-align:center;"><select class="status-select" style="background:${st[0]}; color:${st[1]}; border-radius:4px; border:1px solid rgba(0,0,0,0.1); padding:4px;" onchange="contractManager.updateStatus(${c.id}, this)">
-                    <option value="Emitido" ${c.status=='Emitido'?'selected':''}>Emitido</option>
-                    <option value="Pendente" ${c.status=='Pendente'?'selected':''}>Pendente (Link)</option>
-                    <option value="Assinado" ${c.status=='Assinado'?'selected':''}>Assinado</option>
-                    <option value="Cancelado" ${c.status=='Cancelado'?'selected':''}>Cancelado</option>
-                </select></td>
-                <td style="text-align:right;"><button class="btn btn-outline btn-sm" onclick="contractManager.delete(${c.id})"><i class="fas fa-trash"></i></button></td>
-            </tr>`;
-        });
-    },
-    delete: (id) => { if(confirm('Excluir contrato?')) { db.contracts = db.contracts.filter(c => c.id != id); db.saveContracts(); contractManager.renderHistory(); } },
-    sendWhatsApp: () => {
-        const phone = document.getElementById('c-phone').value.replace(/\D/g, '');
-        if(!phone) return alert('Sem telefone.');
-        window.open(`https://wa.me/55${phone}?text=${encodeURIComponent("Segue o contrato.")}`);
-    }
-};
-const settingsManager = {
-    currentEditId: null,
-    init: () => {
-        document.getElementById('company-name').value = db.settings.name;
-        document.getElementById('company-cnpj').value = db.settings.cnpj;
-        if(db.settings.logo) {
-            document.getElementById('logo-preview-area').style.display = 'none';
-            document.getElementById('logo-img-tag').src = db.settings.logo;
-            document.getElementById('logo-img-tag').style.display = 'block';
-        }
-    },
-    renderTemplateList: () => {
-        const sel = document.getElementById('settings-template-select');
-        sel.innerHTML = '';
-        let target = settingsManager.currentEditId || (db.templates.find(t=>t.isFavorite)||db.templates[0])?.id;
-        db.templates.forEach(t => { sel.innerHTML += `<option value="${t.id}" ${t.id==target?'selected':''}>${t.isFavorite?'★ ':''}${t.name}</option>`; });
-        if(target) settingsManager.loadTemplateToEdit(target);
-    },
-    loadTemplateToEdit: (id) => {
-        settingsManager.currentEditId = id;
-        const tmpl = db.templates.find(t => t.id == id);
-        if(tmpl) {
-            document.getElementById('template-name-edit').value = tmpl.name;
-            document.getElementById('template-text').value = tmpl.content;
-            document.getElementById('btn-fav-toggle').innerHTML = tmpl.isFavorite ? '<i class="fas fa-star" style="color:var(--warning)"></i>' : '<i class="far fa-star"></i>';
-        }
-    },
-    handleLogo: (input) => {
-        if(input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = (e) => { db.settings.logo = e.target.result; settingsManager.init(); };
-            reader.readAsDataURL(input.files[0]);
-        }
-    },
-    save: () => {
-        db.settings.name = document.getElementById('company-name').value;
-        db.settings.cnpj = document.getElementById('company-cnpj').value;
-        db.saveSettings();
-        contractManager.updatePreview(); 
-        alert('Salvo!');
-    },
-    saveTemplate: () => {
-        const idx = db.templates.findIndex(t => t.id == settingsManager.currentEditId);
-        if(idx >= 0) {
-            db.templates[idx].name = document.getElementById('template-name-edit').value;
-            db.templates[idx].content = document.getElementById('template-text').value;
-            db.saveTemplates();
-            settingsManager.renderTemplateList();
-            alert('Modelo salvo.');
-        }
-    },
-    createNewTemplate: () => {
-        const n = { id: Date.now(), name: 'Novo Modelo', content: getDefaultTemplate(), isFavorite: false };
-        db.templates.push(n); db.saveTemplates();
-        settingsManager.currentEditId = n.id; settingsManager.renderTemplateList();
-    },
-    deleteTemplate: () => {
-        if(db.templates.length <= 1) return alert('Mantenha 1 modelo.');
-        if(confirm('Excluir?')) {
-            db.templates = db.templates.filter(t => t.id != settingsManager.currentEditId);
-            if(!db.templates.some(t => t.isFavorite)) db.templates[0].isFavorite = true;
-            db.saveTemplates();
-            settingsManager.currentEditId = null;
-            settingsManager.renderTemplateList();
-        }
-    },
-    toggleFavorite: () => {
-        db.templates.forEach(t => t.isFavorite = false);
-        const idx = db.templates.findIndex(t => t.id == settingsManager.currentEditId);
-        if(idx>=0) { db.templates[idx].isFavorite = true; db.saveTemplates(); settingsManager.renderTemplateList(); }
-    }
-};
-
-const backupSystem = {
-    handleFile: (input) => {
-        const file = input.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const json = JSON.parse(e.target.result);
-                // Lógica de importação simplificada para Legacy CRM
-                if(json.data?.contacts || Array.isArray(json)) {
-                    const contacts = json.data?.contacts || json;
-                    let count = 0;
-                    contacts.forEach(c => {
-                        if(!db.clients.find(x => x.id === c.id)) {
-                            db.clients.push({ id: c.id || Date.now(), name: c.name, doc: c.cpf||c.doc||'', phone: c.phone||'', address: c.address||'', city: c.city||'' });
-                            count++;
-                        }
-                    });
-                    db.saveClients();
-                    alert(`Importação concluída: ${count} novos clientes.`);
-                    clientManager.render();
-                }
-            } catch(err){ alert('Erro no arquivo JSON.'); }
-        };
-        reader.readAsText(file);
-    }
-};
-
-/* ================= GERENCIADOR DE ASSINATURA INTERNA (Canvas) ================= */
-const signatureManager = {
-    canvas: null,
-    ctx: null,
-    drawing: false,
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    const errorDiv = document.getElementById('login-error');
     
-    init() {
-        const paper = document.getElementById('paper-doc');
-        if (!paper) return;
-        // Evita duplicar área de assinatura
-        if (document.getElementById('signature-area')) return;
+    try {
+        await auth.login(email, password);
+    } catch (err) {
+        errorDiv.style.display = 'block';
+    }
+});
 
-        paper.insertAdjacentHTML('beforeend', `
-            <div class="signature-box" id="signature-area">
-                <p><strong>Assinatura do Contratante</strong></p>
-                <canvas id="signature-canvas" class="signature-canvas"></canvas>
-                <div class="signature-actions">
-                    <button class="btn btn-outline btn-sm" onclick="signatureManager.clear()">Limpar</button>
-                    <button class="btn btn-primary btn-sm" onclick="signatureManager.applyInternal()">Aplicar Manualmente</button>
-                </div>
-                <div id="signature-preview"></div>
-            </div>
-        `);
+auth.init();
 
-        this.canvas = document.getElementById('signature-canvas');
-        this.ctx = this.canvas.getContext('2d');
-        this.resize(); 
+/* ================= APP MODULE ================= */
+const app = {
+    init: () => {
+        contracts.load();
+        clients.load();
+        templates.load();
         
-        // Eventos Mouse/Touch
-        ['mousedown','touchstart'].forEach(ev => this.canvas.addEventListener(ev, (e) => this.start(e)));
-        ['mouseup','touchend'].forEach(ev => this.canvas.addEventListener(ev, () => this.stop()));
-        ['mousemove','touchmove'].forEach(ev => this.canvas.addEventListener(ev, (e) => this.draw(e)));
+        // 🔥 INICIA SISTEMA DE POLLING DE ASSINATURAS
+        signatureNotifications.init();
     },
-    resize() {
-        if(!this.canvas) return;
-        this.canvas.width = this.canvas.offsetWidth; 
-        this.canvas.height = 160;
-        this.ctx.lineWidth = 2; 
-        this.ctx.lineCap = 'round'; 
-        this.ctx.strokeStyle = '#000';
-    },
-    getPos(e) {
-        const rect = this.canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        return { x: clientX - rect.left, y: clientY - rect.top };
-    },
-    start(e) {
-        if(e.type === 'touchstart') e.preventDefault();
-        this.drawing = true; 
-        this.ctx.beginPath();
-        const {x, y} = this.getPos(e);
-        this.ctx.moveTo(x, y);
-    },
-    stop() { this.drawing = false; },
-    draw(e) {
-        if(!this.drawing) return;
-        if(e.type === 'touchmove') e.preventDefault();
-        const {x, y} = this.getPos(e);
-        this.ctx.lineTo(x, y);
-        this.ctx.stroke();
-    },
-    clear() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        document.getElementById('signature-preview').innerHTML = '';
-    },
-    applyInternal() {
-        const data = this.canvas.toDataURL('image/png');
-        document.getElementById('signature-preview').innerHTML = `<img src="${data}" style="display:block; margin:10px auto; max-width:200px;">`;
-        alert('Assinatura inserida no visualização (não salva status automaticamente).');
+
+    nav: (viewId) => {
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+
+        if (viewId === 'dashboard') {
+            document.querySelector('.nav-item').classList.add('active');
+            document.querySelector('.topbar-title').innerText = 'Dashboard';
+        } else if (viewId === 'create') {
+            document.querySelectorAll('.nav-item')[1].classList.add('active');
+            document.querySelector('.topbar-title').innerText = 'Criar Contrato';
+            contracts.populateSelects();
+        } else if (viewId === 'clients') {
+            document.querySelectorAll('.nav-item')[2].classList.add('active');
+            document.querySelector('.topbar-title').innerText = 'Clientes';
+        } else if (viewId === 'templates') {
+            document.querySelectorAll('.nav-item')[3].classList.add('active');
+            document.querySelector('.topbar-title').innerText = 'Modelos de Contrato';
+        } else if (viewId === 'backup') {
+            document.querySelectorAll('.nav-item')[4].classList.add('active');
+            document.querySelector('.topbar-title').innerText = 'Backup';
+        }
+
+        document.getElementById('view-' + viewId).classList.add('active');
     }
 };
 
-/* ================= LINK DE ASSINATURA & INTEGRAÇÃO SUPABASE ================= */
+/* ================= CONTRACTS MODULE ================= */
+const contracts = {
+    list: [],
+    selectedClientPhone: '',
 
+    load: async () => {
+        const { data, error } = await window.supabaseClient
+            .from('signature_requests')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) return console.error(error);
+        contracts.list = data || [];
+        contracts.render();
+        contracts.updateStats();
+    },
+
+    render: () => {
+        const tbody = document.getElementById('contracts-tbody');
+        if (contracts.list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:#94a3b8;">Nenhum contrato cadastrado</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = contracts.list.map(c => `
+            <tr>
+                <td>
+                    <strong>${c.client_name}</strong>
+                    ${c.status === 'signed' ? '<span class="signed-indicator"><i class="fas fa-pen-fancy"></i> Assinado</span>' : ''}
+                </td>
+                <td>${c.contract_type || '-'}</td>
+                <td>R$ ${parseFloat(c.contract_value || 0).toFixed(2)}</td>
+                <td>${new Date(c.created_at).toLocaleDateString('pt-BR')}</td>
+                <td>
+                    <span class="badge ${
+                        c.status === 'signed' ? 'badge-signed' : 
+                        c.status === 'active' ? 'badge-active' : 
+                        'badge-pending'
+                    }">
+                        ${c.status === 'signed' ? 'Assinado' : c.status === 'active' ? 'Ativo' : 'Pendente'}
+                    </span>
+                </td>
+                <td>
+                    ${c.status === 'signed' 
+                        ? `<button class="action-btn" onclick="documentViewer.open('${c.id}')" title="Ver documento assinado">
+                             <i class="fas fa-file-contract"></i> Ver
+                           </button>`
+                        : `<button class="action-btn" onclick="signingLinkManager.generate('${c.id}')" title="Gerar link">
+                             <i class="fas fa-link"></i> Link
+                           </button>`
+                    }
+                    <button class="action-btn delete" onclick="contracts.delete('${c.id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    },
+
+    updateStats: () => {
+        const total = contracts.list.length;
+        const pending = contracts.list.filter(c => c.status === 'pending').length;
+        const signed = contracts.list.filter(c => c.status === 'signed').length;
+        const active = contracts.list.filter(c => c.status === 'active').length;
+
+        document.getElementById('stat-total').innerText = total;
+        document.getElementById('stat-pending').innerText = pending;
+        document.getElementById('stat-signed').innerText = signed;
+        document.getElementById('stat-active').innerText = active;
+    },
+
+    populateSelects: () => {
+        const clientSelect = document.getElementById('contract-client');
+        clientSelect.innerHTML = '<option value="">Selecione um cliente</option>' +
+            clients.list.map(c => `<option value="${c.id}" data-phone="${c.phone || ''}">${c.name}</option>`).join('');
+
+        const templateSelect = document.getElementById('contract-template');
+        templateSelect.innerHTML = '<option value="">Selecione um modelo</option>' +
+            templates.list.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+    },
+
+    loadClientPhone: () => {
+        const select = document.getElementById('contract-client');
+        const option = select.options[select.selectedIndex];
+        contracts.selectedClientPhone = option ? option.dataset.phone : '';
+    },
+
+    loadTemplate: async () => {
+        const templateId = document.getElementById('contract-template').value;
+        if (!templateId) return;
+
+        const { data } = await window.supabaseClient
+            .from('contract_templates')
+            .select('content')
+            .eq('id', templateId)
+            .single();
+
+        if (data) {
+            document.getElementById('contract-content').value = data.content;
+        }
+    },
+
+    save: async (formData) => {
+        const { error } = await window.supabaseClient
+            .from('signature_requests')
+            .insert([formData]);
+
+        if (error) throw error;
+        await contracts.load();
+        app.nav('dashboard');
+    },
+
+    delete: async (id) => {
+        if (!confirm('Tem certeza que deseja excluir este contrato?')) return;
+        const { error } = await window.supabaseClient
+            .from('signature_requests')
+            .delete()
+            .eq('id', id);
+
+        if (!error) contracts.load();
+    }
+};
+
+document.getElementById('contract-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const clientId = document.getElementById('contract-client').value;
+    const clientName = document.getElementById('contract-client').options[document.getElementById('contract-client').selectedIndex].text;
+
+    const formData = {
+        client_id: clientId,
+        client_name: clientName,
+        client_phone: contracts.selectedClientPhone,
+        contract_type: document.getElementById('contract-type').value,
+        contract_value: parseFloat(document.getElementById('contract-value').value),
+        contract_date: document.getElementById('contract-date').value,
+        contract_html: document.getElementById('contract-content').value,
+        status: 'pending',
+        user_id: auth.currentUser.id
+    };
+
+    try {
+        await contracts.save(formData);
+        e.target.reset();
+        alert('Contrato salvo com sucesso!');
+    } catch (err) {
+        alert('Erro ao salvar: ' + err.message);
+    }
+});
+
+/* ================= CLIENTS MODULE ================= */
+const clients = {
+    list: [],
+
+    load: async () => {
+        const { data, error } = await window.supabaseClient
+            .from('clients')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) return console.error(error);
+        clients.list = data || [];
+        clients.render();
+    },
+
+    render: () => {
+        const tbody = document.getElementById('clients-tbody');
+        if (clients.list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px; color:#94a3b8;">Nenhum cliente cadastrado</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = clients.list.map(c => `
+            <tr>
+                <td><strong>${c.name}</strong></td>
+                <td>${c.cpf || '-'}</td>
+                <td>${c.phone || '-'}<br><small style="color:#94a3b8;">${c.email || ''}</small></td>
+                <td>
+                    <button class="action-btn delete" onclick="clients.delete('${c.id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    },
+
+    save: async (formData) => {
+        const { error } = await window.supabaseClient
+            .from('clients')
+            .insert([formData]);
+
+        if (error) throw error;
+        await clients.load();
+    },
+
+    delete: async (id) => {
+        if (!confirm('Tem certeza que deseja excluir este cliente?')) return;
+        const { error } = await window.supabaseClient
+            .from('clients')
+            .delete()
+            .eq('id', id);
+
+        if (!error) clients.load();
+    }
+};
+
+document.getElementById('client-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = {
+        name: document.getElementById('client-name').value,
+        cpf: document.getElementById('client-cpf').value,
+        email: document.getElementById('client-email').value,
+        phone: document.getElementById('client-phone').value,
+        address: document.getElementById('client-address').value,
+        user_id: auth.currentUser.id
+    };
+
+    try {
+        await clients.save(formData);
+        e.target.reset();
+        alert('Cliente adicionado com sucesso!');
+    } catch (err) {
+        alert('Erro ao salvar: ' + err.message);
+    }
+});
+
+/* ================= TEMPLATES MODULE ================= */
+const templates = {
+    list: [],
+
+    load: async () => {
+        const { data, error } = await window.supabaseClient
+            .from('contract_templates')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) return console.error(error);
+        templates.list = data || [];
+        templates.render();
+    },
+
+    render: () => {
+        const tbody = document.getElementById('templates-tbody');
+        if (templates.list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:40px; color:#94a3b8;">Nenhum modelo cadastrado</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = templates.list.map(t => `
+            <tr>
+                <td><strong>${t.name}</strong></td>
+                <td>${new Date(t.created_at).toLocaleDateString('pt-BR')}</td>
+                <td>
+                    <button class="action-btn delete" onclick="templates.delete('${t.id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    },
+
+    save: async (formData) => {
+        const { error } = await window.supabaseClient
+            .from('contract_templates')
+            .insert([formData]);
+
+        if (error) throw error;
+        await templates.load();
+    },
+
+    delete: async (id) => {
+        if (!confirm('Tem certeza que deseja excluir este modelo?')) return;
+        const { error } = await window.supabaseClient
+            .from('contract_templates')
+            .delete()
+            .eq('id', id);
+
+        if (!error) templates.load();
+    }
+};
+
+document.getElementById('template-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = {
+        name: document.getElementById('template-name').value,
+        content: document.getElementById('template-content').value,
+        user_id: auth.currentUser.id
+    };
+
+    try {
+        await templates.save(formData);
+        e.target.reset();
+        alert('Modelo salvo com sucesso!');
+    } catch (err) {
+        alert('Erro ao salvar: ' + err.message);
+    }
+});
+
+/* ================= BACKUP MODULE ================= */
+const backup = {
+    exportAll: async () => {
+        try {
+            const { data: contractsData } = await window.supabaseClient
+                .from('signature_requests')
+                .select('*');
+            
+            const { data: clientsData } = await window.supabaseClient
+                .from('clients')
+                .select('*');
+            
+            const { data: templatesData } = await window.supabaseClient
+                .from('contract_templates')
+                .select('*');
+
+            const backup = {
+                exported_at: new Date().toISOString(),
+                contracts: contractsData || [],
+                clients: clientsData || [],
+                templates: templatesData || []
+            };
+
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `legacy-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            alert('Backup exportado com sucesso!');
+        } catch (err) {
+            alert('Erro ao exportar: ' + err.message);
+        }
+    }
+};
+
+/* ================= SIGNING LINK MANAGER ================= */
 const signingLinkManager = {
-    currentContractId: null, // ID local (timestamp)
-    currentPhone: null,
-    currentLink: null,
+    currentLink: '',
+    currentPhone: '',
 
-    generate: async () => {
-        // 1. Validar e Salvar Localmente Primeiro
-        const name = document.getElementById('c-name').value;
-        const phone = document.getElementById('c-phone').value.replace(/\D/g, '');
-        
-        if (!name) return alert('Informe o nome do cliente.');
-        if (!phone) return alert('Informe o telefone para envio.');
+    generate: async (contractId) => {
+        try {
+            let id = contractId;
 
-        // Garante que o usuário salve antes para termos um registro local
-        if(confirm("Para gerar o link, o contrato será salvo agora como 'Pendente'. Continuar?")) {
-            // Salva e pega o ID
-            const localId = contractManager.saveHistory(); 
-            // Atualiza status local para Pendente imediatamente
-            const contractIdx = db.contracts.findIndex(c => c.id === localId);
-            if(contractIdx >= 0) {
-                db.contracts[contractIdx].status = 'Pendente';
-                db.saveContracts();
-                contractManager.renderHistory();
-            }
+            if (!id) {
+                const clientId = document.getElementById('contract-client').value;
+                const clientName = document.getElementById('contract-client').options[document.getElementById('contract-client').selectedIndex].text;
+                const phone = contracts.selectedClientPhone;
 
-            // 2. Preparar HTML limpo para o Cliente
-            const paperDoc = document.getElementById('paper-doc');
-            const clone = paperDoc.cloneNode(true);
-            const sigArea = clone.querySelector('#signature-area');
-            if (sigArea) sigArea.remove(); // Remove área de assinatura interna para o cliente ver a externa
-            
-            const cleanHTML = clone.innerHTML;
-            
-            // 3. Enviar para Supabase (Tabela signature_requests)
-            // ID único para o link externo
-            const externalUUID = crypto.randomUUID(); 
+                if (!clientId) return alert('Selecione um cliente primeiro');
 
-            try {
-                const { error } = await window.supabaseClient
+                const formData = {
+                    client_id: clientId,
+                    client_name: clientName,
+                    client_phone: phone,
+                    contract_type: document.getElementById('contract-type').value,
+                    contract_value: parseFloat(document.getElementById('contract-value').value),
+                    contract_date: document.getElementById('contract-date').value,
+                    contract_html: document.getElementById('contract-content').value,
+                    status: 'pending',
+                    user_id: auth.currentUser.id
+                };
+
+                const { data, error } = await window.supabaseClient
                     .from('signature_requests')
-                    .insert({
-                        id: externalUUID, // UUID para a URL
-                        client_name: name,
-                        contract_html: cleanHTML,
-                        status: 'pending',
-                        created_at: new Date().toISOString()
-                    });
+                    .insert([formData])
+                    .select()
+                    .single();
 
                 if (error) throw error;
-
-                // 4. VINCULAR ID Externo ao Contrato Local
-                db.contracts[contractIdx].external_id = externalUUID;
-                db.saveContracts(); // Salva o vinculo
-
-                // 5. Exibir Modal
-                const baseUrl = window.location.href.split('?')[0];
-                const link = `${baseUrl}?sign=${externalUUID}`;
-                
-                signingLinkManager.currentLink = link;
-                signingLinkManager.currentPhone = phone;
-                
-                document.getElementById('sign-link-input').value = link;
-                document.getElementById('sign-link-modal').style.display = 'flex';
-
-            } catch (err) {
-                alert('Erro ao conectar com servidor de assinaturas: ' + err.message);
+                id = data.id;
+                await contracts.load();
             }
+
+            const link = `${window.location.origin}${window.location.pathname}?sign=${id}`;
+            signingLinkManager.currentLink = link;
+
+            const { data } = await window.supabaseClient
+                .from('signature_requests')
+                .select('client_phone')
+                .eq('id', id)
+                .single();
+
+            signingLinkManager.currentPhone = data?.client_phone || '';
+
+            document.getElementById('sign-link-input').value = link;
+            document.getElementById('sign-link-modal').style.display = 'flex';
+
+        } catch (err) {
+            alert('Erro inesperado: ' + err.message);
         }
     },
+
     copyLink: () => {
         const input = document.getElementById('sign-link-input');
         input.select();
         document.execCommand('copy');
         alert('Link copiado!');
     },
+
     sendWhatsApp: () => {
-        const msg = `Olá! Segue o link para assinar seu contrato digitalmente:\n\n${signingLinkManager.currentLink}\n\nAssine na tela do seu celular. Obrigado!`;
-        window.open(`https://wa.me/55${signingLinkManager.currentPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-        signingLinkManager.closeModal();
+        const phone = signingLinkManager.currentPhone;
+        const link = signingLinkManager.currentLink;
+        if (!phone || !link) return;
+        const msg = `Olá! Segue o link para assinar seu contrato digitalmente:\n\n${link}\n\nClique no link, leia o contrato e assine. Obrigado!`;
+        window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
     },
+
     closeModal: () => {
         document.getElementById('sign-link-modal').style.display = 'none';
     }
 };
 
-/* ================= PÁGINA EXTERNA DE ASSINATURA (VIEW DO CLIENTE) ================= */
-
+/* ================= PÁGINA DE ASSINATURA (CLIENT VIEW) ================= */
 const signingPage = {
-    canvas: null, ctx: null, drawing: false, contractUUID: null,
+    canvas: null,
+    ctx: null,
+    drawing: false,
+    contractId: null,
 
-    init: async (uuid) => {
-        signingPage.contractUUID = uuid;
-        
-        // UI Switch: Esconde CRM, Mostra Assinatura
-        document.getElementById('login-overlay').style.display = 'none';
-        const intro = document.getElementById('intro-overlay');
-        if(intro) intro.style.display = 'none';
+    init: async (contractId) => {
+        signingPage.contractId = contractId;
+
+        // Mostra overlay da página de assinatura, esconde o CRM
         document.getElementById('signing-page-overlay').style.display = 'block';
+        document.getElementById('login-overlay').style.display = 'none';
+        if (document.getElementById('intro-overlay')) document.getElementById('intro-overlay').style.display = 'none';
 
-        // Carregar Dados
+        // Carrega o contrato do Supabase
         try {
             const { data, error } = await window.supabaseClient
                 .from('signature_requests')
                 .select('*')
-                .eq('id', uuid)
+                .eq('id', contractId)
                 .single();
 
-            if (error || !data) throw new Error('Contrato não encontrado.');
-
-            // Verifica se já assinou
-            if(data.status === 'signed') {
-                document.getElementById('sp-contract-body').innerHTML = data.contract_html;
-                document.getElementById('sp-subtitle').innerHTML = `<b style="color:#10b981">CONTRATO JÁ ASSINADO EM ${new Date(data.signed_at).toLocaleDateString()}</b>`;
-                document.querySelector('#signing-page-overlay canvas').parentNode.innerHTML = `<img src="${data.signature_data}" style="max-width:300px; display:block; margin:20px auto;">`;
+            if (error || !data) {
+                document.getElementById('sp-contract-body').innerHTML = '<p style="color:#ef4444; text-align:center; padding:20px;"><i class="fas fa-exclamation-circle"></i> Contrato não encontrado ou link inválido.</p>';
                 return;
             }
 
-            document.getElementById('sp-contract-body').innerHTML = data.contract_html;
-            document.getElementById('sp-subtitle').innerText = `Cliente: ${data.client_name}`;
-            
-            // Inicia Canvas Externo
-            signingPage.setupCanvas();
-
-        } catch (err) {
-            document.getElementById('sp-contract-body').innerHTML = `<div style="text-align:center; color:red; padding:40px;">${err.message}</div>`;
-        }
-    },
-    setupCanvas: () => {
-        const c = document.getElementById('sp-canvas');
-        signingPage.canvas = c;
-        signingPage.ctx = c.getContext('2d');
-        
-        // Ajuste DPI
-        const rect = c.getBoundingClientRect();
-        c.width = rect.width;
-        c.height = 160;
-        
-        const ctx = signingPage.ctx;
-        ctx.lineWidth = 3;
-        ctx.lineCap = 'round';
-        ctx.strokeStyle = '#1e293b';
-
-        // Listeners simples
-        const getXY = (e) => {
-            const r = c.getBoundingClientRect();
-            return { 
-                x: (e.touches?e.touches[0].clientX:e.clientX) - r.left, 
-                y: (e.touches?e.touches[0].clientY:e.clientY) - r.top 
-            };
-        }
-
-        const start = (e) => { if(e.touches) e.preventDefault(); signingPage.drawing = true; ctx.beginPath(); const p=getXY(e); ctx.moveTo(p.x, p.y); };
-        const move = (e) => { if(!signingPage.drawing) return; if(e.touches) e.preventDefault(); const p=getXY(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
-        const end = () => { signingPage.drawing = false; };
-
-        c.addEventListener('mousedown', start); c.addEventListener('mousemove', move); c.addEventListener('mouseup', end);
-        c.addEventListener('touchstart', start); c.addEventListener('touchmove', move); c.addEventListener('touchend', end);
-    },
-    clear: () => {
-        const c = signingPage.canvas;
-        signingPage.ctx.clearRect(0,0,c.width,c.height);
-    },
-    submit: async () => {
-        // Validação Blank Canvas
-        const c = signingPage.canvas;
-        const blank = document.createElement('canvas'); blank.width=c.width; blank.height=c.height;
-        if(c.toDataURL() === blank.toDataURL()) return alert('Por favor, assine antes de confirmar.');
-
-        const sigData = c.toDataURL('image/png');
-        
-        // Salvar no Supabase
-        const { error } = await window.supabaseClient
-            .from('signature_requests')
-            .update({
-                status: 'signed',
-                signature_data: sigData,
-                signed_at: new Date().toISOString()
-            })
-            .eq('id', signingPage.contractUUID);
-
-        if(error) return alert('Erro ao salvar: ' + error.message);
-
-        // Feedback Sucesso
-        document.getElementById('signing-page-overlay').innerHTML = `
-            <div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#f0fdf4;">
-                <i class="fas fa-check-circle" style="font-size:4rem; color:#16a34a; margin-bottom:20px;"></i>
-                <h1 style="color:#14532d;">Documento Assinado!</h1>
-                <p style="color:#166534;">O sistema já foi notificado. Pode fechar esta página.</p>
-            </div>
-        `;
-    }
-};
-
-/* ================= REALTIME WATCHER (Ouvinte Automático) ================= */
-/* Este módulo fica escutando o Supabase. 
-   Quando o cliente assina (status muda para 'signed'), ele:
-   1. Busca o contrato local com aquele ID externo.
-   2. Atualiza o status para 'Assinado'.
-   3. Adiciona a imagem da assinatura ao contrato local.
-   4. Notifica o usuário na Dashboard.
-*/
-const realtimeWatcher = {
-    subscription: null,
-
-    start: () => {
-        if(realtimeWatcher.subscription) return;
-
-        console.log('📡 Iniciando Monitoramento de Assinaturas em Tempo Real...');
-        
-        realtimeWatcher.subscription = window.supabaseClient
-            .channel('public:signature_requests')
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'signature_requests' }, payload => {
-                
-                const newData = payload.new;
-                
-                // Só nos interessa se foi assinado
-                if(newData.status === 'signed' && newData.signature_data) {
-                    realtimeWatcher.handleUpdate(newData);
-                }
-            })
-            .subscribe();
-    },
-
-    handleUpdate: (externalData) => {
-        // Procura contrato local vinculado
-        const idx = db.contracts.findIndex(c => c.external_id === externalData.id);
-        
-        if(idx >= 0) {
-            const contract = db.contracts[idx];
-            
-            // Evita loop se já estiver atualizado
-            if(contract.status === 'Assinado') return;
-
-            // ATUALIZAÇÃO AUTOMÁTICA
-            contract.status = 'Assinado';
-            contract.signature = externalData.signature_data; // Salva a img base64
-            contract.signed_at = externalData.signed_at;
-            
-            // Opcional: Injetar a assinatura no HTML salvo do contrato
-            if(contract.content) {
-                contract.content += `<div style="margin-top:30px; border-top:1px dashed #ccc; padding-top:10px; text-align:center;">
-                    <p><strong>Assinado Digitalmente em ${new Date().toLocaleString()}</strong></p>
-                    <img src="${externalData.signature_data}" style="max-width:250px;">
-                </div>`;
+            if (data.status === 'signed') {
+                document.getElementById('sp-contract-body').innerHTML = data.contract_html || '';
+                document.getElementById('sp-subtitle').innerHTML = '<span style="color:#10b981; font-weight:600;"><i class="fas fa-check-circle"></i> Este contrato já foi assinado.</span>';
+                document.querySelector('#signing-page-overlay [style*="border-top:2px dashed"]').style.display = 'none';
+                return;
             }
 
-            db.saveContracts();
-            
-            // Atualiza UI se estiver na dashboard
-            contractManager.renderHistory();
-            
-            // Notificação Toast
-            const toast = document.createElement('div');
-            toast.style.cssText = "position:fixed; bottom:20px; right:20px; background:#10b981; color:white; padding:15px 25px; border-radius:8px; box-shadow:0 10px 15px rgba(0,0,0,0.2); z-index:10000; display:flex; align-items:center; gap:10px; animation: slideUp 0.5s ease;";
-            toast.innerHTML = `<i class="fas fa-file-signature"></i> <div><strong>Contrato Assinado!</strong><br><small>${contract.client} acabou de assinar.</small></div>`;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 5000);
+            document.getElementById('sp-contract-body').innerHTML = data.contract_html || '';
+            document.getElementById('sp-subtitle').innerText = `Contrato para: ${data.client_name}`;
+
+        } catch (err) {
+            document.getElementById('sp-contract-body').innerText = 'Erro ao carregar o contrato.';
+        }
+
+        // Inicia canvas
+        const canvas = document.getElementById('sp-canvas');
+        signingPage.canvas = canvas;
+        signingPage.ctx = canvas.getContext('2d');
+
+        const resize = () => {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 160;
+            signingPage.ctx.lineWidth = 2;
+            signingPage.ctx.lineCap = 'round';
+            signingPage.ctx.strokeStyle = '#1e293b';
+        };
+        resize();
+        window.addEventListener('resize', resize);
+
+        const getPos = (e) => {
+            const r = canvas.getBoundingClientRect();
+            return { x: (e.clientX || e.touches[0].clientX) - r.left, y: (e.clientY || e.touches[0].clientY) - r.top };
+        };
+
+        canvas.addEventListener('mousedown', (e) => { signingPage.drawing = true; const p = getPos(e); signingPage.ctx.beginPath(); signingPage.ctx.moveTo(p.x, p.y); });
+        canvas.addEventListener('mouseup', () => { signingPage.drawing = false; });
+        canvas.addEventListener('mouseleave', () => { signingPage.drawing = false; });
+        canvas.addEventListener('mousemove', (e) => { if (!signingPage.drawing) return; const p = getPos(e); signingPage.ctx.lineTo(p.x, p.y); signingPage.ctx.stroke(); });
+
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); signingPage.drawing = true; const p = getPos(e); signingPage.ctx.beginPath(); signingPage.ctx.moveTo(p.x, p.y); });
+        canvas.addEventListener('touchend', () => { signingPage.drawing = false; });
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (!signingPage.drawing) return; const p = getPos(e); signingPage.ctx.lineTo(p.x, p.y); signingPage.ctx.stroke(); });
+    },
+
+    clear: () => {
+        if (!signingPage.canvas) return;
+        signingPage.ctx.clearRect(0, 0, signingPage.canvas.width, signingPage.canvas.height);
+    },
+
+    submit: async () => {
+        const canvas = signingPage.canvas;
+        if (!canvas) return;
+
+        // Verifica se o canvas está em branco
+        const blank = document.createElement('canvas');
+        blank.width = canvas.width; blank.height = canvas.height;
+        if (canvas.toDataURL() === blank.toDataURL()) {
+            return alert('Por favor, assine o documento antes de confirmar.');
+        }
+
+        const signatureData = canvas.toDataURL('image/png');
+
+        try {
+            const { error } = await window.supabaseClient
+                .from('signature_requests')
+                .update({
+                    status: 'signed',
+                    signature_data: signatureData,
+                    signed_at: new Date().toISOString()
+                })
+                .eq('id', signingPage.contractId);
+
+            if (error) return alert('Erro ao salvar assinatura: ' + error.message);
+
+            // Feedback visual de sucesso
+            document.getElementById('signing-page-overlay').innerHTML = `
+                <div style="display:flex; align-items:center; justify-content:center; min-height:100vh;">
+                    <div style="background:white; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.12); padding:60px 40px; text-align:center; max-width:400px;">
+                        <div style="width:80px; height:80px; background:#dcfce7; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+                            <i class="fas fa-check" style="font-size:2.5rem; color:#16a34a;"></i>
+                        </div>
+                        <h2 style="font-size:1.6rem; font-weight:800; color:#1e293b; margin-bottom:10px;">Assinado com Sucesso!</h2>
+                        <p style="color:#64748b; font-size:0.95rem;">Seu contrato foi assinado digitalmente e registrado com segurança.</p>
+                        <p style="color:#94a3b8; font-size:0.8rem; margin-top:20px;">Você pode fechar esta página.</p>
+                    </div>
+                </div>
+            `;
+
+        } catch (err) {
+            alert('Erro inesperado: ' + err.message);
         }
     }
 };
 
-/* ================= INICIALIZAÇÃO FINAL & ROTEAMENTO DE URL ================= */
+/* ================= 🔥 SISTEMA DE NOTIFICAÇÕES DE ASSINATURA ================= */
+const signatureNotifications = {
+    pollingInterval: null,
+    lastCheckedSignatures: new Set(),
+    pendingViewCount: 0,
+    isInitialized: false,
 
-// Verifica se é visualização de assinatura ou CRM normal
-const urlParams = new URLSearchParams(window.location.search);
-const signId = urlParams.get('sign');
+    init: () => {
+        if (signatureNotifications.isInitialized) return;
+        signatureNotifications.isInitialized = true;
+        
+        // Primeira carga silenciosa - popula o histórico sem notificar
+        signatureNotifications.silentLoad();
+        
+        // Inicia polling a cada 12 segundos
+        signatureNotifications.pollingInterval = setInterval(() => {
+            signatureNotifications.checkNewSignatures();
+        }, 12000);
+    },
 
-if (signId) {
-    // MODO CLIENTE (Assinatura)
-    // Aguarda carregar Supabase e inicia página de assinatura
-    const waitInt = setInterval(() => {
-        if(window.supabaseClient) {
-            clearInterval(waitInt);
-            signingPage.init(signId);
+    silentLoad: async () => {
+        try {
+            const { data } = await window.supabaseClient
+                .from('signature_requests')
+                .select('id, status')
+                .eq('status', 'signed');
+
+            if (data) {
+                data.forEach(item => {
+                    signatureNotifications.lastCheckedSignatures.add(item.id);
+                });
+            }
+        } catch (err) {
+            console.error('Erro na carga silenciosa:', err);
         }
-    }, 100);
-} else {
-    // MODO SISTEMA (CRM)
-    // Inicia listener realtime assim que logar
-    const originalLogin = authManager.updateUI;
-    authManager.updateUI = function(session) {
-        originalLogin(session);
-        if(session) {
-            realtimeWatcher.start();
+    },
+
+    checkNewSignatures: async () => {
+        try {
+            const { data } = await window.supabaseClient
+                .from('signature_requests')
+                .select('*')
+                .eq('status', 'signed')
+                .order('signed_at', { ascending: false });
+
+            if (data) {
+                data.forEach(contract => {
+                    if (!signatureNotifications.lastCheckedSignatures.has(contract.id)) {
+                        // Nova assinatura detectada!
+                        signatureNotifications.lastCheckedSignatures.add(contract.id);
+                        signatureNotifications.showToast(contract);
+                        signatureNotifications.showConfirmationModal(contract);
+                        signatureNotifications.pendingViewCount++;
+                        signatureNotifications.updateBadge();
+                        
+                        // Recarrega contratos para atualizar a tabela
+                        contracts.load();
+                    }
+                });
+            }
+        } catch (err) {
+            console.error('Erro no polling:', err);
         }
-    };
+    },
+
+    showToast: (contract) => {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `
+            <div class="toast-icon">
+                <i class="fas fa-pen-fancy"></i>
+            </div>
+            <div class="toast-content">
+                <div class="toast-title">Nova Assinatura!</div>
+                <div class="toast-message">${contract.client_name} acabou de assinar</div>
+            </div>
+            <div class="toast-close" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </div>
+        `;
+
+        // Torna o toast clicável para ir ao dashboard
+        toast.style.cursor = 'pointer';
+        toast.addEventListener('click', (e) => {
+            if (!e.target.closest('.toast-close')) {
+                signatureNotifications.goToDashboard();
+                toast.remove();
+            }
+        });
+
+        container.appendChild(toast);
+
+        // Animação de entrada
+        setTimeout(() => toast.classList.add('show'), 10);
+
+        // Remove automaticamente após 7 segundos
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(400px)';
+            setTimeout(() => toast.remove(), 400);
+        }, 7000);
+    },
+
+    showConfirmationModal: (contract) => {
+        const modal = document.getElementById('signature-confirmation-modal');
+        
+        // Preenche os dados
+        document.getElementById('conf-client-name').textContent = contract.client_name;
+        
+        const signedDate = new Date(contract.signed_at);
+        document.getElementById('conf-signed-at').textContent = 
+            signedDate.toLocaleDateString('pt-BR') + ' às ' + 
+            signedDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        
+        document.getElementById('conf-signature-img').src = contract.signature_data;
+
+        // Mostra o modal
+        modal.classList.add('show');
+    },
+
+    closeConfirmationModal: () => {
+        document.getElementById('signature-confirmation-modal').classList.remove('show');
+    },
+
+    goToDashboard: () => {
+        signatureNotifications.closeConfirmationModal();
+        signatureNotifications.pendingViewCount = 0;
+        signatureNotifications.updateBadge();
+        app.nav('dashboard');
+    },
+
+    updateBadge: () => {
+        const badge = document.getElementById('pending-signatures-badge');
+        if (signatureNotifications.pendingViewCount > 0) {
+            badge.textContent = signatureNotifications.pendingViewCount;
+            badge.classList.add('show');
+        } else {
+            badge.classList.remove('show');
+        }
+    }
+};
+
+/* ================= 📄 VISUALIZADOR DE DOCUMENTO ASSINADO ================= */
+const documentViewer = {
+    currentContract: null,
+
+    open: async (contractId) => {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('signature_requests')
+                .select('*')
+                .eq('id', contractId)
+                .single();
+
+            if (error || !data) {
+                alert('Erro ao carregar documento');
+                return;
+            }
+
+            documentViewer.currentContract = data;
+
+            // Preenche o conteúdo do contrato
+            document.getElementById('viewer-contract-content').innerHTML = data.contract_html || '';
+
+            // Se tiver assinatura, mostra a seção
+            if (data.signature_data && data.status === 'signed') {
+                document.getElementById('viewer-signature-section').style.display = 'block';
+                document.getElementById('viewer-signature-img').src = data.signature_data;
+                document.getElementById('viewer-client-name').textContent = data.client_name;
+                
+                const signedDate = new Date(data.signed_at);
+                document.getElementById('viewer-signed-date').textContent = signedDate.toLocaleDateString('pt-BR');
+                document.getElementById('viewer-signed-time').textContent = signedDate.toLocaleTimeString('pt-BR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            } else {
+                document.getElementById('viewer-signature-section').style.display = 'none';
+            }
+
+            // Mostra o visualizador
+            document.getElementById('signed-document-viewer').style.display = 'flex';
+
+        } catch (err) {
+            alert('Erro: ' + err.message);
+        }
+    },
+
+    close: () => {
+        document.getElementById('signed-document-viewer').style.display = 'none';
+        documentViewer.currentContract = null;
+    },
+
+    download: () => {
+        if (!documentViewer.currentContract) return;
+
+        // Cria HTML completo do documento
+        const html = `
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Contrato - ${documentViewer.currentContract.client_name}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 40px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #2563eb;
+        }
+        .header h1 {
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+        .contract-content {
+            margin-bottom: 40px;
+        }
+        .signature-section {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 2px solid #e2e8f0;
+        }
+        .signature-title {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            color: #0f172a;
+        }
+        .signature-box {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .signature-img {
+            max-width: 300px;
+            max-height: 120px;
+            border: 1px solid #cbd5e1;
+            margin-bottom: 15px;
+        }
+        .signature-meta {
+            font-size: 0.9em;
+            color: #64748b;
+            line-height: 1.6;
+        }
+        .signature-meta strong {
+            color: #0f172a;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 Contrato</h1>
+        <p><strong>Cliente:</strong> ${documentViewer.currentContract.client_name}</p>
+        <p><strong>Tipo:</strong> ${documentViewer.currentContract.contract_type || 'Não especificado'}</p>
+        <p><strong>Data:</strong> ${new Date(documentViewer.currentContract.created_at).toLocaleDateString('pt-BR')}</p>
+    </div>
     
-    // Injeta botão de "Gerar Link" na tela de criação
-    // Hook na navegação para garantir que o elemento existe
+    <div class="contract-content">
+        ${documentViewer.currentContract.contract_html || ''}
+    </div>
+    
+    ${documentViewer.currentContract.status === 'signed' ? `
+    <div class="signature-section">
+        <div class="signature-title">✍️ Assinatura Digital</div>
+        <div class="signature-box">
+            <img class="signature-img" src="${documentViewer.currentContract.signature_data}" alt="Assinatura">
+            <div class="signature-meta">
+                <p>✓ Assinado por: <strong>${documentViewer.currentContract.client_name}</strong></p>
+                <p>✓ Data: <strong>${new Date(documentViewer.currentContract.signed_at).toLocaleDateString('pt-BR')}</strong></p>
+                <p>✓ Hora: <strong>${new Date(documentViewer.currentContract.signed_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</strong></p>
+            </div>
+        </div>
+    </div>
+    ` : ''}
+</body>
+</html>
+        `;
+
+        // Cria blob e faz download
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `contrato-${documentViewer.currentContract.client_name.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.html`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+};
+
+/* ================= INTERCEPT URL PARAM ?sign= ================= */
+(function checkSigningMode() {
+    const params = new URLSearchParams(window.location.search);
+    const signId = params.get('sign');
+    if (signId) {
+        // Aguarda Supabase estar pronto antes de carregar
+        const tryInit = () => {
+            if (window.supabaseClient) {
+                signingPage.init(signId);
+            } else {
+                setTimeout(tryInit, 100);
+            }
+        };
+        tryInit();
+    }
+})();
+
+/* ================= HOOK: ADICIONAR BOTÃO "ENVIAR LINK" NA TELA DE CONTRATO ================= */
+(function hookSendLinkButton() {
     const originalNav = app.nav;
-    app.nav = function(view) {
-        originalNav(view);
-        if(view === 'create') {
+    app.nav = function(viewId) {
+        originalNav.call(this, viewId);
+        if (viewId === 'create') {
             setTimeout(() => {
-                const headerActions = document.getElementById('create-actions-wrapper');
-                if(headerActions && !document.getElementById('btn-gen-link')) {
+                if (document.getElementById('btn-send-sign-link')) return;
+                const headerBtns = document.querySelector('#view-create header > div[style]');
+                if (headerBtns) {
                     const btn = document.createElement('button');
-                    btn.id = 'btn-gen-link';
+                    btn.id = 'btn-send-sign-link';
                     btn.className = 'btn btn-whatsapp-sign';
-                    btn.innerHTML = '<i class="fas fa-link"></i> Gerar Link de Assinatura';
-                    btn.onclick = signingLinkManager.generate;
-                    headerActions.insertBefore(btn, headerActions.firstChild);
+                    btn.innerHTML = '<i class="fab fa-whatsapp"></i> Enviar para Assinar';
+                    btn.onclick = () => signingLinkManager.generate();
+                    headerBtns.insertBefore(btn, headerBtns.firstChild);
                 }
             }, 100);
         }
-    }
-}
-
+    };
+})();
 </script>
 </body>
 </html>
