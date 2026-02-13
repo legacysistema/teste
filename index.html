@@ -1279,6 +1279,19 @@
 </div>
 
 <script>
+
+const API = "https://rjyxkouegrropsarrhje.supabase.co/functions/v1/legacy";
+
+async function api(action, payload={}) {
+  const res = await fetch(API, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ action, payload })
+  });
+
+  return res.json();
+}
+
 /* ================= SUPABASE CONFIG ================= */
 const SUPABASE_URL = 'https://rjyxkouegrropsarrhje.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqeXhrb3VlZ3Jyb3BzYXJyaGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NjYxNjcsImV4cCI6MjA4NTE0MjE2N30.UjNPnVBVhQcUSirXeWZ3RmYmAhDMqqbbVUChG_Mv57U';
