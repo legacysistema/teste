@@ -1279,6 +1279,22 @@
 </div>
 
 <script>
+    async function testarAPI(){
+  const r = await fetch("https://SEU-PROJETO.supabase.co/functions/v1/legacy", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      action: "ping"
+    })
+  });
+
+  const j = await r.json();
+  console.log(j);
+}
+
+testarAPI();
 
 const API = "https://rjyxkouegrropsarrhje.supabase.co/functions/v1/legacy";
 
