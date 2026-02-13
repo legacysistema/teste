@@ -894,7 +894,7 @@
                 <label for="login-password">Senha</label>
                 <input type="password" id="login-password" class="login-input" placeholder="••••••••" required>
             </div>
-            <button type="button" id="btnLogin" class="btn-login-action">Entrar no Sistema</button>
+            <button type="summit" id="btnLogin" class="btn-login-action">Entrar no Sistema</button>
         </form>
 
         <div class="login-footer-badge">
@@ -1280,7 +1280,28 @@
 
 
 <script src="https://rjyxkouegrropsarrhje.supabase.co/functions/v1/legacy"></script>
+<script>    
+    async function entrar(){
 
+  console.log("clicou login");
+
+  const email = document.getElementById("login-email").value;
+  const senha = document.getElementById("login-password").value;
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email,
+    password: senha
+  });
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  console.log("LOGADO");
+  window.location.href = "/sistema";
+}
+</script>
 
 </body>
 </html>
