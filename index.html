@@ -2617,7 +2617,31 @@ window.supabaseClient = supabase.createClient(
             loadSettings: async () => { const types = await db.getAll('eventTypes'); agendaManager.types = types.length ? types : [ {id: 1, name: 'Reunião', color: '#2563eb'}, {id: 2, name: 'Instalação', color: '#166534'}, {id: 3, name: 'Entrega', color: '#f59e0b'} ]; if(!types.length) agendaManager.types.forEach(async t => await db.put('eventTypes', t)); const visits = await db.getAll('visitTypes'); agendaManager.visits = visits.length ? visits : [ {id: 1, name: 'Presencial'}, {id: 2, name: 'Online / Remoto'} ]; if(!visits.length) agendaManager.visits.forEach(async v => await db.put('visitTypes', v)); },
             changeMonth: (delta) => { if (delta === 0) agendaManager.currentDate = new Date(); else agendaManager.currentDate.setMonth(agendaManager.currentDate.getMonth() + delta); agendaManager.render(); },
             render: async () => { agendaManager.events = await db.getAll('events'); const dt = agendaManager.currentDate; const year = dt.getFullYear(), month = dt.getMonth(); const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]; document.getElementById('agenda-month-year').innerText = `${monthNames[month]} ${year}`; const firstDay = new Date(year, month, 1); const lastDay = new Date(year, month + 1, 0); const startDayIndex = firstDay.getDay(); const totalDays = lastDay.getDate(); const prevMonthLastDay = new Date(year, month, 0).getDate(); let html = ''; for (let i = startDayIndex; i > 0; i--) { html += `<div class="cal-cell other-month"><span class="cal-cell-num">${prevMonthLastDay - i + 1}</span></div>`; } const today = new Date(); for (let i = 1; i <= totalDays; i++) { const currentDayStr = `${year}-${String(month+1).padStart(2, '0')}-${String(i).padStart(2, '0')}`; let isToday = (i === today.getDate() && month === today.getMonth() && year === today.getFullYear()) ? 'today' : ''; const dayEvents = agendaManager.events.filter(e => e.date === currentDayStr); let eventHtml = ''; dayEvents.forEach(evt => { const typeObj = agendaManager.types.find(t => t.id == evt.typeId) || {color: '#ccc'}; eventHtml += `<div class="agenda-event-pill" style="background:${typeObj.color}" onclick="agendaManager.viewEvent(${evt.id})">${evt.time} ${evt.title}</div>`; }); html += `<div class="cal-cell ${isToday}" onclick="agendaManager.dayClick('${currentDayStr}')"><span class="cal-cell-num">${i}</span><div style="display:flex; flex-direction:column; gap:2px;">${eventHtml}</div></div>`; } const totalSlots = startDayIndex + totalDays; const remaining = 42 - totalSlots; if(remaining < 7) for(let j = 1; j <= remaining; j++) html += `<div class="cal-cell other-month"><span class="cal-cell-num">${j}</span></div>`; document.getElementById('agenda-grid').innerHTML = html; agendaManager.renderSidebarList(); },
-            renderSidebarList: () => { const list = document.getElementById('agenda-sidebar-list'); list.innerHTML = ''; const todayStr = new Date().toISOString().split('T')[0]; const upcoming = agendaManager.events.filter(e => e.date >= todayStr).sort((a,b) => (a.date + a.time).localeCompare(b.date + b.time)).slice(0, 10); if(!upcoming.length) { list.innerHTML = '<p style="color:#94a3b8; font-size:0.8rem; text-align:center;">Sem eventos próximos.</p>'; return; } upcoming.forEach(e => { const typeObj = agendaManager.types.find(t => t.id == e.typeId) || {color: '#ccc'}; const dateFormatted = new Date(e.date).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'}); list.innerHTML += `<div class="mini-list-item"><div class="mini-time">${dateFormatted}<br>${e.time}</div><div class="mini-desc"><h4>${e.title}</h4><p>${e.clientName || 'Sem cliente'}</p><span class="mini-tag" style="background:${typeObj.color}"></span></div></div>`; }); },
+            renderSidebarList: () => { 
+                const list = document.getElementById('agenda-sidebar-list'); 
+                list.innerHTML = ''; 
+                const todayStr = new Date().toISOString().split('T')[0]; 
+                const upcoming = agendaManager.events
+                    .filter(e => e.date >= todayStr)
+                    .sort((a,b) => (a.date + a.time).localeCompare(b.date + b.time))
+                    .slice(0, 10); 
+                
+                if(!upcoming.length) { 
+                    list.innerHTML = '<p style="color:#94a3b8; font-size:0.8rem; text-align:center;">Sem eventos próximos.</p>'; 
+                    return; 
+                } 
+                
+                upcoming.forEach(e => { 
+                    const typeObj = agendaManager.types.find(t => t.id == e.typeId) || {color: '#ccc'}; 
+                    
+                    // Corrigir problema de fuso horário - fazer parse manual da data
+                    const [year, month, day] = e.date.split('-').map(Number);
+                    const dateObj = new Date(year, month - 1, day); // month - 1 porque JS conta meses de 0-11
+                    const dateFormatted = dateObj.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'}); 
+                    
+                    list.innerHTML += `<div class="mini-list-item"><div class="mini-time">${dateFormatted}<br>${e.time}</div><div class="mini-desc"><h4>${e.title}</h4><p>${e.clientName || 'Sem cliente'}</p><span class="mini-tag" style="background:${typeObj.color}"></span></div></div>`; 
+                }); 
+            },
             openModal: async (datePreSet = null) => { document.getElementById('event-form').reset(); document.getElementById('evt-id').value = ''; document.getElementById('evt-modal-title').innerText = "Novo Agendamento"; document.getElementById('btn-delete-event').style.display = 'none'; if(datePreSet) document.getElementById('evt-date').value = datePreSet; else document.getElementById('evt-date').value = new Date().toISOString().split('T')[0]; const clients = await db.getAll('contacts'); const clientSel = document.getElementById('evt-client'); clientSel.innerHTML = '<option value="">Selecione um cliente...</option>'; clients.forEach(c => clientSel.innerHTML += `<option value="${c.id}">${c.name}</option>`); const typeSel = document.getElementById('evt-type'); typeSel.innerHTML = ''; agendaManager.types.forEach(t => typeSel.innerHTML += `<option value="${t.id}">${t.name}</option>`); const visitSel = document.getElementById('evt-visit-type'); visitSel.innerHTML = ''; agendaManager.visits.forEach(v => visitSel.innerHTML += `<option value="${v.id}">${v.name}</option>`); document.getElementById('event-modal').style.display = 'flex'; },
             populateClientData: async () => { const clientId = document.getElementById('evt-client').value; if(clientId) { const contacts = await db.getAll('contacts'); const c = contacts.find(x => x.id == clientId); if(c && c.address) { const fullAddr = `${c.address}, ${c.number || ''} - ${c.district || ''}, ${c.city || ''}`; document.getElementById('evt-address').value = fullAddr; } } },
             calcFinancials: () => { const total = parseFloat(document.getElementById('evt-val-total').value || 0); const signal = parseFloat(document.getElementById('evt-val-signal').value || 0); const rest = total - signal; document.getElementById('evt-val-rest').value = rest.toFixed(2); },
@@ -3557,6 +3581,37 @@ window.addEventListener('resize', () => {
         transform: scale(0.95);
         background: rgba(239, 68, 68, 0.3);
     }
+    
+    #ia-chat-clear {
+        background: rgba(59, 130, 246, 0.1);
+        border: 2px solid rgba(59, 130, 246, 0.3);
+        border-radius: 8px;
+        color: #3b82f6;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        padding: 8px 14px;
+        transition: all 0.3s ease;
+        line-height: 1;
+        position: relative;
+        z-index: 10001;
+        min-width: 45px;
+        min-height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    #ia-chat-clear:hover { 
+        color: white; 
+        background: rgba(59, 130, 246, 0.8);
+        border-color: #3b82f6;
+        transform: scale(1.1);
+    }
+    #ia-chat-clear:active {
+        transform: scale(0.95);
+        background: rgba(59, 130, 246, 0.3);
+    }
     #ia-chat-close:hover { 
         color: white; 
         background: rgba(239, 68, 68, 0.8);
@@ -3763,7 +3818,10 @@ window.addEventListener('resize', () => {
                 Assistente Estratégico
                 <div class="ia-status-indicator"></div>
             </h3>
-            <button id="ia-chat-close" title="Fechar chat (ESC)">✕</button>
+            <div style="display: flex; gap: 8px;">
+                <button id="ia-chat-clear" title="Limpar conversa"><i class="fas fa-broom"></i></button>
+                <button id="ia-chat-close" title="Fechar chat (ESC)">✕</button>
+            </div>
         </div>
         <div id="ia-chat-messages"></div>
         <div id="ia-chat-input-area">
@@ -3815,6 +3873,7 @@ window.addEventListener('resize', () => {
     const chatButton = document.getElementById('ia-chat-button');
     const chatModal = document.getElementById('ia-chat-modal');
     const chatClose = document.getElementById('ia-chat-close');
+    const chatClear = document.getElementById('ia-chat-clear');
     const chatMessages = document.getElementById('ia-chat-messages');
     const chatInput = document.getElementById('ia-chat-input');
     const chatSend = document.getElementById('ia-chat-send');
@@ -4577,6 +4636,49 @@ Produtos: ${JSON.stringify(context.products.slice(0, 3))}... (${context.products
         console.log('🔴 Touch no botão fechar!');
         chatModal.style.display = 'none';
     }, { passive: false });
+
+    // Botão de limpar conversa
+    chatClear.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (chatMessages.children.length === 0) {
+            return; // Nada para limpar
+        }
+        
+        if (confirm('Deseja limpar toda a conversa? Esta ação não pode ser desfeita.')) {
+            // Limpar mensagens na tela
+            chatMessages.innerHTML = '';
+            
+            // Limpar histórico de conversação
+            conversationHistory = [];
+            
+            // Adicionar mensagem de boas-vindas novamente
+            addMessage('assistant', `
+                👋 <strong>Olá! Sou seu Assistente Estratégico.</strong><br><br>
+                Posso ajudar você a:<br>
+                • Gerenciar contatos, projetos e eventos<br>
+                • Gerar relatórios e análises<br>
+                • Consultar e cruzar informações<br>
+                • Automatizar tarefas do CRM<br><br>
+                Como posso ajudar?
+            `);
+            
+            // Adicionar sugestões
+            getSystemContext().then(context => {
+                const suggestions = getSuggestions(context);
+                if (suggestions.length > 0) {
+                    addSuggestions(suggestions);
+                }
+            });
+            
+            console.log('🧹 Conversa limpa!');
+        }
+    });
+    
+    chatClear.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+    });
 
     // Fechar com tecla ESC
     document.addEventListener('keydown', (e) => {
