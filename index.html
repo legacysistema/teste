@@ -3831,17 +3831,20 @@ window.addEventListener('resize', () => {
 
             const data = await resp.json();
 
-            
+            // Procurar TODAS as tool calls
             const toolUseBlocks =
                 data.content?.filter(block => block.type === "tool_use") || [];
 
-            
+            // ===== SEM TOOL CALL => resposta final =====
             if (toolUseBlocks.length === 0) {
                 return data;
             }
 
             console.log("🔧 Tool calls detectadas:", toolUseBlocks.map(t => t.name));
 
+            // IMPORTANTE:
+            // adiciona a resposta do assistant ao contexto
+            // mas o frontend NÃO deve renderizar blocos tool_use
             currentMessages.push({
                 role: "assistant",
                 content: data.content
@@ -3872,31 +3875,7 @@ window.addEventListener('resize', () => {
     }
 
 })();
-
-
-    // ========== EXECUTAR FUNÇÕES LOCAIS ==========
-    async function executeLocalFunction(functionName, params) {
-        console.log('⚙️ Executando:', functionName, params);
-        
-        const handler = actionHandlers[functionName];
-        
-        if (!handler) {
-            return { 
-                success: false, 
-                message: `Função '${functionName}' não implementada` 
-            };
-        }
-        
-        try {
-            return await handler(params || {});
-        } catch (error) {
-            console.error('❌ Erro ao executar função:', error);
-            return { 
-                success: false, 
-                message: `Erro: ${error.message}` 
-            };
-        }
-    }
+}
 
    
     // ==================== ELEMENTOS DOM ====================
