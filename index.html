@@ -3808,38 +3808,23 @@ window.addEventListener('resize', () => {
    // ==================== CONFIGURAÇÃO ==================== //
 (function() {
 
-    let isProcessing = false;
-    let conversationHistory = [];
+       let isProcessing = false;
+       let conversationHistory = [];
 
-    async function perguntarIA(messages) {
-
-        try {
-
-            const resp = await fetch(
-                "https://rjyxkouegrropsarrhje.supabase.co/functions/v1/ai-proxy",
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ messages })
-                }
-            );
-
-            const data = await resp.json();
-
-            // 🔥 mostra erro real da Edge Function
-            if (!resp.ok) {
-                throw new Error(data.error || "Erro na IA");
-            }
-
-            return data;
-
-        } catch (err) {
-            console.error("Erro perguntarIA:", err);
-            throw err;
-        }
+        async function perguntarIA(messages) {
+  const resp = await fetch(
+    "https://rjyxkouegrropsarrhje.supabase.co/functions/v1/ai-proxy",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages })
     }
+  );
 
+  return await resp.json();
+}
 
+   
     // ==================== ELEMENTOS DOM ====================
     const chatButton = document.getElementById('ia-chat-button');
     const chatModal = document.getElementById('ia-chat-modal');
