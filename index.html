@@ -3808,50 +3808,37 @@ window.addEventListener('resize', () => {
    // ==================== CONFIGURAÇÃO ==================== //
 (function() {
 
-       let isProcessing = false;
-       let conversationHistory = [];
+    let isProcessing = false;
+    let conversationHistory = [];
 
-        async function perguntarIA(messages) {
-  const resp = await fetch(
-    "https://rjyxkouegrropsarrhje.supabase.co/functions/v1/ai-proxy",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages })
-    }
-  );
+    async function perguntarIA(messages) {
 
-  return await resp.json();
-}
+        try {
 
-    // ==================== INDEXEDDB ====================
-    async function loadIAKey() {
-        return new Promise((resolve) => {
-            const request = indexedDB.open('AnalisadorDB', 1);
-            request.onsuccess = (e) => {
-                const db = e.target.result;
-                if (!db.objectStoreNames.contains('config')) {
-                    resolve('');
-                    return;
+            const resp = await fetch(
+                "https://rjyxkouegrropsarrhje.supabase.co/functions/v1/ai-proxy",
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ messages })
                 }
-                const tx = db.transaction('config', 'readonly');
-                const store = tx.objectStore('config');
-                const getReq = store.get('openrouter_key');
-                getReq.onsuccess = () => resolve(getReq.result ? getReq.result.value : '');
-                getReq.onerror = () => resolve('');
-            };
-            request.onerror = () => resolve('');
-        });
+            );
+
+            const data = await resp.json();
+
+            // 🔥 mostra erro real da Edge Function
+            if (!resp.ok) {
+                throw new Error(data.error || "Erro na IA");
+            }
+
+            return data;
+
+        } catch (err) {
+            console.error("Erro perguntarIA:", err);
+            throw err;
+        }
     }
 
-    loadIAKey().then(key => {
-        if (key && key.trim() !== '') {
-            iaApiKey = key;
-            console.log('✅ Chave carregada do IndexedDB');
-        } else {
-            console.log('✅ Usando chave padrão configurada no código');
-        }
-    });
 
     // ==================== ELEMENTOS DOM ====================
     const chatButton = document.getElementById('ia-chat-button');
