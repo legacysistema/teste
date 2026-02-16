@@ -3809,21 +3809,88 @@ window.addEventListener('resize', () => {
    // ==================== CONFIGURAÇÃO ==================== //
 (function() {
 
-       let isProcessing = false;
-       let conversationHistory = [];
+    let isProcessing = false;
+    let conversationHistory = [];
 
-        async function perguntarIA(messages) {
-  const resp = await fetch(
-    "https://rjyxkouegrropsarrhje.supabase.co/functions/v1/ai-proxy",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages })
+    // ========== FUNÇÃO PRINCIPAL (MODIFICADA) ==========
+    async function perguntarIA(messages) {
+        let currentMessages = [...messages];
+        let maxIterations = 5;
+        let iterations = 0;
+        
+        while (iterations < maxIterations) {
+            const resp = await fetch(
+                "https://rjyxkouegropsarrhje.supabase.co/functions/v1/ai-proxy",
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ messages: currentMessages })
+                }
+            );
+            
+            const data = await resp.json();
+            
+            // Verificar se há tool_use na resposta
+            const toolUseBlock = data.content?.find(block => block.type === 'tool_use');
+            
+            if (toolUseBlock) {
+                console.log('🔧 Tool call detectada:', toolUseBlock.name);
+                
+                // Adicionar resposta do assistente
+                currentMessages.push({
+                    role: 'assistant',
+                    content: data.content
+                });
+                
+                // Executar função local
+                const toolResult = await executeLocalFunction(
+                    toolUseBlock.name,
+                    toolUseBlock.input
+                );
+                
+                // Adicionar resultado
+                currentMessages.push({
+                    role: 'user',
+                    content: [{
+                        type: 'tool_result',
+                        tool_use_id: toolUseBlock.id,
+                        content: JSON.stringify(toolResult)
+                    }]
+                });
+                
+                iterations++;
+            } else {
+                // Sem tool_use, retornar resposta final
+                return data;
+            }
+        }
+        
+        throw new Error('Limite de chamadas de função excedido');
     }
-  );
 
-  return await resp.json();
-}
+    // ========== EXECUTAR FUNÇÕES LOCAIS ==========
+    async function executeLocalFunction(functionName, params) {
+        console.log('⚙️ Executando:', functionName, params);
+        
+        const handler = actionHandlers[functionName];
+        
+        if (!handler) {
+            return { 
+                success: false, 
+                message: `Função '${functionName}' não implementada` 
+            };
+        }
+        
+        try {
+            return await handler(params || {});
+        } catch (error) {
+            console.error('❌ Erro ao executar função:', error);
+            return { 
+                success: false, 
+                message: `Erro: ${error.message}` 
+            };
+        }
+    }
 
    
     // ==================== ELEMENTOS DOM ====================
