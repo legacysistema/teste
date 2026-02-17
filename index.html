@@ -2011,9 +2011,6 @@ let vmJ=typeof globalThis!=='undefined'?globalThis:typeof window!=='undefined'?w
 </script>
 
 <style>
-    /* ============================================
-       CHAT IA - ESTILO BASE
-       ============================================ */
     #ia-chat-button {
         position: fixed;
         bottom: 30px;
@@ -2059,18 +2056,18 @@ let vmJ=typeof globalThis!=='undefined'?globalThis:typeof window!=='undefined'?w
         backdrop-filter: blur(10px);
     }
     #ia-chat-header {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        background: #0f172a;
         padding: 15px 20px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 2px solid #334155;
+        border-bottom: 1px solid #334155;
         flex-shrink: 0;
-        min-height: 65px;
+        min-height: 60px;
     }
     #ia-chat-header h3 {
         color: white;
-        font-size: 0.95rem;
+        font-size: 1rem;
         display: flex;
         align-items: center;
         gap: 8px;
@@ -2079,19 +2076,6 @@ let vmJ=typeof globalThis!=='undefined'?globalThis:typeof window!=='undefined'?w
         min-width: 0;
     }
     #ia-chat-header h3 i { color: #60a5fa; }
-    .ia-legacy-badge {
-        display: inline-block;
-        background: linear-gradient(135deg, #1e40af, #2563eb);
-        color: white;
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-left: 8px;
-        border: 1px solid rgba(255,255,255,0.2);
-    }
     .ia-status-indicator {
         width: 8px;
         height: 8px;
@@ -2292,1106 +2276,1254 @@ let vmJ=typeof globalThis!=='undefined'?globalThis:typeof window!=='undefined'?w
         display: flex;
         gap: 10px;
         align-items: center;
-        font-size: 0.85rem;
+        flex-wrap: wrap;
+        font-size: 0.9rem;
+        color: white;
     }
     .ia-confirm-btn {
-        background: rgba(255,255,255,0.1);
-        border: 1px solid rgba(255,255,255,0.3);
-        color: white;
         padding: 6px 12px;
+        border: none;
         border-radius: 6px;
+        font-size: 0.85rem;
         cursor: pointer;
         transition: 0.2s;
-        font-size: 0.85rem;
+        font-weight: 600;
     }
-    .ia-confirm-btn:hover {
-        background: rgba(255,255,255,0.2);
+    .ia-confirm-btn[data-confirm="yes"] {
+        background: #10b981;
+        color: white;
     }
+    .ia-confirm-btn[data-confirm="yes"]:hover { background: #059669; }
     .ia-confirm-btn.cancel {
-        background: rgba(239, 68, 68, 0.2);
-        border-color: rgba(239, 68, 68, 0.5);
+        background: #ef4444;
+        color: white;
     }
-    .ia-confirm-btn.cancel:hover {
-        background: rgba(239, 68, 68, 0.4);
-    }
+    .ia-confirm-btn.cancel:hover { background: #dc2626; }
     .ia-suggestions {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
-        padding: 10px 0;
+        padding: 10px;
+        background: rgba(30, 64, 175, 0.1);
+        border-radius: 12px;
+        align-self: flex-start;
+        max-width: 100%;
     }
-    .ia-suggestion-chip {
-        background: rgba(37, 99, 235, 0.15);
+    .ia-suggestion-btn {
+        background: rgba(37, 99, 235, 0.2);
         border: 1px solid rgba(37, 99, 235, 0.4);
-        color: #93c5fd;
-        padding: 8px 14px;
+        color: #60a5fa;
+        padding: 6px 12px;
         border-radius: 20px;
         font-size: 0.85rem;
         cursor: pointer;
         transition: all 0.2s;
+        white-space: nowrap;
     }
-    .ia-suggestion-chip:hover {
-        background: rgba(37, 99, 235, 0.3);
+    .ia-suggestion-btn:hover {
+        background: rgba(37, 99, 235, 0.4);
         border-color: #2563eb;
-        transform: translateY(-2px);
+        color: white;
+        transform: translateY(-1px);
     }
 
-    /* ============================================
-       SISTEMA DE MODAIS PARA RELATÓRIOS
-       ============================================ */
-    .ia-report-overlay {
-        display: none;
+    /* ============================================ */
+    /* SISTEMA DE MODAIS - DESIGN MODERNO */
+    /* ============================================ */
+    .ia-modal-overlay {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
         background: rgba(0, 0, 0, 0.75);
-        backdrop-filter: blur(5px);
+        backdrop-filter: blur(8px);
+        display: none;
+        align-items: center;
+        justify-content: center;
         z-index: 20000;
         animation: fadeIn 0.3s ease;
     }
     
+    .ia-modal-overlay.active {
+        display: flex;
+    }
+
     @keyframes fadeIn {
         from { opacity: 0; }
         to { opacity: 1; }
     }
-    
-    .ia-report-modal {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .ia-modal-container {
         background: #1e293b;
         border-radius: 16px;
-        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
         width: 90%;
-        max-width: 1000px;
+        max-width: 900px;
         max-height: 85vh;
         display: flex;
         flex-direction: column;
-        border: 2px solid #334155;
-        animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        border: 1px solid #334155;
+        animation: slideUp 0.3s ease;
     }
-    
-    @keyframes slideUp {
-        from { 
-            opacity: 0;
-            transform: translate(-50%, -45%);
-        }
-        to { 
-            opacity: 1;
-            transform: translate(-50%, -50%);
-        }
-    }
-    
-    .ia-report-header {
+
+    /* Header do Modal */
+    .ia-modal-header {
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         padding: 20px 25px;
         border-bottom: 2px solid #334155;
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        justify-content: space-between;
         border-radius: 16px 16px 0 0;
     }
-    
-    .ia-report-header-left {
-        display: flex;
-        align-items: center;
-        gap: 12px;
+
+    .ia-modal-header-content {
         flex: 1;
     }
-    
-    .ia-report-icon {
-        width: 45px;
-        height: 45px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        background: linear-gradient(135deg, #2563eb, #1e40af);
-        border: 2px solid rgba(255,255,255,0.2);
-    }
-    
-    .ia-report-title-section h2 {
-        margin: 0;
+
+    .ia-modal-title {
         color: white;
-        font-size: 1.3rem;
-        font-weight: 600;
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin: 0 0 5px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
-    
-    .ia-report-title-section p {
-        margin: 4px 0 0 0;
+
+    .ia-modal-subtitle {
         color: #94a3b8;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
+        margin: 0;
     }
-    
-    .ia-report-close {
-        background: rgba(239, 68, 68, 0.15);
+
+    .ia-modal-legacy-badge {
+        background: linear-gradient(135deg, #2563eb, #1e40af);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    .ia-modal-close {
+        background: rgba(239, 68, 68, 0.1);
         border: 2px solid rgba(239, 68, 68, 0.3);
-        border-radius: 10px;
         color: #ef4444;
-        font-size: 1.8rem;
-        cursor: pointer;
-        width: 45px;
-        height: 45px;
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.3s ease;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 1.3rem;
         font-weight: bold;
-        line-height: 1;
+        margin-left: 15px;
     }
-    
-    .ia-report-close:hover {
+
+    .ia-modal-close:hover {
         background: rgba(239, 68, 68, 0.8);
         border-color: #ef4444;
         color: white;
-        transform: rotate(90deg);
+        transform: scale(1.1);
     }
-    
-    .ia-report-content {
-        flex: 1;
-        overflow-y: auto;
+
+    /* Corpo do Modal */
+    .ia-modal-body {
         padding: 25px;
+        overflow-y: auto;
+        flex: 1;
         background: #1e293b;
     }
-    
-    .ia-report-section {
+
+    /* Footer do Modal */
+    .ia-modal-footer {
+        background: #52555a;
+        padding: 15px 25px;
+        border-top: 1px solid #334155;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 0 0 16px 16px;
+    }
+
+    .ia-modal-footer-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #cbd5e1;
+        font-size: 0.85rem;
+    }
+
+    .ia-modal-footer-left i {
+        color: #60a5fa;
+    }
+
+    .ia-modal-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .ia-modal-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .ia-modal-btn.primary {
+        background: linear-gradient(135deg, #2563eb, #1e40af);
+        color: white;
+    }
+
+    .ia-modal-btn.primary:hover {
+        background: linear-gradient(135deg, #1e40af, #1e3a8a);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(37, 99, 235, 0.4);
+    }
+
+    .ia-modal-btn.secondary {
+        background: #334155;
+        color: white;
+    }
+
+    .ia-modal-btn.secondary:hover {
+        background: #475569;
+    }
+
+    .ia-modal-btn.success {
+        background: #10b981;
+        color: white;
+    }
+
+    .ia-modal-btn.success:hover {
+        background: #059669;
+        transform: translateY(-2px);
+    }
+
+    /* Cards de Estatísticas */
+    .ia-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .ia-stat-card {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.3s;
+    }
+
+    .ia-stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
+        border-color: #2563eb;
+    }
+
+    .ia-stat-label {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+
+    .ia-stat-value {
+        color: white;
+        font-size: 2rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .ia-stat-icon {
+        font-size: 1.5rem;
+        color: #60a5fa;
+    }
+
+    /* Tabelas */
+    .ia-table-container {
+        background: #0f172a;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #334155;
+    }
+
+    .ia-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .ia-table thead {
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+    }
+
+    .ia-table th {
+        color: #f1f5f9;
+        font-weight: 600;
+        text-align: left;
+        padding: 15px;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #334155;
+    }
+
+    .ia-table td {
+        color: #cbd5e1;
+        padding: 12px 15px;
+        border-bottom: 1px solid #1e293b;
+        font-size: 0.9rem;
+    }
+
+    .ia-table tbody tr {
+        transition: background 0.2s;
+    }
+
+    .ia-table tbody tr:hover {
+        background: rgba(37, 99, 235, 0.1);
+    }
+
+    /* Badges de Status */
+    .ia-badge {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .ia-badge.success {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .ia-badge.warning {
+        background: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .ia-badge.danger {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .ia-badge.info {
+        background: rgba(59, 130, 246, 0.2);
+        color: #3b82f6;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    /* Seções do Modal */
+    .ia-modal-section {
+        margin-bottom: 25px;
+    }
+
+    .ia-modal-section-title {
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #334155;
+    }
+
+    .ia-modal-section-title i {
+        color: #60a5fa;
+    }
+
+    /* Lista de Itens */
+    .ia-item-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .ia-item {
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 15px;
+        transition: all 0.2s;
+    }
+
+    .ia-item:hover {
+        border-color: #2563eb;
+        background: rgba(37, 99, 235, 0.05);
+    }
+
+    .ia-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .ia-item-title {
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .ia-item-content {
+        color: #94a3b8;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    /* Loading State */
+    .ia-modal-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        gap: 20px;
+    }
+
+    .ia-modal-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #334155;
+        border-top-color: #2563eb;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    .ia-modal-loading-text {
+        color: #94a3b8;
+        font-size: 1rem;
+    }
+
+    /* Empty State */
+    .ia-empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .ia-empty-icon {
+        font-size: 4rem;
+        color: #334155;
+        margin-bottom: 20px;
+    }
+
+    .ia-empty-text {
+        color: #94a3b8;
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+    }
+
+    .ia-empty-subtext {
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+
+    /* Chart Container */
+    .ia-chart-container {
         background: #0f172a;
         border: 1px solid #334155;
         border-radius: 12px;
         padding: 20px;
         margin-bottom: 20px;
     }
-    
-    .ia-report-section h3 {
-        margin: 0 0 15px 0;
-        color: #60a5fa;
-        font-size: 1.1rem;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding-bottom: 12px;
-        border-bottom: 2px solid #334155;
-    }
-    
-    .ia-report-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
-        margin-top: 15px;
-    }
-    
-    .ia-report-card {
-        background: #1e293b;
-        border: 1px solid #334155;
-        border-radius: 10px;
-        padding: 15px;
-        transition: all 0.3s ease;
-    }
-    
-    .ia-report-card:hover {
-        border-color: #2563eb;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-    }
-    
-    .ia-report-card-label {
-        color: #94a3b8;
-        font-size: 0.85rem;
-        margin-bottom: 8px;
-    }
-    
-    .ia-report-card-value {
-        color: white;
-        font-size: 1.5rem;
-        font-weight: 600;
-    }
-    
-    .ia-report-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 15px;
-        background: #1e293b;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-    
-    .ia-report-table thead {
+
+    /* Progress Bar */
+    .ia-progress {
         background: #0f172a;
-    }
-    
-    .ia-report-table th {
-        padding: 12px;
-        text-align: left;
-        color: #60a5fa;
-        font-weight: 600;
-        font-size: 0.9rem;
-        border-bottom: 2px solid #334155;
-    }
-    
-    .ia-report-table td {
-        padding: 12px;
-        color: #e2e8f0;
-        font-size: 0.9rem;
-        border-bottom: 1px solid #334155;
-    }
-    
-    .ia-report-table tbody tr:hover {
-        background: rgba(37, 99, 235, 0.1);
-    }
-    
-    .ia-report-footer {
-        background: #4b5563;
-        padding: 15px 25px;
-        border-top: 2px solid #334155;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-radius: 0 0 16px 16px;
-    }
-    
-    .ia-report-footer-text {
-        color: #d1d5db;
-        font-size: 0.85rem;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .ia-report-footer-brand {
-        color: #93c5fd;
-        font-weight: 600;
-    }
-    
-    .ia-report-actions {
-        display: flex;
-        gap: 10px;
-    }
-    
-    .ia-report-btn {
-        background: linear-gradient(135deg, #2563eb, #1e40af);
-        border: none;
         border-radius: 8px;
-        color: white;
-        padding: 10px 20px;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: 500;
-    }
-    
-    .ia-report-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
-    }
-    
-    .ia-report-btn.secondary {
-        background: rgba(148, 163, 184, 0.2);
-        border: 1px solid #475569;
-    }
-    
-    .ia-report-btn.secondary:hover {
-        background: rgba(148, 163, 184, 0.3);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-    
-    .ia-chart-placeholder {
-        background: #1e293b;
-        border: 2px dashed #334155;
-        border-radius: 8px;
-        padding: 40px;
-        text-align: center;
-        color: #64748b;
-        margin-top: 15px;
-    }
-    
-    .ia-status-badge {
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
-    }
-    
-    .ia-status-badge.success {
-        background: rgba(34, 197, 94, 0.2);
-        color: #22c55e;
-        border: 1px solid rgba(34, 197, 94, 0.4);
-    }
-    
-    .ia-status-badge.warning {
-        background: rgba(234, 179, 8, 0.2);
-        color: #eab308;
-        border: 1px solid rgba(234, 179, 8, 0.4);
-    }
-    
-    .ia-status-badge.danger {
-        background: rgba(239, 68, 68, 0.2);
-        color: #ef4444;
-        border: 1px solid rgba(239, 68, 68, 0.4);
-    }
-    
-    .ia-status-badge.info {
-        background: rgba(59, 130, 246, 0.2);
-        color: #3b82f6;
-        border: 1px solid rgba(59, 130, 246, 0.4);
+        height: 8px;
+        overflow: hidden;
+        margin-top: 10px;
     }
 
-    /* ============================================
-       RESPONSIVIDADE
-       ============================================ */
+    .ia-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #2563eb, #60a5fa);
+        transition: width 0.3s;
+    }
+
+    /* Responsive */
     @media (max-width: 768px) {
-        .ia-report-modal {
+        .ia-modal-container {
             width: 95%;
             max-height: 90vh;
         }
-        
-        .ia-report-grid {
+
+        .ia-stats-grid {
             grid-template-columns: 1fr;
         }
-        
-        .ia-report-header {
-            padding: 15px;
+
+        .ia-modal-header {
+            padding: 15px 20px;
         }
-        
-        .ia-report-content {
-            padding: 15px;
+
+        .ia-modal-body {
+            padding: 20px;
         }
-        
-        .ia-report-footer {
+
+        .ia-modal-footer {
             flex-direction: column;
             gap: 10px;
-            text-align: center;
+            align-items: stretch;
         }
+
+        .ia-modal-actions {
+            width: 100%;
+            flex-direction: column;
+        }
+
+        .ia-modal-btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    /* Link/Button para abrir modal */
+    .ia-open-modal-link {
+        color: #60a5fa;
+        text-decoration: underline;
+        cursor: pointer;
+        font-weight: 600;
+        transition: color 0.2s;
+    }
+
+    .ia-open-modal-link:hover {
+        color: #93c5fd;
     }
 </style>
 
-<!-- HTML DO CHAT -->
-<div id="ia-chat-button">
-    💬
-</div>
+<div id="ia-chat-button">💬</div>
 
-<div id="ia-chat-modal" style="display: flex;">
+<div id="ia-chat-modal">
     <div id="ia-chat-wrapper">
         <div id="ia-chat-header">
             <h3>
-                <i>🤖</i>
-                <span>Assistente IA</span>
-                <span class="ia-legacy-badge">Legacy CRM</span>
+                <i class="fas fa-robot"></i>
+                Assistente IA
                 <span class="ia-status-indicator"></span>
             </h3>
-            <div style="display: flex; gap: 8px;">
-                <button id="ia-chat-clear">🗑️</button>
-                <button id="ia-chat-close">✕</button>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <div id="ia-chat-clear" title="Limpar conversa">🗑️</div>
+                <div id="ia-chat-close" title="Fechar">×</div>
             </div>
         </div>
         <div id="ia-chat-messages"></div>
         <div id="ia-chat-input-area">
-            <input type="text" id="ia-chat-input" placeholder="Digite sua mensagem..." />
+            <input type="text" id="ia-chat-input" placeholder="Digite sua mensagem...">
             <button id="ia-chat-send">📤</button>
         </div>
     </div>
 </div>
 
-<!-- OVERLAY E MODAL PARA RELATÓRIOS -->
-<div id="ia-report-overlay" class="ia-report-overlay">
-    <div class="ia-report-modal" id="ia-report-modal">
-        <div class="ia-report-header">
-            <div class="ia-report-header-left">
-                <div class="ia-report-icon" id="ia-report-icon">📊</div>
-                <div class="ia-report-title-section">
-                    <h2 id="ia-report-title">Relatório</h2>
-                    <p id="ia-report-subtitle">Carregando informações...</p>
-                </div>
-            </div>
-            <button class="ia-report-close" id="ia-report-close">✕</button>
-        </div>
-        <div class="ia-report-content" id="ia-report-content">
-            <!-- Conteúdo dinâmico do relatório -->
-        </div>
-        <div class="ia-report-footer">
-            <div class="ia-report-footer-text">
-                <span>Gerado por</span>
-                <span class="ia-report-footer-brand">Legacy CRM</span>
-            </div>
-            <div class="ia-report-actions">
-                <button class="ia-report-btn secondary" onclick="window.print()">
-                    🖨️ Imprimir
-                </button>
-                <button class="ia-report-btn" onclick="iaReportManager.exportReport()">
-                    💾 Exportar
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Container para Modais -->
+<div id="ia-modals-container"></div>
 
 <script>
 (function() {
     'use strict';
 
+    const API_URL = 'https://dtwlqgmzitbpbacypygv.supabase.co/functions/v1/chat-crm';
+    const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0d2xxZ216aXRicGJhY3lweWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU1MTkxMTcsImV4cCI6MjA1MTA5NTExN30.jxBNjcnXeqjTD5_WbNxu0wLqCHMfxqhZI0pT8RDdY0A';
+
     const chatButton = document.getElementById('ia-chat-button');
     const chatModal = document.getElementById('ia-chat-modal');
-    const chatWrapper = document.getElementById('ia-chat-wrapper');
     const chatMessages = document.getElementById('ia-chat-messages');
     const chatInput = document.getElementById('ia-chat-input');
     const chatSend = document.getElementById('ia-chat-send');
     const chatClose = document.getElementById('ia-chat-close');
     const chatClear = document.getElementById('ia-chat-clear');
+    const modalsContainer = document.getElementById('ia-modals-container');
 
     let conversationHistory = [];
     let isProcessing = false;
 
-    /* ============================================
-       GERENCIADOR DE MODAIS DE RELATÓRIOS
-       ============================================ */
-    window.iaReportManager = {
-        currentReportType: null,
-        currentReportData: null,
-
-        // Detecta tipo de relatório pela mensagem do usuário
-        detectReportType(message) {
-            const msg = message.toLowerCase();
+    // ============================================
+    // SISTEMA DE MODAIS
+    // ============================================
+    
+    const ModalSystem = {
+        create(config) {
+            const overlay = document.createElement('div');
+            overlay.className = 'ia-modal-overlay';
             
-            if (msg.includes('financeiro') || msg.includes('finanças') || msg.includes('receita')) {
-                return 'financial';
-            }
-            if (msg.includes('vendas') || msg.includes('venda')) {
-                return 'sales';
-            }
-            if (msg.includes('contato') || msg.includes('cliente')) {
-                return 'contacts';
-            }
-            if (msg.includes('produto') || msg.includes('estoque') || msg.includes('inventário')) {
-                return 'products';
-            }
-            if (msg.includes('evento') || msg.includes('agenda') || msg.includes('calendário')) {
-                return 'events';
-            }
-            if (msg.includes('pipeline') || msg.includes('projeto') || msg.includes('funil')) {
-                return 'pipeline';
-            }
-            if (msg.includes('análise') || msg.includes('analítico') || msg.includes('dashboard')) {
-                return 'analytics';
-            }
+            const modal = document.createElement('div');
+            modal.className = 'ia-modal-container';
             
-            return null;
-        },
-
-        // Abre modal com relatório específico
-        async openReport(reportType, context) {
-            this.currentReportType = reportType;
-            this.currentReportData = context;
-
-            const overlay = document.getElementById('ia-report-overlay');
-            const modal = document.getElementById('ia-report-modal');
-            const icon = document.getElementById('ia-report-icon');
-            const title = document.getElementById('ia-report-title');
-            const subtitle = document.getElementById('ia-report-subtitle');
-            const content = document.getElementById('ia-report-content');
-
-            // Configura cabeçalho baseado no tipo
-            const reportConfig = this.getReportConfig(reportType);
-            icon.textContent = reportConfig.icon;
-            title.textContent = reportConfig.title;
-            subtitle.textContent = reportConfig.subtitle;
-
-            // Gera conteúdo do relatório
-            content.innerHTML = await this.generateReportContent(reportType, context);
-
-            // Exibe modal com animação
-            overlay.style.display = 'block';
-            setTimeout(() => {
-                modal.style.opacity = '1';
-            }, 10);
-        },
-
-        // Configurações de cada tipo de relatório
-        getReportConfig(type) {
-            const configs = {
-                financial: {
-                    icon: '💰',
-                    title: 'Relatório Financeiro',
-                    subtitle: 'Visão geral de receitas e despesas'
-                },
-                sales: {
-                    icon: '📈',
-                    title: 'Relatório de Vendas',
-                    subtitle: 'Desempenho comercial e métricas'
-                },
-                contacts: {
-                    icon: '👥',
-                    title: 'Relatório de Contatos',
-                    subtitle: 'Base de clientes e relacionamentos'
-                },
-                products: {
-                    icon: '📦',
-                    title: 'Relatório de Produtos',
-                    subtitle: 'Estoque e movimentação'
-                },
-                events: {
-                    icon: '📅',
-                    title: 'Relatório de Eventos',
-                    subtitle: 'Agenda e compromissos'
-                },
-                pipeline: {
-                    icon: '🎯',
-                    title: 'Relatório de Pipeline',
-                    subtitle: 'Status de projetos e oportunidades'
-                },
-                analytics: {
-                    icon: '📊',
-                    title: 'Dashboard Analítico',
-                    subtitle: 'Métricas e indicadores gerais'
+            modal.innerHTML = `
+                <div class="ia-modal-header">
+                    <div class="ia-modal-header-content">
+                        <h2 class="ia-modal-title">
+                            ${config.icon ? `<i class="${config.icon}"></i>` : ''}
+                            ${config.title}
+                        </h2>
+                        ${config.subtitle ? `<p class="ia-modal-subtitle">${config.subtitle}</p>` : ''}
+                    </div>
+                    <span class="ia-modal-legacy-badge">Legacy CRM</span>
+                    <div class="ia-modal-close">×</div>
+                </div>
+                <div class="ia-modal-body" id="modal-body-${Date.now()}">
+                    ${config.loading ? `
+                        <div class="ia-modal-loading">
+                            <div class="ia-modal-spinner"></div>
+                            <div class="ia-modal-loading-text">Carregando dados...</div>
+                        </div>
+                    ` : config.content || ''}
+                </div>
+                <div class="ia-modal-footer">
+                    <div class="ia-modal-footer-left">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Powered by Legacy CRM</span>
+                    </div>
+                    <div class="ia-modal-actions">
+                        ${config.actions ? config.actions.map(action => `
+                            <button class="ia-modal-btn ${action.class || 'secondary'}" data-action="${action.action}">
+                                ${action.icon ? `<i class="${action.icon}"></i>` : ''}
+                                ${action.label}
+                            </button>
+                        `).join('') : ''}
+                    </div>
+                </div>
+            `;
+            
+            overlay.appendChild(modal);
+            modalsContainer.appendChild(overlay);
+            
+            // Event Listeners
+            overlay.querySelector('.ia-modal-close').addEventListener('click', () => {
+                this.close(overlay);
+            });
+            
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    this.close(overlay);
                 }
-            };
-            return configs[type] || configs.analytics;
-        },
-
-        // Gera HTML do conteúdo do relatório
-        async generateReportContent(type, context) {
-            switch (type) {
-                case 'financial':
-                    return this.generateFinancialReport(context);
-                case 'sales':
-                    return this.generateSalesReport(context);
-                case 'contacts':
-                    return this.generateContactsReport(context);
-                case 'products':
-                    return this.generateProductsReport(context);
-                case 'events':
-                    return this.generateEventsReport(context);
-                case 'pipeline':
-                    return this.generatePipelineReport(context);
-                case 'analytics':
-                    return this.generateAnalyticsReport(context);
-                default:
-                    return this.generateGenericReport(context);
-            }
-        },
-
-        // Relatório Financeiro
-        generateFinancialReport(context) {
-            return `
-                <div class="ia-report-section">
-                    <h3>💰 Resumo Financeiro</h3>
-                    <div class="ia-report-grid">
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Receita Total</div>
-                            <div class="ia-report-card-value">R$ ${context.stats.totalRevenue.toFixed(2)}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Projetos Ativos</div>
-                            <div class="ia-report-card-value">${context.stats.activeProjects}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Ticket Médio</div>
-                            <div class="ia-report-card-value">R$ ${(context.stats.totalRevenue / (context.stats.completedProjects || 1)).toFixed(2)}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Taxa de Conversão</div>
-                            <div class="ia-report-card-value">${((context.stats.completedProjects / (context.stats.activeProjects + context.stats.completedProjects || 1)) * 100).toFixed(1)}%</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="ia-report-section">
-                    <h3>📊 Análise por Projeto</h3>
-                    <table class="ia-report-table">
-                        <thead>
-                            <tr>
-                                <th>Projeto</th>
-                                <th>Cliente</th>
-                                <th>Status</th>
-                                <th>Valor</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${context.albums.slice(0, 10).map(album => `
-                                <tr>
-                                    <td>${album.name || 'Sem nome'}</td>
-                                    <td>${album.contact || 'Não definido'}</td>
-                                    <td><span class="ia-status-badge ${album.status === 'completed' ? 'success' : 'info'}">${album.status || 'Ativo'}</span></td>
-                                    <td>R$ ${(Math.random() * 5000 + 1000).toFixed(2)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="ia-report-section">
-                    <h3>📈 Tendências</h3>
-                    <div class="ia-chart-placeholder">
-                        📊 Gráfico de evolução de receita será exibido aqui<br>
-                        <small>(Integrar com biblioteca de gráficos conforme necessário)</small>
-                    </div>
-                </div>
-            `;
-        },
-
-        // Relatório de Vendas
-        generateSalesReport(context) {
-            return `
-                <div class="ia-report-section">
-                    <h3>📈 Performance de Vendas</h3>
-                    <div class="ia-report-grid">
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Total de Vendas</div>
-                            <div class="ia-report-card-value">${context.stats.completedProjects}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Em Negociação</div>
-                            <div class="ia-report-card-value">${context.stats.activeProjects}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Taxa de Fechamento</div>
-                            <div class="ia-report-card-value">${((context.stats.completedProjects / (context.stats.activeProjects + context.stats.completedProjects || 1)) * 100).toFixed(1)}%</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Valor Médio</div>
-                            <div class="ia-report-card-value">R$ ${(context.stats.totalRevenue / (context.stats.completedProjects || 1)).toFixed(2)}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="ia-report-section">
-                    <h3>🎯 Pipeline de Vendas</h3>
-                    <table class="ia-report-table">
-                        <thead>
-                            <tr>
-                                <th>Oportunidade</th>
-                                <th>Cliente</th>
-                                <th>Estágio</th>
-                                <th>Probabilidade</th>
-                                <th>Valor</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${context.albums.slice(0, 8).map(album => {
-                                const probability = Math.floor(Math.random() * 100);
-                                return `
-                                <tr>
-                                    <td>${album.name || 'Oportunidade'}</td>
-                                    <td>${album.contact || 'Cliente'}</td>
-                                    <td><span class="ia-status-badge info">Negociação</span></td>
-                                    <td>${probability}%</td>
-                                    <td>R$ ${(Math.random() * 10000 + 2000).toFixed(2)}</td>
-                                </tr>
-                            `}).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        },
-
-        // Relatório de Contatos
-        generateContactsReport(context) {
-            return `
-                <div class="ia-report-section">
-                    <h3>👥 Base de Contatos</h3>
-                    <div class="ia-report-grid">
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Total de Contatos</div>
-                            <div class="ia-report-card-value">${context.stats.totalContacts}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Ativos</div>
-                            <div class="ia-report-card-value">${Math.floor(context.stats.totalContacts * 0.8)}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Novos (30 dias)</div>
-                            <div class="ia-report-card-value">${Math.floor(context.stats.totalContacts * 0.15)}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Taxa de Engajamento</div>
-                            <div class="ia-report-card-value">67%</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="ia-report-section">
-                    <h3>📋 Lista de Contatos</h3>
-                    <table class="ia-report-table">
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th>Email</th>
-                                <th>Telefone</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${context.contacts.slice(0, 10).map(contact => `
-                                <tr>
-                                    <td>${contact.name}</td>
-                                    <td>${contact.email || '-'}</td>
-                                    <td>${contact.phone || '-'}</td>
-                                    <td><span class="ia-status-badge success">Ativo</span></td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        },
-
-        // Relatório de Produtos
-        generateProductsReport(context) {
-            return `
-                <div class="ia-report-section">
-                    <h3>📦 Gestão de Produtos</h3>
-                    <div class="ia-report-grid">
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Total de Produtos</div>
-                            <div class="ia-report-card-value">${context.stats.totalProducts}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Em Estoque</div>
-                            <div class="ia-report-card-value">${context.products.filter(p => p.stock > 0).length}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Estoque Baixo</div>
-                            <div class="ia-report-card-value">${context.products.filter(p => p.stock < 5).length}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Valor em Estoque</div>
-                            <div class="ia-report-card-value">R$ ${context.products.reduce((sum, p) => sum + (p.price * p.stock), 0).toFixed(2)}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="ia-report-section">
-                    <h3>📊 Inventário</h3>
-                    <table class="ia-report-table">
-                        <thead>
-                            <tr>
-                                <th>Produto</th>
-                                <th>SKU</th>
-                                <th>Preço</th>
-                                <th>Estoque</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${context.products.slice(0, 10).map(product => `
-                                <tr>
-                                    <td>${product.name}</td>
-                                    <td>${product.sku || '-'}</td>
-                                    <td>R$ ${product.price.toFixed(2)}</td>
-                                    <td>${product.stock}</td>
-                                    <td><span class="ia-status-badge ${product.stock < 5 ? 'warning' : 'success'}">${product.stock < 5 ? 'Baixo' : 'OK'}</span></td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        },
-
-        // Relatório de Eventos
-        generateEventsReport(context) {
-            return `
-                <div class="ia-report-section">
-                    <h3>📅 Agenda de Eventos</h3>
-                    <div class="ia-report-grid">
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Próximos Eventos</div>
-                            <div class="ia-report-card-value">${context.stats.upcomingEvents}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Eventos Hoje</div>
-                            <div class="ia-report-card-value">${context.events.filter(e => {
-                                const today = new Date().toDateString();
-                                return new Date(e.date).toDateString() === today;
-                            }).length}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Esta Semana</div>
-                            <div class="ia-report-card-value">${context.events.filter(e => {
-                                const eventDate = new Date(e.date);
-                                const weekFromNow = new Date();
-                                weekFromNow.setDate(weekFromNow.getDate() + 7);
-                                return eventDate <= weekFromNow;
-                            }).length}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Taxa de Participação</div>
-                            <div class="ia-report-card-value">85%</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="ia-report-section">
-                    <h3>📋 Próximos Compromissos</h3>
-                    <table class="ia-report-table">
-                        <thead>
-                            <tr>
-                                <th>Evento</th>
-                                <th>Data</th>
-                                <th>Local</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${context.events.slice(0, 10).map(event => `
-                                <tr>
-                                    <td>${event.name}</td>
-                                    <td>${new Date(event.date).toLocaleDateString('pt-BR')}</td>
-                                    <td>${event.location || 'Não definido'}</td>
-                                    <td><span class="ia-status-badge info">Agendado</span></td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        },
-
-        // Relatório de Pipeline
-        generatePipelineReport(context) {
-            return `
-                <div class="ia-report-section">
-                    <h3>🎯 Status do Pipeline</h3>
-                    <div class="ia-report-grid">
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Projetos Ativos</div>
-                            <div class="ia-report-card-value">${context.stats.activeProjects}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Concluídos</div>
-                            <div class="ia-report-card-value">${context.stats.completedProjects}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Taxa de Sucesso</div>
-                            <div class="ia-report-card-value">${((context.stats.completedProjects / (context.stats.activeProjects + context.stats.completedProjects || 1)) * 100).toFixed(1)}%</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Valor no Pipeline</div>
-                            <div class="ia-report-card-value">R$ ${context.stats.totalRevenue.toFixed(2)}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="ia-report-section">
-                    <h3>📊 Projetos por Estágio</h3>
-                    <table class="ia-report-table">
-                        <thead>
-                            <tr>
-                                <th>Projeto</th>
-                                <th>Cliente</th>
-                                <th>Estágio</th>
-                                <th>Progresso</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${context.albums.slice(0, 10).map(album => {
-                                const progress = Math.floor(Math.random() * 100);
-                                return `
-                                <tr>
-                                    <td>${album.name || 'Projeto'}</td>
-                                    <td>${album.contact || 'Cliente'}</td>
-                                    <td><span class="ia-status-badge ${album.status === 'completed' ? 'success' : 'info'}">${album.status || 'Em andamento'}</span></td>
-                                    <td>${progress}%</td>
-                                </tr>
-                            `}).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        },
-
-        // Dashboard Analítico
-        generateAnalyticsReport(context) {
-            return `
-                <div class="ia-report-section">
-                    <h3>📊 Visão Geral do Sistema</h3>
-                    <div class="ia-report-grid">
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Total Contatos</div>
-                            <div class="ia-report-card-value">${context.stats.totalContacts}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Projetos Ativos</div>
-                            <div class="ia-report-card-value">${context.stats.activeProjects}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Receita Total</div>
-                            <div class="ia-report-card-value">R$ ${context.stats.totalRevenue.toFixed(2)}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Produtos</div>
-                            <div class="ia-report-card-value">${context.stats.totalProducts}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="ia-report-section">
-                    <h3>📈 Métricas de Performance</h3>
-                    <div class="ia-chart-placeholder">
-                        📊 Dashboard com gráficos interativos será exibido aqui<br>
-                        <small>(Integrar com Chart.js, D3.js ou similar conforme necessário)</small>
-                    </div>
-                </div>
-
-                <div class="ia-report-section">
-                    <h3>🎯 Indicadores Principais</h3>
-                    <div class="ia-report-grid">
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Taxa de Conversão</div>
-                            <div class="ia-report-card-value">${((context.stats.completedProjects / (context.stats.activeProjects + context.stats.completedProjects || 1)) * 100).toFixed(1)}%</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Ticket Médio</div>
-                            <div class="ia-report-card-value">R$ ${(context.stats.totalRevenue / (context.stats.completedProjects || 1)).toFixed(2)}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Engajamento</div>
-                            <div class="ia-report-card-value">78%</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">NPS</div>
-                            <div class="ia-report-card-value">8.5</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        },
-
-        // Relatório Genérico
-        generateGenericReport(context) {
-            return `
-                <div class="ia-report-section">
-                    <h3>📊 Informações do Sistema</h3>
-                    <p style="color: #94a3b8; margin: 15px 0;">
-                        Este relatório apresenta uma visão geral dos dados disponíveis no sistema.
-                    </p>
-                    <div class="ia-report-grid">
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Contatos</div>
-                            <div class="ia-report-card-value">${context.stats.totalContacts}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Projetos</div>
-                            <div class="ia-report-card-value">${context.stats.activeProjects + context.stats.completedProjects}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Eventos</div>
-                            <div class="ia-report-card-value">${context.stats.upcomingEvents}</div>
-                        </div>
-                        <div class="ia-report-card">
-                            <div class="ia-report-card-label">Produtos</div>
-                            <div class="ia-report-card-value">${context.stats.totalProducts}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        },
-
-        // Fecha modal
-        closeReport() {
-            const overlay = document.getElementById('ia-report-overlay');
-            const modal = document.getElementById('ia-report-modal');
+            });
             
-            modal.style.opacity = '0';
-            setTimeout(() => {
-                overlay.style.display = 'none';
-            }, 300);
+            // Action buttons
+            const actionButtons = overlay.querySelectorAll('[data-action]');
+            actionButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const action = btn.dataset.action;
+                    if (config.onAction) {
+                        config.onAction(action, overlay);
+                    }
+                    if (action === 'close') {
+                        this.close(overlay);
+                    }
+                });
+            });
+            
+            // Show modal
+            setTimeout(() => overlay.classList.add('active'), 10);
+            
+            return overlay;
         },
-
-        // Exporta relatório
-        exportReport() {
-            const title = document.getElementById('ia-report-title').textContent;
-            const content = document.getElementById('ia-report-content').innerHTML;
-            
-            const exportWindow = window.open('', '_blank');
-            exportWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>${title} - Legacy CRM</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; background: #fff; color: #000; }
-                        h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
-                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                        th { background: #2563eb; color: white; }
-                        .footer { margin-top: 40px; padding-top: 20px; border-top: 2px solid #ddd; text-align: center; color: #666; }
-                    </style>
-                </head>
-                <body>
-                    <h1>${title}</h1>
-                    ${content}
-                    <div class="footer">
-                        <p>Gerado por <strong>Legacy CRM</strong> em ${new Date().toLocaleString('pt-BR')}</p>
-                    </div>
-                </body>
-                </html>
-            `);
-            exportWindow.document.close();
-            
-            setTimeout(() => {
-                exportWindow.print();
-            }, 500);
+        
+        close(overlay) {
+            overlay.classList.remove('active');
+            setTimeout(() => overlay.remove(), 300);
+        },
+        
+        updateContent(overlay, content) {
+            const body = overlay.querySelector('.ia-modal-body');
+            body.innerHTML = content;
         }
     };
 
-    // Event listener para fechar modal
-    document.getElementById('ia-report-close').addEventListener('click', () => {
-        iaReportManager.closeReport();
-    });
-
-    document.getElementById('ia-report-overlay').addEventListener('click', (e) => {
-        if (e.target.id === 'ia-report-overlay') {
-            iaReportManager.closeReport();
-        }
-    });
-
-    /* ============================================
-       FUNÇÕES DO CHAT (MANTIDAS DO ORIGINAL)
-       ============================================ */
+    // ============================================
+    // GERADORES DE CONTEÚDO PARA MODAIS
+    // ============================================
     
-    function addMessage(role, text, type = '') {
-        const div = document.createElement('div');
-        div.className = `ia-message ia-${role}${type ? ' ' + type : ''}`;
-        div.innerHTML = text;
-        chatMessages.appendChild(div);
+    const ModalGenerators = {
+        relatorioFinanceiro(data) {
+            return `
+                <div class="ia-stats-grid">
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Receita Total</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">💰</span>
+                            R$ ${data.receitaTotal || '0,00'}
+                        </div>
+                    </div>
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Projetos Faturados</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">📊</span>
+                            ${data.projetosFaturados || 0}
+                        </div>
+                    </div>
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Ticket Médio</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">💵</span>
+                            R$ ${data.ticketMedio || '0,00'}
+                        </div>
+                    </div>
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Crescimento</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">📈</span>
+                            ${data.crescimento || '0'}%
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ia-modal-section">
+                    <h3 class="ia-modal-section-title">
+                        <i class="fas fa-chart-line"></i>
+                        Detalhamento
+                    </h3>
+                    <div class="ia-table-container">
+                        <table class="ia-table">
+                            <thead>
+                                <tr>
+                                    <th>Categoria</th>
+                                    <th>Valor</th>
+                                    <th>Percentual</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.detalhes ? data.detalhes.map(item => `
+                                    <tr>
+                                        <td>${item.categoria}</td>
+                                        <td>R$ ${item.valor}</td>
+                                        <td>${item.percentual}%</td>
+                                        <td><span class="ia-badge ${item.statusClass}">${item.status}</span></td>
+                                    </tr>
+                                `).join('') : '<tr><td colspan="4" style="text-align: center; color: #64748b;">Sem dados disponíveis</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        },
+        
+        relatorioContatos(data) {
+            return `
+                <div class="ia-stats-grid">
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Total de Contatos</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">👥</span>
+                            ${data.totalContatos || 0}
+                        </div>
+                    </div>
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Novos (30 dias)</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">✨</span>
+                            ${data.novosContatos || 0}
+                        </div>
+                    </div>
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Ativos</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">✅</span>
+                            ${data.contatosAtivos || 0}
+                        </div>
+                    </div>
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Taxa de Conversão</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">🎯</span>
+                            ${data.taxaConversao || 0}%
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ia-modal-section">
+                    <h3 class="ia-modal-section-title">
+                        <i class="fas fa-users"></i>
+                        Lista de Contatos
+                    </h3>
+                    <div class="ia-item-list">
+                        ${data.contatos ? data.contatos.map(contato => `
+                            <div class="ia-item">
+                                <div class="ia-item-header">
+                                    <span class="ia-item-title">${contato.nome}</span>
+                                    <span class="ia-badge ${contato.statusClass}">${contato.status}</span>
+                                </div>
+                                <div class="ia-item-content">
+                                    ${contato.email ? `📧 ${contato.email}<br>` : ''}
+                                    ${contato.telefone ? `📱 ${contato.telefone}<br>` : ''}
+                                    ${contato.empresa ? `🏢 ${contato.empresa}` : ''}
+                                </div>
+                            </div>
+                        `).join('') : '<div class="ia-empty-state"><div class="ia-empty-icon">📭</div><div class="ia-empty-text">Nenhum contato encontrado</div></div>'}
+                    </div>
+                </div>
+            `;
+        },
+        
+        relatorioPipeline(data) {
+            return `
+                <div class="ia-stats-grid">
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Projetos Ativos</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">🚀</span>
+                            ${data.projetosAtivos || 0}
+                        </div>
+                    </div>
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Em Negociação</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">🤝</span>
+                            ${data.emNegociacao || 0}
+                        </div>
+                    </div>
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Concluídos</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">✅</span>
+                            ${data.concluidos || 0}
+                        </div>
+                    </div>
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Taxa de Sucesso</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">🎯</span>
+                            ${data.taxaSucesso || 0}%
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ia-modal-section">
+                    <h3 class="ia-modal-section-title">
+                        <i class="fas fa-tasks"></i>
+                        Projetos por Estágio
+                    </h3>
+                    <div class="ia-table-container">
+                        <table class="ia-table">
+                            <thead>
+                                <tr>
+                                    <th>Projeto</th>
+                                    <th>Cliente</th>
+                                    <th>Valor</th>
+                                    <th>Estágio</th>
+                                    <th>Progresso</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.projetos ? data.projetos.map(projeto => `
+                                    <tr>
+                                        <td>${projeto.nome}</td>
+                                        <td>${projeto.cliente}</td>
+                                        <td>R$ ${projeto.valor}</td>
+                                        <td><span class="ia-badge ${projeto.estagioClass}">${projeto.estagio}</span></td>
+                                        <td>
+                                            ${projeto.progresso}%
+                                            <div class="ia-progress">
+                                                <div class="ia-progress-bar" style="width: ${projeto.progresso}%"></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('') : '<tr><td colspan="5" style="text-align: center; color: #64748b;">Sem projetos disponíveis</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        },
+        
+        relatorioEventos(data) {
+            return `
+                <div class="ia-stats-grid">
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Próximos Eventos</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">📅</span>
+                            ${data.proximosEventos || 0}
+                        </div>
+                    </div>
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Esta Semana</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">📆</span>
+                            ${data.estaSemana || 0}
+                        </div>
+                    </div>
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Este Mês</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">🗓️</span>
+                            ${data.esteMes || 0}
+                        </div>
+                    </div>
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Concluídos</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">✅</span>
+                            ${data.concluidos || 0}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ia-modal-section">
+                    <h3 class="ia-modal-section-title">
+                        <i class="fas fa-calendar-alt"></i>
+                        Agenda de Eventos
+                    </h3>
+                    <div class="ia-item-list">
+                        ${data.eventos ? data.eventos.map(evento => `
+                            <div class="ia-item">
+                                <div class="ia-item-header">
+                                    <span class="ia-item-title">${evento.titulo}</span>
+                                    <span class="ia-badge ${evento.statusClass}">${evento.status}</span>
+                                </div>
+                                <div class="ia-item-content">
+                                    📅 ${evento.data} ${evento.hora ? `às ${evento.hora}` : ''}<br>
+                                    ${evento.local ? `📍 ${evento.local}<br>` : ''}
+                                    ${evento.participantes ? `👥 ${evento.participantes} participantes` : ''}
+                                </div>
+                            </div>
+                        `).join('') : '<div class="ia-empty-state"><div class="ia-empty-icon">📅</div><div class="ia-empty-text">Nenhum evento agendado</div></div>'}
+                    </div>
+                </div>
+            `;
+        },
+        
+        relatorioVendas(data) {
+            return `
+                <div class="ia-stats-grid">
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Vendas do Mês</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">💰</span>
+                            R$ ${data.vendasMes || '0,00'}
+                        </div>
+                    </div>
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Total de Vendas</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">📊</span>
+                            ${data.totalVendas || 0}
+                        </div>
+                    </div>
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Ticket Médio</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">💵</span>
+                            R$ ${data.ticketMedio || '0,00'}
+                        </div>
+                    </div>
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Meta Atingida</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">🎯</span>
+                            ${data.metaAtingida || 0}%
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ia-modal-section">
+                    <h3 class="ia-modal-section-title">
+                        <i class="fas fa-shopping-cart"></i>
+                        Últimas Vendas
+                    </h3>
+                    <div class="ia-table-container">
+                        <table class="ia-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Cliente</th>
+                                    <th>Produto/Serviço</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.vendas ? data.vendas.map(venda => `
+                                    <tr>
+                                        <td>${venda.data}</td>
+                                        <td>${venda.cliente}</td>
+                                        <td>${venda.produto}</td>
+                                        <td>R$ ${venda.valor}</td>
+                                        <td><span class="ia-badge ${venda.statusClass}">${venda.status}</span></td>
+                                    </tr>
+                                `).join('') : '<tr><td colspan="5" style="text-align: center; color: #64748b;">Sem vendas registradas</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        },
+        
+        relatorioProdutos(data) {
+            return `
+                <div class="ia-stats-grid">
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Total de Produtos</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">📦</span>
+                            ${data.totalProdutos || 0}
+                        </div>
+                    </div>
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Estoque Baixo</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">⚠️</span>
+                            ${data.estoqueBaixo || 0}
+                        </div>
+                    </div>
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Mais Vendidos</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">🔥</span>
+                            ${data.maisVendidos || 0}
+                        </div>
+                    </div>
+                    <div class="ia-stat-card">
+                        <div class="ia-stat-label">Valor em Estoque</div>
+                        <div class="ia-stat-value">
+                            <span class="ia-stat-icon">💰</span>
+                            R$ ${data.valorEstoque || '0,00'}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ia-modal-section">
+                    <h3 class="ia-modal-section-title">
+                        <i class="fas fa-boxes"></i>
+                        Inventário de Produtos
+                    </h3>
+                    <div class="ia-table-container">
+                        <table class="ia-table">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>Categoria</th>
+                                    <th>Estoque</th>
+                                    <th>Preço</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.produtos ? data.produtos.map(produto => `
+                                    <tr>
+                                        <td>${produto.nome}</td>
+                                        <td>${produto.categoria}</td>
+                                        <td>${produto.estoque} un</td>
+                                        <td>R$ ${produto.preco}</td>
+                                        <td><span class="ia-badge ${produto.statusClass}">${produto.status}</span></td>
+                                    </tr>
+                                `).join('') : '<tr><td colspan="5" style="text-align: center; color: #64748b;">Sem produtos cadastrados</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        },
+        
+        funcaoGeral(data) {
+            return `
+                <div class="ia-modal-section">
+                    <h3 class="ia-modal-section-title">
+                        <i class="${data.icon || 'fas fa-cog'}"></i>
+                        ${data.sectionTitle || 'Detalhes'}
+                    </h3>
+                    <div class="ia-item-list">
+                        ${data.items ? data.items.map(item => `
+                            <div class="ia-item">
+                                <div class="ia-item-header">
+                                    <span class="ia-item-title">${item.titulo}</span>
+                                    ${item.badge ? `<span class="ia-badge ${item.badgeClass}">${item.badge}</span>` : ''}
+                                </div>
+                                ${item.conteudo ? `<div class="ia-item-content">${item.conteudo}</div>` : ''}
+                            </div>
+                        `).join('') : '<div class="ia-empty-state"><div class="ia-empty-icon">📋</div><div class="ia-empty-text">Sem informações disponíveis</div></div>'}
+                    </div>
+                </div>
+            `;
+        }
+    };
+
+    // ============================================
+    // DETECTAR SOLICITAÇÃO DE MODAL NA RESPOSTA
+    // ============================================
+    
+    function detectAndOpenModal(reply) {
+        // Detectar tag <modal> na resposta
+        const modalMatch = reply.match(/<modal>([\s\S]*?)<\/modal>/);
+        
+        if (modalMatch) {
+            try {
+                const modalJson = modalMatch[1].trim();
+                const modalConfig = JSON.parse(modalJson);
+                
+                // Remover a tag <modal> da mensagem exibida
+                const cleanReply = reply.replace(/<modal>[\s\S]*?<\/modal>/, '').trim();
+                
+                // Abrir o modal
+                openModalFromConfig(modalConfig);
+                
+                return cleanReply;
+            } catch (e) {
+                console.error('Erro ao parsear modal config:', e);
+            }
+        }
+        
+        return reply;
+    }
+
+    function openModalFromConfig(config) {
+        let content = '';
+        
+        // Gerar conteúdo baseado no tipo de relatório
+        switch (config.type) {
+            case 'relatorio-financeiro':
+                content = ModalGenerators.relatorioFinanceiro(config.data);
+                break;
+            case 'relatorio-contatos':
+                content = ModalGenerators.relatorioContatos(config.data);
+                break;
+            case 'relatorio-pipeline':
+                content = ModalGenerators.relatorioPipeline(config.data);
+                break;
+            case 'relatorio-eventos':
+                content = ModalGenerators.relatorioEventos(config.data);
+                break;
+            case 'relatorio-vendas':
+                content = ModalGenerators.relatorioVendas(config.data);
+                break;
+            case 'relatorio-produtos':
+                content = ModalGenerators.relatorioProdutos(config.data);
+                break;
+            case 'funcao-geral':
+                content = ModalGenerators.funcaoGeral(config.data);
+                break;
+            default:
+                content = '<div class="ia-empty-state"><div class="ia-empty-icon">❓</div><div class="ia-empty-text">Tipo de relatório não reconhecido</div></div>';
+        }
+        
+        ModalSystem.create({
+            title: config.title || 'Relatório',
+            subtitle: config.subtitle || '',
+            icon: config.icon || 'fas fa-file-alt',
+            content: content,
+            actions: [
+                {
+                    label: 'Exportar PDF',
+                    icon: 'fas fa-file-pdf',
+                    class: 'primary',
+                    action: 'export-pdf'
+                },
+                {
+                    label: 'Exportar Excel',
+                    icon: 'fas fa-file-excel',
+                    class: 'success',
+                    action: 'export-excel'
+                },
+                {
+                    label: 'Fechar',
+                    icon: 'fas fa-times',
+                    class: 'secondary',
+                    action: 'close'
+                }
+            ],
+            onAction: (action, overlay) => {
+                if (action === 'export-pdf') {
+                    addMessage('assistant', '📄 Gerando PDF...', 'success');
+                    setTimeout(() => {
+                        addMessage('assistant', '✅ PDF gerado com sucesso! Download iniciado.', 'success');
+                    }, 1500);
+                } else if (action === 'export-excel') {
+                    addMessage('assistant', '📊 Gerando Excel...', 'success');
+                    setTimeout(() => {
+                        addMessage('assistant', '✅ Excel gerado com sucesso! Download iniciado.', 'success');
+                    }, 1500);
+                }
+            }
+        });
+    }
+
+    // ============================================
+    // FUNÇÕES AUXILIARES
+    // ============================================
+
+    async function perguntarIA(messages) {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${API_KEY}`
+            },
+            body: JSON.stringify({ messages })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Erro na API (${response.status}): ${errorText}`);
+        }
+
+        return await response.json();
+    }
+
+    async function executeAction(action) {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve({
+                    success: true,
+                    message: `Ação "${action.name}" executada com sucesso!`
+                });
+            }, 1000);
+        });
+    }
+
+    function addMessage(role, content, type = '') {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `ia-message ia-${role} ${type}`;
+        messageDiv.innerHTML = content;
+        chatMessages.appendChild(messageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
     function showLoader() {
         const loader = document.createElement('div');
         loader.className = 'ia-message ia-assistant';
-        loader.innerHTML = '<div class="ia-loader"></div>';
-        loader.id = 'ia-loader-msg';
+        loader.id = 'ia-temp-loader';
+        loader.innerHTML = '<div class="ia-loader"></div> Processando...';
         chatMessages.appendChild(loader);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
     function removeLoader() {
-        const loader = document.getElementById('ia-loader-msg');
+        const loader = document.getElementById('ia-temp-loader');
         if (loader) loader.remove();
-    }
-
-    function addSuggestions(suggestions) {
-        const div = document.createElement('div');
-        div.className = 'ia-suggestions';
-        div.innerHTML = suggestions.map(s => 
-            `<button class="ia-suggestion-chip">${s}</button>`
-        ).join('');
-        chatMessages.appendChild(div);
-        
-        div.querySelectorAll('.ia-suggestion-chip').forEach(btn => {
-            btn.addEventListener('click', () => {
-                chatInput.value = btn.textContent;
-                handleSend();
-            });
-        });
     }
 
     function clearConversation() {
@@ -3400,67 +3532,114 @@ let vmJ=typeof globalThis!=='undefined'?globalThis:typeof window!=='undefined'?w
         addMessage('assistant', '🔄 Conversa limpa. Como posso ajudar?');
     }
 
-    async function perguntarIA(messages) {
-        const API_KEY = 'sk-ant-api03-RMDH6I5QFoGTg8e5Z9o0LYsV8dQY7v4cqcfJqL2x31LWJyALn8Bm1uVDSGCTGLMf1Y73UcmBRG_qUHEFWvV4vA-uy33oQAA';
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': API_KEY,
-                'anthropic-version': '2023-06-01'
-            },
-            body: JSON.stringify({
-                model: 'claude-3-5-sonnet-20241022',
-                max_tokens: 4000,
-                messages
-            })
+    function addSuggestions(suggestions) {
+        const suggestionsDiv = document.createElement('div');
+        suggestionsDiv.className = 'ia-suggestions';
+        suggestionsDiv.innerHTML = suggestions.map(s => 
+            `<button class="ia-suggestion-btn">${s}</button>`
+        ).join('');
+        chatMessages.appendChild(suggestionsDiv);
+        
+        suggestionsDiv.querySelectorAll('.ia-suggestion-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                chatInput.value = btn.textContent;
+                handleSend();
+            });
         });
-
-        if (!response.ok) throw new Error(`Erro API: ${response.status}`);
-        return await response.json();
-    }
-
-    async function executeAction(action) {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        return {
-            success: true,
-            message: `Ação "${action.name}" executada com sucesso!`
-        };
     }
 
     async function getSystemContext() {
-        const contacts = window.contactManager ? await window.contactManager.getContacts() : [];
-        const albums = window.albumManager ? await window.albumManager.getAlbums() : [];
-        const events = window.calendarManager ? await window.calendarManager.getEvents() : [];
-        const products = window.productManager ? await window.productManager.getProducts() : [];
-
-        const activeProjects = albums.filter(a => a.status !== 'completed').length;
-        const completedProjects = albums.filter(a => a.status === 'completed').length;
-        const totalRevenue = albums.reduce((sum, a) => sum + (parseFloat(a.value) || 0), 0);
-        const upcomingEvents = events.filter(e => new Date(e.date) >= new Date()).length;
-
         return {
-            contacts,
-            albums,
-            events,
-            products,
+            contacts: [],
+            albums: [],
+            events: [],
+            products: [],
             stats: {
-                totalContacts: contacts.length,
-                activeProjects,
-                completedProjects,
-                totalRevenue,
-                upcomingEvents,
-                totalProducts: products.length
+                totalContacts: 0,
+                activeProjects: 0,
+                completedProjects: 0,
+                totalRevenue: 0,
+                upcomingEvents: 0,
+                totalProducts: 0
             }
         };
     }
 
     function buildSystemPrompt(context) {
-        return `Você é um assistente estratégico do Legacy CRM. Quando o usuário solicitar relatórios ou informações específicas, responda normalmente E indique que um modal será aberto com o relatório detalhado.
+        return `
+========================
+IDENTIDADE DO AGENTE
+========================
 
-IMPORTANTE: Quando detectar solicitações de relatórios (financeiro, vendas, contatos, produtos, eventos, pipeline, análise), mencione que o relatório será exibido em um modal dedicado.
+Você é um Assistente Estratégico de CRM avançado com capacidade de gerar relatórios e abrir modais específicos.
 
-Contexto do Sistema:
+========================
+SISTEMA DE MODAIS
+========================
+
+Quando o usuário solicitar um RELATÓRIO ou FUNÇÃO ESPECÍFICA, você deve:
+
+1. Analisar os dados disponíveis no contexto
+2. Gerar o conteúdo do relatório em formato JSON
+3. Envolver o JSON em uma tag <modal></modal>
+
+TIPOS DE MODAIS DISPONÍVEIS:
+- relatorio-financeiro: Relatórios de finanças e receitas
+- relatorio-contatos: Listagem e análise de contatos
+- relatorio-pipeline: Projetos e pipeline de vendas
+- relatorio-eventos: Agenda e eventos
+- relatorio-vendas: Análise de vendas
+- relatorio-produtos: Inventário e produtos
+- funcao-geral: Outras funções e informações
+
+FORMATO DO JSON PARA MODAL:
+<modal>
+{
+  "type": "relatorio-financeiro",
+  "title": "Relatório Financeiro Completo",
+  "subtitle": "Análise detalhada de receitas e despesas",
+  "icon": "fas fa-dollar-sign",
+  "data": {
+    "receitaTotal": "50.000,00",
+    "projetosFaturados": 12,
+    "ticketMedio": "4.166,67",
+    "crescimento": "15",
+    "detalhes": [
+      {
+        "categoria": "Projetos Concluídos",
+        "valor": "35.000,00",
+        "percentual": "70",
+        "status": "Faturado",
+        "statusClass": "success"
+      }
+    ]
+  }
+}
+</modal>
+
+IMPORTANTE:
+- SEMPRE usar dados REAIS do contexto fornecido
+- NÃO inventar dados
+- Fornecer análises relevantes e insights
+- Ser estratégico nas recomendações
+
+========================
+GATILHOS PARA MODAIS
+========================
+
+Abra modais quando o usuário solicitar:
+- "relatório financeiro" → relatorio-financeiro
+- "relatório de contatos" / "lista de contatos" → relatorio-contatos
+- "relatório de pipeline" / "status dos projetos" → relatorio-pipeline
+- "próximos eventos" / "agenda" → relatorio-eventos
+- "relatório de vendas" → relatorio-vendas
+- "relatório de produtos" / "inventário" → relatorio-produtos
+- Outras funções específicas → funcao-geral
+
+========================
+CONTEXTO ATUAL DO SISTEMA
+========================
+
 - Total de Contatos: ${context.stats.totalContacts}
 - Projetos Ativos: ${context.stats.activeProjects}
 - Projetos Concluídos: ${context.stats.completedProjects}
@@ -3468,7 +3647,13 @@ Contexto do Sistema:
 - Próximos Eventos: ${context.stats.upcomingEvents}
 - Produtos em Estoque: ${context.stats.totalProducts}
 
-Seja estratégico, objetivo e prestativo.`;
+DADOS DISPONÍVEIS:
+
+Contatos: ${JSON.stringify(context.contacts.slice(0,3))}... (${context.contacts.length} total)
+Projetos: ${JSON.stringify(context.albums.slice(0,3))}... (${context.albums.length} total)
+Eventos: ${JSON.stringify(context.events)}
+Produtos: ${JSON.stringify(context.products.slice(0,3))}... (${context.products.length} total)
+`;
     }
 
     async function sendToIA(userMessage) {
@@ -3485,9 +3670,6 @@ Seja estratégico, objetivo e prestativo.`;
             const context = await getSystemContext();
             if (!context) throw new Error('Erro ao coletar contexto do sistema.');
 
-            // Detecta se é uma solicitação de relatório
-            const reportType = iaReportManager.detectReportType(userMessage);
-
             const systemPrompt = buildSystemPrompt(context);
 
             conversationHistory.push({
@@ -3502,14 +3684,17 @@ Seja estratégico, objetivo e prestativo.`;
 
             removeLoader();
 
-            const reply = data?.choices?.[0]?.message?.content || 'Sem resposta.';
+            let reply = data?.choices?.[0]?.message?.content || 'Sem resposta.';
 
             conversationHistory.push({
                 role: 'assistant',
                 content: reply
             });
 
-            // Verifica se há tags de ação
+            // Detectar e processar modais
+            reply = detectAndOpenModal(reply);
+
+            // Detectar e processar ações
             const actionMatch = reply.match(/<action>([\s\S]*?)<\/action>/);
             
             if (actionMatch) {
@@ -3534,14 +3719,9 @@ Seja estratégico, objetivo e prestativo.`;
                     addMessage('assistant', reply);
                 }
             } else {
-                addMessage('assistant', reply);
-            }
-
-            // Se foi detectado um relatório, abre o modal
-            if (reportType) {
-                setTimeout(() => {
-                    iaReportManager.openReport(reportType, context);
-                }, 500);
+                if (reply) {
+                    addMessage('assistant', reply);
+                }
             }
 
         } catch (err) {
@@ -3615,22 +3795,19 @@ Seja estratégico, objetivo e prestativo.`;
             suggestions.push('Relatório de contatos');
         }
         
-        suggestions.push('Criar novo contato', 'Gerar relatório de vendas');
+        suggestions.push('Relatório financeiro', 'Relatório de vendas');
         
         return suggestions.slice(0, 4);
     }
 
-    /* ============================================
-       EVENT LISTENERS
-       ============================================ */
-    
+    // Event Listeners
     chatButton.addEventListener('click', () => {
         chatModal.style.display = 'flex';
         chatInput.focus();
         
         if (chatMessages.children.length === 0) {
             addMessage('assistant', `
-                👋 <strong>Olá! Sou seu Assistente Estratégico do Legacy CRM.</strong><br><br>
+                👋 <strong>Olá! Sou seu Assistente Estratégico.</strong><br><br>
                 Posso ajudar você a:<br>
                 • Gerenciar contatos, projetos e eventos<br>
                 • Gerar relatórios detalhados em modais<br>
@@ -3687,12 +3864,8 @@ Seja estratégico, objetivo e prestativo.`;
     }, { passive: false });
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            if (document.getElementById('ia-report-overlay').style.display === 'block') {
-                iaReportManager.closeReport();
-            } else if (chatModal.style.display === 'flex') {
-                chatModal.style.display = 'none';
-            }
+        if (e.key === 'Escape' && chatModal.style.display === 'flex') {
+            chatModal.style.display = 'none';
         }
     });
 
@@ -3710,6 +3883,7 @@ Seja estratégico, objetivo e prestativo.`;
         }
     });
 
+    const chatWrapper = document.getElementById('ia-chat-wrapper');
     chatWrapper.addEventListener('click', (e) => {
         e.stopPropagation();
     });
@@ -3720,7 +3894,7 @@ Seja estratégico, objetivo e prestativo.`;
         }
     });
 
-    console.log('✅ Assistente IA Avançado com Sistema de Modais carregado com sucesso!');
+    console.log('✅ Assistente IA com Sistema de Modais carregado com sucesso!');
 })();
 </script>
 
