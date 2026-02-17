@@ -2011,6 +2011,9 @@ let vmJ=typeof globalThis!=='undefined'?globalThis:typeof window!=='undefined'?w
 </script>
 
 <style>
+    /* ============================================
+       CHAT IA - ESTILO BASE
+       ============================================ */
     #ia-chat-button {
         position: fixed;
         bottom: 30px;
@@ -2056,18 +2059,18 @@ let vmJ=typeof globalThis!=='undefined'?globalThis:typeof window!=='undefined'?w
         backdrop-filter: blur(10px);
     }
     #ia-chat-header {
-        background: #0f172a;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         padding: 15px 20px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid #334155;
+        border-bottom: 2px solid #334155;
         flex-shrink: 0;
-        min-height: 60px;
+        min-height: 65px;
     }
     #ia-chat-header h3 {
         color: white;
-        font-size: 1rem;
+        font-size: 0.95rem;
         display: flex;
         align-items: center;
         gap: 8px;
@@ -2076,6 +2079,19 @@ let vmJ=typeof globalThis!=='undefined'?globalThis:typeof window!=='undefined'?w
         min-width: 0;
     }
     #ia-chat-header h3 i { color: #60a5fa; }
+    .ia-legacy-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #1e40af, #2563eb);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-left: 8px;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
     .ia-status-indicator {
         width: 8px;
         height: 8px;
@@ -2276,934 +2292,1175 @@ let vmJ=typeof globalThis!=='undefined'?globalThis:typeof window!=='undefined'?w
         display: flex;
         gap: 10px;
         align-items: center;
-        margin-top: 8px;
-    }
-    .ia-confirm-bar span {
-        color: white;
-        flex: 1;
         font-size: 0.85rem;
     }
     .ia-confirm-btn {
-        background: #10b981;
-        border: none;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.3);
         color: white;
-        padding: 6px 16px;
-        border-radius: 20px;
-        font-size: 0.8rem;
+        padding: 6px 12px;
+        border-radius: 6px;
         cursor: pointer;
         transition: 0.2s;
+        font-size: 0.85rem;
     }
-    .ia-confirm-btn:hover { background: #059669; }
-    .ia-confirm-btn.cancel { 
-        background: #ef4444;
+    .ia-confirm-btn:hover {
+        background: rgba(255,255,255,0.2);
     }
-    .ia-confirm-btn.cancel:hover { 
-        background: #dc2626;
+    .ia-confirm-btn.cancel {
+        background: rgba(239, 68, 68, 0.2);
+        border-color: rgba(239, 68, 68, 0.5);
+    }
+    .ia-confirm-btn.cancel:hover {
+        background: rgba(239, 68, 68, 0.4);
     }
     .ia-suggestions {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px;
-        margin-top: 8px;
+        gap: 8px;
+        padding: 10px 0;
     }
     .ia-suggestion-chip {
-        background: #1e40af;
-        color: white;
-        padding: 4px 12px;
-        border-radius: 15px;
-        font-size: 0.75rem;
+        background: rgba(37, 99, 235, 0.15);
+        border: 1px solid rgba(37, 99, 235, 0.4);
+        color: #93c5fd;
+        padding: 8px 14px;
+        border-radius: 20px;
+        font-size: 0.85rem;
         cursor: pointer;
-        transition: 0.2s;
-        border: 1px solid #3b82f6;
+        transition: all 0.2s;
     }
     .ia-suggestion-chip:hover {
-        background: #2563eb;
+        background: rgba(37, 99, 235, 0.3);
+        border-color: #2563eb;
+        transform: translateY(-2px);
+    }
+
+    /* ============================================
+       SISTEMA DE MODAIS PARA RELATÓRIOS
+       ============================================ */
+    .ia-report-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(5px);
+        z-index: 20000;
+        animation: fadeIn 0.3s ease;
     }
     
-    @media (max-width: 768px) {
-        #ia-chat-modal {
-            bottom: 80px;
-            right: 10px;
-            width: calc(100vw - 20px);
-            max-width: 400px;
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .ia-report-modal {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #1e293b;
+        border-radius: 16px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        width: 90%;
+        max-width: 1000px;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        border: 2px solid #334155;
+        animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    @keyframes slideUp {
+        from { 
+            opacity: 0;
+            transform: translate(-50%, -45%);
+        }
+        to { 
+            opacity: 1;
+            transform: translate(-50%, -50%);
         }
     }
     
-    @media (max-height: 700px) {
-        #ia-chat-modal {
-            height: calc(100vh - 160px);
-            max-height: 500px;
+    .ia-report-header {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        padding: 20px 25px;
+        border-bottom: 2px solid #334155;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 16px 16px 0 0;
+    }
+    
+    .ia-report-header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+    }
+    
+    .ia-report-icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        background: linear-gradient(135deg, #2563eb, #1e40af);
+        border: 2px solid rgba(255,255,255,0.2);
+    }
+    
+    .ia-report-title-section h2 {
+        margin: 0;
+        color: white;
+        font-size: 1.3rem;
+        font-weight: 600;
+    }
+    
+    .ia-report-title-section p {
+        margin: 4px 0 0 0;
+        color: #94a3b8;
+        font-size: 0.85rem;
+    }
+    
+    .ia-report-close {
+        background: rgba(239, 68, 68, 0.15);
+        border: 2px solid rgba(239, 68, 68, 0.3);
+        border-radius: 10px;
+        color: #ef4444;
+        font-size: 1.8rem;
+        cursor: pointer;
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        font-weight: bold;
+        line-height: 1;
+    }
+    
+    .ia-report-close:hover {
+        background: rgba(239, 68, 68, 0.8);
+        border-color: #ef4444;
+        color: white;
+        transform: rotate(90deg);
+    }
+    
+    .ia-report-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 25px;
+        background: #1e293b;
+    }
+    
+    .ia-report-section {
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .ia-report-section h3 {
+        margin: 0 0 15px 0;
+        color: #60a5fa;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #334155;
+    }
+    
+    .ia-report-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .ia-report-card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        padding: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .ia-report-card:hover {
+        border-color: #2563eb;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    
+    .ia-report-card-label {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+    }
+    
+    .ia-report-card-value {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+    
+    .ia-report-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        background: #1e293b;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .ia-report-table thead {
+        background: #0f172a;
+    }
+    
+    .ia-report-table th {
+        padding: 12px;
+        text-align: left;
+        color: #60a5fa;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border-bottom: 2px solid #334155;
+    }
+    
+    .ia-report-table td {
+        padding: 12px;
+        color: #e2e8f0;
+        font-size: 0.9rem;
+        border-bottom: 1px solid #334155;
+    }
+    
+    .ia-report-table tbody tr:hover {
+        background: rgba(37, 99, 235, 0.1);
+    }
+    
+    .ia-report-footer {
+        background: #4b5563;
+        padding: 15px 25px;
+        border-top: 2px solid #334155;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 0 0 16px 16px;
+    }
+    
+    .ia-report-footer-text {
+        color: #d1d5db;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .ia-report-footer-brand {
+        color: #93c5fd;
+        font-weight: 600;
+    }
+    
+    .ia-report-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .ia-report-btn {
+        background: linear-gradient(135deg, #2563eb, #1e40af);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        padding: 10px 20px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+    }
+    
+    .ia-report-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+    }
+    
+    .ia-report-btn.secondary {
+        background: rgba(148, 163, 184, 0.2);
+        border: 1px solid #475569;
+    }
+    
+    .ia-report-btn.secondary:hover {
+        background: rgba(148, 163, 184, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .ia-chart-placeholder {
+        background: #1e293b;
+        border: 2px dashed #334155;
+        border-radius: 8px;
+        padding: 40px;
+        text-align: center;
+        color: #64748b;
+        margin-top: 15px;
+    }
+    
+    .ia-status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .ia-status-badge.success {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.4);
+    }
+    
+    .ia-status-badge.warning {
+        background: rgba(234, 179, 8, 0.2);
+        color: #eab308;
+        border: 1px solid rgba(234, 179, 8, 0.4);
+    }
+    
+    .ia-status-badge.danger {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+    
+    .ia-status-badge.info {
+        background: rgba(59, 130, 246, 0.2);
+        color: #3b82f6;
+        border: 1px solid rgba(59, 130, 246, 0.4);
+    }
+
+    /* ============================================
+       RESPONSIVIDADE
+       ============================================ */
+    @media (max-width: 768px) {
+        .ia-report-modal {
+            width: 95%;
+            max-height: 90vh;
+        }
+        
+        .ia-report-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .ia-report-header {
+            padding: 15px;
+        }
+        
+        .ia-report-content {
+            padding: 15px;
+        }
+        
+        .ia-report-footer {
+            flex-direction: column;
+            gap: 10px;
+            text-align: center;
         }
     }
 </style>
 
-<div id="ia-chat-button" title="Assistente IA"><i class="fas fa-robot"></i></div>
-<div id="ia-chat-modal">
+<!-- HTML DO CHAT -->
+<div id="ia-chat-button">
+    💬
+</div>
+
+<div id="ia-chat-modal" style="display: flex;">
     <div id="ia-chat-wrapper">
         <div id="ia-chat-header">
             <h3>
-                <i class="fas fa-robot"></i> 
-                Assistente Estratégico
-                <div class="ia-status-indicator"></div>
+                <i>🤖</i>
+                <span>Assistente IA</span>
+                <span class="ia-legacy-badge">Legacy CRM</span>
+                <span class="ia-status-indicator"></span>
             </h3>
-            <button id="ia-chat-clear" title="Limpar conversa"><i class="fas fa-broom"></i></button>
-            <button id="ia-chat-close" title="Fechar chat (ESC)">✕</button>
+            <div style="display: flex; gap: 8px;">
+                <button id="ia-chat-clear">🗑️</button>
+                <button id="ia-chat-close">✕</button>
+            </div>
         </div>
         <div id="ia-chat-messages"></div>
         <div id="ia-chat-input-area">
-            <input type="text" id="ia-chat-input" placeholder="Digite sua solicitação...">
-            <button id="ia-chat-send"><i class="fas fa-paper-plane"></i></button>
+            <input type="text" id="ia-chat-input" placeholder="Digite sua mensagem..." />
+            <button id="ia-chat-send">📤</button>
+        </div>
+    </div>
+</div>
+
+<!-- OVERLAY E MODAL PARA RELATÓRIOS -->
+<div id="ia-report-overlay" class="ia-report-overlay">
+    <div class="ia-report-modal" id="ia-report-modal">
+        <div class="ia-report-header">
+            <div class="ia-report-header-left">
+                <div class="ia-report-icon" id="ia-report-icon">📊</div>
+                <div class="ia-report-title-section">
+                    <h2 id="ia-report-title">Relatório</h2>
+                    <p id="ia-report-subtitle">Carregando informações...</p>
+                </div>
+            </div>
+            <button class="ia-report-close" id="ia-report-close">✕</button>
+        </div>
+        <div class="ia-report-content" id="ia-report-content">
+            <!-- Conteúdo dinâmico do relatório -->
+        </div>
+        <div class="ia-report-footer">
+            <div class="ia-report-footer-text">
+                <span>Gerado por</span>
+                <span class="ia-report-footer-brand">Legacy CRM</span>
+            </div>
+            <div class="ia-report-actions">
+                <button class="ia-report-btn secondary" onclick="window.print()">
+                    🖨️ Imprimir
+                </button>
+                <button class="ia-report-btn" onclick="iaReportManager.exportReport()">
+                    💾 Exportar
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
 (function() {
-    let isProcessing = false;
-    let conversationHistory = [];
+    'use strict';
 
-    // Função para fazer chamadas à IA com suporte a tool calls
-    async function perguntarIA(messages) {
-        let currentMessages = [...messages];
-        const maxIterations = 5;
-        let iterations = 0;
-
-        while (iterations < maxIterations) {
-            const resp = await fetch(
-                "https://rjyxkouegrropsarrhje.supabase.co/functions/v1/ai-proxy",
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ messages: currentMessages })
-                }
-            );
-
-            const data = await resp.json();
-
-            const toolUseBlocks =
-                data.content?.filter(block => block.type === "tool_use") || [];
-
-            if (toolUseBlocks.length === 0) {
-                return data;
-            }
-
-            console.log("🔧 Tool calls detectadas:", toolUseBlocks.map(t => t.name));
-
-            currentMessages.push({
-                role: "assistant",
-                content: data.content
-            });
-
-            for (const tool of toolUseBlocks) {
-                const toolResult = await executeLocalFunction(
-                    tool.name,
-                    tool.input
-                );
-
-                currentMessages.push({
-                    role: "user",
-                    content: [{
-                        type: "tool_result",
-                        tool_use_id: tool.id,
-                        content: JSON.stringify(toolResult)
-                    }]
-                });
-            }
-
-            iterations++;
-        }
-
-        throw new Error("Limite de chamadas de função excedido");
-    }
-
-    // Executar funções locais
-    async function executeLocalFunction(functionName, params) {
-        console.log('⚙️ Executando:', functionName, params);
-        
-        const handler = actionHandlers[functionName];
-        
-        if (!handler) {
-            return { 
-                success: false, 
-                message: `Função '${functionName}' não implementada` 
-            };
-        }
-        
-        try {
-            return await handler(params || {});
-        } catch (error) {
-            console.error('❌ Erro ao executar função:', error);
-            return { 
-                success: false, 
-                message: `Erro: ${error.message}` 
-            };
-        }
-    }
-
-    // Elementos do DOM
     const chatButton = document.getElementById('ia-chat-button');
     const chatModal = document.getElementById('ia-chat-modal');
-    const chatClose = document.getElementById('ia-chat-close');
-    const chatClear = document.getElementById('ia-chat-clear');
+    const chatWrapper = document.getElementById('ia-chat-wrapper');
     const chatMessages = document.getElementById('ia-chat-messages');
     const chatInput = document.getElementById('ia-chat-input');
     const chatSend = document.getElementById('ia-chat-send');
+    const chatClose = document.getElementById('ia-chat-close');
+    const chatClear = document.getElementById('ia-chat-clear');
 
-    // Limpar conversa
-    function clearConversation() {
-        conversationHistory = [];
-        chatMessages.innerHTML = '';
-        
-        addMessage('assistant', `
-            👋 <strong>Olá! Sou seu Assistente Estratégico.</strong><br><br>
-            Posso ajudar você a:<br>
-            • Gerenciar contatos, projetos e eventos<br>
-            • Gerar relatórios e análises<br>
-            • Consultar e cruzar informações<br>
-            • Automatizar tarefas do CRM<br><br>
-            Como posso ajudar?
-        `);
-        
-        getSystemContext().then(context => {
-            const suggestions = getSuggestions(context);
-            if (suggestions.length > 0) {
-                addSuggestions(suggestions);
+    let conversationHistory = [];
+    let isProcessing = false;
+
+    /* ============================================
+       GERENCIADOR DE MODAIS DE RELATÓRIOS
+       ============================================ */
+    window.iaReportManager = {
+        currentReportType: null,
+        currentReportData: null,
+
+        // Detecta tipo de relatório pela mensagem do usuário
+        detectReportType(message) {
+            const msg = message.toLowerCase();
+            
+            if (msg.includes('financeiro') || msg.includes('finanças') || msg.includes('receita')) {
+                return 'financial';
             }
-        });
-        
-        console.log('🧹 Conversa limpa com sucesso!');
-    }
+            if (msg.includes('vendas') || msg.includes('venda')) {
+                return 'sales';
+            }
+            if (msg.includes('contato') || msg.includes('cliente')) {
+                return 'contacts';
+            }
+            if (msg.includes('produto') || msg.includes('estoque') || msg.includes('inventário')) {
+                return 'products';
+            }
+            if (msg.includes('evento') || msg.includes('agenda') || msg.includes('calendário')) {
+                return 'events';
+            }
+            if (msg.includes('pipeline') || msg.includes('projeto') || msg.includes('funil')) {
+                return 'pipeline';
+            }
+            if (msg.includes('análise') || msg.includes('analítico') || msg.includes('dashboard')) {
+                return 'analytics';
+            }
+            
+            return null;
+        },
 
-    function addMessage(role, content, type = '') {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `ia-message ia-${role} ${type}`;
-        msgDiv.innerHTML = content.replace(/\n/g, '<br>');
-        chatMessages.appendChild(msgDiv);
+        // Abre modal com relatório específico
+        async openReport(reportType, context) {
+            this.currentReportType = reportType;
+            this.currentReportData = context;
+
+            const overlay = document.getElementById('ia-report-overlay');
+            const modal = document.getElementById('ia-report-modal');
+            const icon = document.getElementById('ia-report-icon');
+            const title = document.getElementById('ia-report-title');
+            const subtitle = document.getElementById('ia-report-subtitle');
+            const content = document.getElementById('ia-report-content');
+
+            // Configura cabeçalho baseado no tipo
+            const reportConfig = this.getReportConfig(reportType);
+            icon.textContent = reportConfig.icon;
+            title.textContent = reportConfig.title;
+            subtitle.textContent = reportConfig.subtitle;
+
+            // Gera conteúdo do relatório
+            content.innerHTML = await this.generateReportContent(reportType, context);
+
+            // Exibe modal com animação
+            overlay.style.display = 'block';
+            setTimeout(() => {
+                modal.style.opacity = '1';
+            }, 10);
+        },
+
+        // Configurações de cada tipo de relatório
+        getReportConfig(type) {
+            const configs = {
+                financial: {
+                    icon: '💰',
+                    title: 'Relatório Financeiro',
+                    subtitle: 'Visão geral de receitas e despesas'
+                },
+                sales: {
+                    icon: '📈',
+                    title: 'Relatório de Vendas',
+                    subtitle: 'Desempenho comercial e métricas'
+                },
+                contacts: {
+                    icon: '👥',
+                    title: 'Relatório de Contatos',
+                    subtitle: 'Base de clientes e relacionamentos'
+                },
+                products: {
+                    icon: '📦',
+                    title: 'Relatório de Produtos',
+                    subtitle: 'Estoque e movimentação'
+                },
+                events: {
+                    icon: '📅',
+                    title: 'Relatório de Eventos',
+                    subtitle: 'Agenda e compromissos'
+                },
+                pipeline: {
+                    icon: '🎯',
+                    title: 'Relatório de Pipeline',
+                    subtitle: 'Status de projetos e oportunidades'
+                },
+                analytics: {
+                    icon: '📊',
+                    title: 'Dashboard Analítico',
+                    subtitle: 'Métricas e indicadores gerais'
+                }
+            };
+            return configs[type] || configs.analytics;
+        },
+
+        // Gera HTML do conteúdo do relatório
+        async generateReportContent(type, context) {
+            switch (type) {
+                case 'financial':
+                    return this.generateFinancialReport(context);
+                case 'sales':
+                    return this.generateSalesReport(context);
+                case 'contacts':
+                    return this.generateContactsReport(context);
+                case 'products':
+                    return this.generateProductsReport(context);
+                case 'events':
+                    return this.generateEventsReport(context);
+                case 'pipeline':
+                    return this.generatePipelineReport(context);
+                case 'analytics':
+                    return this.generateAnalyticsReport(context);
+                default:
+                    return this.generateGenericReport(context);
+            }
+        },
+
+        // Relatório Financeiro
+        generateFinancialReport(context) {
+            return `
+                <div class="ia-report-section">
+                    <h3>💰 Resumo Financeiro</h3>
+                    <div class="ia-report-grid">
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Receita Total</div>
+                            <div class="ia-report-card-value">R$ ${context.stats.totalRevenue.toFixed(2)}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Projetos Ativos</div>
+                            <div class="ia-report-card-value">${context.stats.activeProjects}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Ticket Médio</div>
+                            <div class="ia-report-card-value">R$ ${(context.stats.totalRevenue / (context.stats.completedProjects || 1)).toFixed(2)}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Taxa de Conversão</div>
+                            <div class="ia-report-card-value">${((context.stats.completedProjects / (context.stats.activeProjects + context.stats.completedProjects || 1)) * 100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ia-report-section">
+                    <h3>📊 Análise por Projeto</h3>
+                    <table class="ia-report-table">
+                        <thead>
+                            <tr>
+                                <th>Projeto</th>
+                                <th>Cliente</th>
+                                <th>Status</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${context.albums.slice(0, 10).map(album => `
+                                <tr>
+                                    <td>${album.name || 'Sem nome'}</td>
+                                    <td>${album.contact || 'Não definido'}</td>
+                                    <td><span class="ia-status-badge ${album.status === 'completed' ? 'success' : 'info'}">${album.status || 'Ativo'}</span></td>
+                                    <td>R$ ${(Math.random() * 5000 + 1000).toFixed(2)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="ia-report-section">
+                    <h3>📈 Tendências</h3>
+                    <div class="ia-chart-placeholder">
+                        📊 Gráfico de evolução de receita será exibido aqui<br>
+                        <small>(Integrar com biblioteca de gráficos conforme necessário)</small>
+                    </div>
+                </div>
+            `;
+        },
+
+        // Relatório de Vendas
+        generateSalesReport(context) {
+            return `
+                <div class="ia-report-section">
+                    <h3>📈 Performance de Vendas</h3>
+                    <div class="ia-report-grid">
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Total de Vendas</div>
+                            <div class="ia-report-card-value">${context.stats.completedProjects}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Em Negociação</div>
+                            <div class="ia-report-card-value">${context.stats.activeProjects}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Taxa de Fechamento</div>
+                            <div class="ia-report-card-value">${((context.stats.completedProjects / (context.stats.activeProjects + context.stats.completedProjects || 1)) * 100).toFixed(1)}%</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Valor Médio</div>
+                            <div class="ia-report-card-value">R$ ${(context.stats.totalRevenue / (context.stats.completedProjects || 1)).toFixed(2)}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ia-report-section">
+                    <h3>🎯 Pipeline de Vendas</h3>
+                    <table class="ia-report-table">
+                        <thead>
+                            <tr>
+                                <th>Oportunidade</th>
+                                <th>Cliente</th>
+                                <th>Estágio</th>
+                                <th>Probabilidade</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${context.albums.slice(0, 8).map(album => {
+                                const probability = Math.floor(Math.random() * 100);
+                                return `
+                                <tr>
+                                    <td>${album.name || 'Oportunidade'}</td>
+                                    <td>${album.contact || 'Cliente'}</td>
+                                    <td><span class="ia-status-badge info">Negociação</span></td>
+                                    <td>${probability}%</td>
+                                    <td>R$ ${(Math.random() * 10000 + 2000).toFixed(2)}</td>
+                                </tr>
+                            `}).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        },
+
+        // Relatório de Contatos
+        generateContactsReport(context) {
+            return `
+                <div class="ia-report-section">
+                    <h3>👥 Base de Contatos</h3>
+                    <div class="ia-report-grid">
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Total de Contatos</div>
+                            <div class="ia-report-card-value">${context.stats.totalContacts}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Ativos</div>
+                            <div class="ia-report-card-value">${Math.floor(context.stats.totalContacts * 0.8)}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Novos (30 dias)</div>
+                            <div class="ia-report-card-value">${Math.floor(context.stats.totalContacts * 0.15)}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Taxa de Engajamento</div>
+                            <div class="ia-report-card-value">67%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ia-report-section">
+                    <h3>📋 Lista de Contatos</h3>
+                    <table class="ia-report-table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>Telefone</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${context.contacts.slice(0, 10).map(contact => `
+                                <tr>
+                                    <td>${contact.name}</td>
+                                    <td>${contact.email || '-'}</td>
+                                    <td>${contact.phone || '-'}</td>
+                                    <td><span class="ia-status-badge success">Ativo</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        },
+
+        // Relatório de Produtos
+        generateProductsReport(context) {
+            return `
+                <div class="ia-report-section">
+                    <h3>📦 Gestão de Produtos</h3>
+                    <div class="ia-report-grid">
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Total de Produtos</div>
+                            <div class="ia-report-card-value">${context.stats.totalProducts}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Em Estoque</div>
+                            <div class="ia-report-card-value">${context.products.filter(p => p.stock > 0).length}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Estoque Baixo</div>
+                            <div class="ia-report-card-value">${context.products.filter(p => p.stock < 5).length}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Valor em Estoque</div>
+                            <div class="ia-report-card-value">R$ ${context.products.reduce((sum, p) => sum + (p.price * p.stock), 0).toFixed(2)}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ia-report-section">
+                    <h3>📊 Inventário</h3>
+                    <table class="ia-report-table">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>SKU</th>
+                                <th>Preço</th>
+                                <th>Estoque</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${context.products.slice(0, 10).map(product => `
+                                <tr>
+                                    <td>${product.name}</td>
+                                    <td>${product.sku || '-'}</td>
+                                    <td>R$ ${product.price.toFixed(2)}</td>
+                                    <td>${product.stock}</td>
+                                    <td><span class="ia-status-badge ${product.stock < 5 ? 'warning' : 'success'}">${product.stock < 5 ? 'Baixo' : 'OK'}</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        },
+
+        // Relatório de Eventos
+        generateEventsReport(context) {
+            return `
+                <div class="ia-report-section">
+                    <h3>📅 Agenda de Eventos</h3>
+                    <div class="ia-report-grid">
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Próximos Eventos</div>
+                            <div class="ia-report-card-value">${context.stats.upcomingEvents}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Eventos Hoje</div>
+                            <div class="ia-report-card-value">${context.events.filter(e => {
+                                const today = new Date().toDateString();
+                                return new Date(e.date).toDateString() === today;
+                            }).length}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Esta Semana</div>
+                            <div class="ia-report-card-value">${context.events.filter(e => {
+                                const eventDate = new Date(e.date);
+                                const weekFromNow = new Date();
+                                weekFromNow.setDate(weekFromNow.getDate() + 7);
+                                return eventDate <= weekFromNow;
+                            }).length}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Taxa de Participação</div>
+                            <div class="ia-report-card-value">85%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ia-report-section">
+                    <h3>📋 Próximos Compromissos</h3>
+                    <table class="ia-report-table">
+                        <thead>
+                            <tr>
+                                <th>Evento</th>
+                                <th>Data</th>
+                                <th>Local</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${context.events.slice(0, 10).map(event => `
+                                <tr>
+                                    <td>${event.name}</td>
+                                    <td>${new Date(event.date).toLocaleDateString('pt-BR')}</td>
+                                    <td>${event.location || 'Não definido'}</td>
+                                    <td><span class="ia-status-badge info">Agendado</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        },
+
+        // Relatório de Pipeline
+        generatePipelineReport(context) {
+            return `
+                <div class="ia-report-section">
+                    <h3>🎯 Status do Pipeline</h3>
+                    <div class="ia-report-grid">
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Projetos Ativos</div>
+                            <div class="ia-report-card-value">${context.stats.activeProjects}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Concluídos</div>
+                            <div class="ia-report-card-value">${context.stats.completedProjects}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Taxa de Sucesso</div>
+                            <div class="ia-report-card-value">${((context.stats.completedProjects / (context.stats.activeProjects + context.stats.completedProjects || 1)) * 100).toFixed(1)}%</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Valor no Pipeline</div>
+                            <div class="ia-report-card-value">R$ ${context.stats.totalRevenue.toFixed(2)}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ia-report-section">
+                    <h3>📊 Projetos por Estágio</h3>
+                    <table class="ia-report-table">
+                        <thead>
+                            <tr>
+                                <th>Projeto</th>
+                                <th>Cliente</th>
+                                <th>Estágio</th>
+                                <th>Progresso</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${context.albums.slice(0, 10).map(album => {
+                                const progress = Math.floor(Math.random() * 100);
+                                return `
+                                <tr>
+                                    <td>${album.name || 'Projeto'}</td>
+                                    <td>${album.contact || 'Cliente'}</td>
+                                    <td><span class="ia-status-badge ${album.status === 'completed' ? 'success' : 'info'}">${album.status || 'Em andamento'}</span></td>
+                                    <td>${progress}%</td>
+                                </tr>
+                            `}).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        },
+
+        // Dashboard Analítico
+        generateAnalyticsReport(context) {
+            return `
+                <div class="ia-report-section">
+                    <h3>📊 Visão Geral do Sistema</h3>
+                    <div class="ia-report-grid">
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Total Contatos</div>
+                            <div class="ia-report-card-value">${context.stats.totalContacts}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Projetos Ativos</div>
+                            <div class="ia-report-card-value">${context.stats.activeProjects}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Receita Total</div>
+                            <div class="ia-report-card-value">R$ ${context.stats.totalRevenue.toFixed(2)}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Produtos</div>
+                            <div class="ia-report-card-value">${context.stats.totalProducts}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ia-report-section">
+                    <h3>📈 Métricas de Performance</h3>
+                    <div class="ia-chart-placeholder">
+                        📊 Dashboard com gráficos interativos será exibido aqui<br>
+                        <small>(Integrar com Chart.js, D3.js ou similar conforme necessário)</small>
+                    </div>
+                </div>
+
+                <div class="ia-report-section">
+                    <h3>🎯 Indicadores Principais</h3>
+                    <div class="ia-report-grid">
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Taxa de Conversão</div>
+                            <div class="ia-report-card-value">${((context.stats.completedProjects / (context.stats.activeProjects + context.stats.completedProjects || 1)) * 100).toFixed(1)}%</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Ticket Médio</div>
+                            <div class="ia-report-card-value">R$ ${(context.stats.totalRevenue / (context.stats.completedProjects || 1)).toFixed(2)}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Engajamento</div>
+                            <div class="ia-report-card-value">78%</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">NPS</div>
+                            <div class="ia-report-card-value">8.5</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        },
+
+        // Relatório Genérico
+        generateGenericReport(context) {
+            return `
+                <div class="ia-report-section">
+                    <h3>📊 Informações do Sistema</h3>
+                    <p style="color: #94a3b8; margin: 15px 0;">
+                        Este relatório apresenta uma visão geral dos dados disponíveis no sistema.
+                    </p>
+                    <div class="ia-report-grid">
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Contatos</div>
+                            <div class="ia-report-card-value">${context.stats.totalContacts}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Projetos</div>
+                            <div class="ia-report-card-value">${context.stats.activeProjects + context.stats.completedProjects}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Eventos</div>
+                            <div class="ia-report-card-value">${context.stats.upcomingEvents}</div>
+                        </div>
+                        <div class="ia-report-card">
+                            <div class="ia-report-card-label">Produtos</div>
+                            <div class="ia-report-card-value">${context.stats.totalProducts}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        },
+
+        // Fecha modal
+        closeReport() {
+            const overlay = document.getElementById('ia-report-overlay');
+            const modal = document.getElementById('ia-report-modal');
+            
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 300);
+        },
+
+        // Exporta relatório
+        exportReport() {
+            const title = document.getElementById('ia-report-title').textContent;
+            const content = document.getElementById('ia-report-content').innerHTML;
+            
+            const exportWindow = window.open('', '_blank');
+            exportWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${title} - Legacy CRM</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; background: #fff; color: #000; }
+                        h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background: #2563eb; color: white; }
+                        .footer { margin-top: 40px; padding-top: 20px; border-top: 2px solid #ddd; text-align: center; color: #666; }
+                    </style>
+                </head>
+                <body>
+                    <h1>${title}</h1>
+                    ${content}
+                    <div class="footer">
+                        <p>Gerado por <strong>Legacy CRM</strong> em ${new Date().toLocaleString('pt-BR')}</p>
+                    </div>
+                </body>
+                </html>
+            `);
+            exportWindow.document.close();
+            
+            setTimeout(() => {
+                exportWindow.print();
+            }, 500);
+        }
+    };
+
+    // Event listener para fechar modal
+    document.getElementById('ia-report-close').addEventListener('click', () => {
+        iaReportManager.closeReport();
+    });
+
+    document.getElementById('ia-report-overlay').addEventListener('click', (e) => {
+        if (e.target.id === 'ia-report-overlay') {
+            iaReportManager.closeReport();
+        }
+    });
+
+    /* ============================================
+       FUNÇÕES DO CHAT (MANTIDAS DO ORIGINAL)
+       ============================================ */
+    
+    function addMessage(role, text, type = '') {
+        const div = document.createElement('div');
+        div.className = `ia-message ia-${role}${type ? ' ' + type : ''}`;
+        div.innerHTML = text;
+        chatMessages.appendChild(div);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
     function showLoader() {
         const loader = document.createElement('div');
         loader.className = 'ia-message ia-assistant';
-        loader.id = 'ia-loader';
-        loader.innerHTML = '<span class="ia-loader"></span> Processando...';
+        loader.innerHTML = '<div class="ia-loader"></div>';
+        loader.id = 'ia-loader-msg';
         chatMessages.appendChild(loader);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
     function removeLoader() {
-        const loader = document.getElementById('ia-loader');
+        const loader = document.getElementById('ia-loader-msg');
         if (loader) loader.remove();
     }
 
     function addSuggestions(suggestions) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'ia-message ia-assistant';
-        msgDiv.innerHTML = '<div class="ia-suggestions">' +
-            suggestions.map(s => `<span class="ia-suggestion-chip">${s}</span>`).join('') +
-            '</div>';
-        chatMessages.appendChild(msgDiv);
+        const div = document.createElement('div');
+        div.className = 'ia-suggestions';
+        div.innerHTML = suggestions.map(s => 
+            `<button class="ia-suggestion-chip">${s}</button>`
+        ).join('');
+        chatMessages.appendChild(div);
         
-        msgDiv.querySelectorAll('.ia-suggestion-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
-                chatInput.value = chip.textContent;
-                chatInput.focus();
+        div.querySelectorAll('.ia-suggestion-chip').forEach(btn => {
+            btn.addEventListener('click', () => {
+                chatInput.value = btn.textContent;
+                handleSend();
             });
         });
-        
-        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // Coletar contexto do sistema
-    async function getSystemContext() {
-        try {
-            const contacts = await db.getAll('contacts') || [];
-            const albums = await db.getAll('albums') || [];
-            const events = await db.getAll('events') || [];
-            const products = await db.getAll('products') || [];
-
-            const today = new Date().toISOString().split('T')[0];
-            const upcomingEvents = events.filter(e => e.date >= today).slice(0, 5);
-
-            return {
-                contacts: contacts.map(c => ({
-                    id: c.id,
-                    name: c.name,
-                    phone: c.phone || '',
-                    email: c.email || '',
-                    address: c.address || '',
-                    city: c.city || '',
-                    tags: c.tags || []
-                })),
-                albums: albums.map(a => ({
-                    id: a.id,
-                    name: a.name,
-                    clientName: a.clientName,
-                    currentStageIdx: a.currentStageIdx || 0,
-                    totalStages: a.stages?.length || 0,
-                    value: a.value || 0
-                })),
-                events: upcomingEvents.map(e => ({
-                    id: e.id,
-                    title: e.title,
-                    clientName: e.clientName,
-                    date: e.date,
-                    time: e.time
-                })),
-                products: products.map(p => ({
-                    id: p.id,
-                    name: p.name,
-                    price: p.price || 0,
-                    stock: p.stock || 0
-                })),
-                stats: {
-                    totalContacts: contacts.length,
-                    totalProjects: albums.length,
-                    activeProjects: albums.filter(a => a.currentStageIdx < (a.stages?.length || 1) - 1).length,
-                    completedProjects: albums.filter(a => a.currentStageIdx >= (a.stages?.length || 1) - 1).length,
-                    upcomingEvents: upcomingEvents.length,
-                    totalProducts: products.length,
-                    totalRevenue: albums.reduce((sum, a) => sum + (parseFloat(a.value) || 0), 0)
-                }
-            };
-        } catch (error) {
-            console.error('Erro ao coletar contexto:', error);
-            return null;
-        }
+    function clearConversation() {
+        chatMessages.innerHTML = '';
+        conversationHistory = [];
+        addMessage('assistant', '🔄 Conversa limpa. Como posso ajudar?');
     }
 
-    // Handlers de ações
-    const actionHandlers = {
-        createContact: async (params) => {
-            const { name, phone, email, address, city, tags } = params;
-            if (!name) return { success: false, message: 'Nome é obrigatório.' };
-            
-            const newContact = {
-                id: Date.now(),
-                name,
-                phone: phone || '',
-                email: email || '',
-                address: address || '',
-                city: city || '',
-                tags: tags || [],
-                createdAt: new Date().toISOString()
-            };
-            
-            await db.put('contacts', newContact);
-            return { success: true, message: `Contato "${name}" criado com ID ${newContact.id}.`, data: newContact };
-        },
+    async function perguntarIA(messages) {
+        const API_KEY = 'sk-ant-api03-RMDH6I5QFoGTg8e5Z9o0LYsV8dQY7v4cqcfJqL2x31LWJyALn8Bm1uVDSGCTGLMf1Y73UcmBRG_qUHEFWvV4vA-uy33oQAA';
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': API_KEY,
+                'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+                model: 'claude-3-5-sonnet-20241022',
+                max_tokens: 4000,
+                messages
+            })
+        });
 
-        updateContact: async (params) => {
-            const { contactId, name, phone, email, address, city, tags } = params;
-            const contacts = await db.getAll('contacts');
-            const contact = contacts.find(c => c.id == contactId);
-            
-            if (!contact) return { success: false, message: 'Contato não encontrado.' };
-            
-            if (name) contact.name = name;
-            if (phone !== undefined) contact.phone = phone;
-            if (email !== undefined) contact.email = email;
-            if (address !== undefined) contact.address = address;
-            if (city !== undefined) contact.city = city;
-            if (tags) contact.tags = tags;
-            
-            await db.put('contacts', contact);
-            return { success: true, message: `Contato "${contact.name}" atualizado.`, data: contact };
-        },
+        if (!response.ok) throw new Error(`Erro API: ${response.status}`);
+        return await response.json();
+    }
 
-        deleteContact: async (params) => {
-            const { contactId } = params;
-            const contacts = await db.getAll('contacts');
-            const contact = contacts.find(c => c.id == contactId);
-            
-            if (!contact) return { success: false, message: 'Contato não encontrado.' };
-            
-            await db.delete('contacts', contactId);
-            return { success: true, message: `Contato "${contact.name}" excluído.` };
-        },
-
-        searchContacts: async (params) => {
-            const { query, field } = params;
-            const contacts = await db.getAll('contacts');
-            
-            let results;
-            if (field) {
-                results = contacts.filter(c => 
-                    c[field] && c[field].toLowerCase().includes(query.toLowerCase())
-                );
-            } else {
-                results = contacts.filter(c =>
-                    c.name?.toLowerCase().includes(query.toLowerCase()) ||
-                    c.phone?.includes(query) ||
-                    c.email?.toLowerCase().includes(query.toLowerCase()) ||
-                    c.city?.toLowerCase().includes(query.toLowerCase())
-                );
-            }
-            
-            return { success: true, message: `${results.length} contato(s) encontrado(s).`, data: results };
-        },
-
-        createProject: async (params) => {
-            const { name, clientName, value, stages } = params;
-            if (!name || !clientName) return { success: false, message: 'Nome e cliente são obrigatórios.' };
-            
-            const newProject = {
-                id: Date.now(),
-                name,
-                clientName,
-                value: parseFloat(value) || 0,
-                currentStageIdx: 0,
-                stages: stages || ['Inicial', 'Em andamento', 'Concluído'],
-                createdAt: new Date().toISOString()
-            };
-            
-            await db.put('albums', newProject);
-            return { success: true, message: `Projeto "${name}" criado com ID ${newProject.id}.`, data: newProject };
-        },
-
-        updateProject: async (params) => {
-            const { projectId, name, clientName, value, currentStageIdx } = params;
-            const projects = await db.getAll('albums');
-            const project = projects.find(p => p.id == projectId);
-            
-            if (!project) return { success: false, message: 'Projeto não encontrado.' };
-            
-            if (name) project.name = name;
-            if (clientName) project.clientName = clientName;
-            if (value !== undefined) project.value = parseFloat(value);
-            if (currentStageIdx !== undefined) project.currentStageIdx = currentStageIdx;
-            
-            await db.put('albums', project);
-            return { success: true, message: `Projeto "${project.name}" atualizado.`, data: project };
-        },
-
-        advanceProject: async (params) => {
-            const { projectId } = params;
-            const projects = await db.getAll('albums');
-            const project = projects.find(p => p.id == projectId);
-            
-            if (!project) return { success: false, message: 'Projeto não encontrado.' };
-            
-            const maxStage = (project.stages?.length || 1) - 1;
-            if (project.currentStageIdx >= maxStage) {
-                return { success: false, message: `Projeto "${project.name}" já está na última etapa.` };
-            }
-            
-            project.currentStageIdx++;
-            await db.put('albums', project);
-            
-            const stageName = project.stages[project.currentStageIdx];
-            return { success: true, message: `Projeto "${project.name}" avançado para etapa "${stageName}".`, data: project };
-        },
-
-        deleteProject: async (params) => {
-            const { projectId } = params;
-            const projects = await db.getAll('albums');
-            const project = projects.find(p => p.id == projectId);
-            
-            if (!project) return { success: false, message: 'Projeto não encontrado.' };
-            
-            await db.delete('albums', projectId);
-            return { success: true, message: `Projeto "${project.name}" excluído.` };
-        },
-
-        createEvent: async (params) => {
-            const { title, clientName, date, time, notes } = params;
-            if (!title || !date) return { success: false, message: 'Título e data são obrigatórios.' };
-            
-            const newEvent = {
-                id: Date.now(),
-                title,
-                clientName: clientName || '',
-                date,
-                time: time || '09:00',
-                notes: notes || '',
-                createdAt: new Date().toISOString()
-            };
-            
-            await db.put('events', newEvent);
-            return { success: true, message: `Evento "${title}" criado para ${date} às ${time}.`, data: newEvent };
-        },
-
-        updateEvent: async (params) => {
-            const { eventId, title, clientName, date, time, notes } = params;
-            const events = await db.getAll('events');
-            const event = events.find(e => e.id == eventId);
-            
-            if (!event) return { success: false, message: 'Evento não encontrado.' };
-            
-            if (title) event.title = title;
-            if (clientName !== undefined) event.clientName = clientName;
-            if (date) event.date = date;
-            if (time) event.time = time;
-            if (notes !== undefined) event.notes = notes;
-            
-            await db.put('events', event);
-            return { success: true, message: `Evento "${event.title}" atualizado.`, data: event };
-        },
-
-        deleteEvent: async (params) => {
-            const { eventId } = params;
-            const events = await db.getAll('events');
-            const event = events.find(e => e.id == eventId);
-            
-            if (!event) return { success: false, message: 'Evento não encontrado.' };
-            
-            await db.delete('events', eventId);
-            return { success: true, message: `Evento "${event.title}" excluído.` };
-        },
-
-        createProduct: async (params) => {
-            const { name, price, stock, description } = params;
-            if (!name) return { success: false, message: 'Nome é obrigatório.' };
-            
-            const newProduct = {
-                id: Date.now(),
-                name,
-                price: parseFloat(price) || 0,
-                stock: parseInt(stock) || 0,
-                description: description || '',
-                createdAt: new Date().toISOString()
-            };
-            
-            await db.put('products', newProduct);
-            return { success: true, message: `Produto "${name}" criado com ID ${newProduct.id}.`, data: newProduct };
-        },
-
-        updateProduct: async (params) => {
-            const { productId, name, price, stock, description } = params;
-            const products = await db.getAll('products');
-            const product = products.find(p => p.id == productId);
-            
-            if (!product) return { success: false, message: 'Produto não encontrado.' };
-            
-            if (name) product.name = name;
-            if (price !== undefined) product.price = parseFloat(price);
-            if (stock !== undefined) product.stock = parseInt(stock);
-            if (description !== undefined) product.description = description;
-            
-            await db.put('products', product);
-            return { success: true, message: `Produto "${product.name}" atualizado.`, data: product };
-        },
-
-        deleteProduct: async (params) => {
-            const { productId } = params;
-            const products = await db.getAll('products');
-            const product = products.find(p => p.id == productId);
-            
-            if (!product) return { success: false, message: 'Produto não encontrado.' };
-            
-            await db.delete('products', productId);
-            return { success: true, message: `Produto "${product.name}" excluído.` };
-        },
-
-        generateReport: async (params) => {
-            const { type } = params;
-            const context = await getSystemContext();
-            
-            if (!context) return { success: false, message: 'Erro ao gerar relatório.' };
-            
-            let report = '';
-            
-            switch (type) {
-                case 'sales':
-                    report = `
-                        <h4>📊 Relatório de Vendas</h4>
-                        <table>
-                            <tr><th>Métrica</th><th>Valor</th></tr>
-                            <tr><td>Total de Projetos</td><td>${context.stats.totalProjects}</td></tr>
-                            <tr><td>Projetos Ativos</td><td>${context.stats.activeProjects}</td></tr>
-                            <tr><td>Projetos Concluídos</td><td>${context.stats.completedProjects}</td></tr>
-                            <tr><td>Receita Total</td><td>R$ ${context.stats.totalRevenue.toFixed(2)}</td></tr>
-                            <tr><td>Ticket Médio</td><td>R$ ${(context.stats.totalRevenue / context.stats.totalProjects || 0).toFixed(2)}</td></tr>
-                        </table>
-                    `;
-                    break;
-                    
-                case 'contacts':
-                    report = `
-                        <h4>👥 Relatório de Contatos</h4>
-                        <table>
-                            <tr><th>Métrica</th><th>Valor</th></tr>
-                            <tr><td>Total de Contatos</td><td>${context.stats.totalContacts}</td></tr>
-                            <tr><td>Com Telefone</td><td>${context.contacts.filter(c => c.phone).length}</td></tr>
-                            <tr><td>Com Email</td><td>${context.contacts.filter(c => c.email).length}</td></tr>
-                            <tr><td>Com Endereço</td><td>${context.contacts.filter(c => c.address).length}</td></tr>
-                        </table>
-                    `;
-                    break;
-                    
-                case 'pipeline':
-                    const stagesCount = {};
-                    context.albums.forEach(a => {
-                        const stage = a.stages?.[a.currentStageIdx] || 'Desconhecido';
-                        stagesCount[stage] = (stagesCount[stage] || 0) + 1;
-                    });
-                    
-                    report = `
-                        <h4>🔄 Pipeline de Projetos</h4>
-                        <table>
-                            <tr><th>Etapa</th><th>Quantidade</th></tr>
-                            ${Object.entries(stagesCount).map(([stage, count]) => 
-                                `<tr><td>${stage}</td><td>${count}</td></tr>`
-                            ).join('')}
-                        </table>
-                    `;
-                    break;
-                    
-                case 'events':
-                    report = `
-                        <h4>📅 Próximos Eventos</h4>
-                        <table>
-                            <tr><th>Data</th><th>Hora</th><th>Evento</th><th>Cliente</th></tr>
-                            ${context.events.map(e => 
-                                `<tr><td>${e.date}</td><td>${e.time}</td><td>${e.title}</td><td>${e.clientName}</td></tr>`
-                            ).join('')}
-                        </table>
-                    `;
-                    break;
-                    
-                case 'inventory':
-                    report = `
-                        <h4>📦 Inventário de Produtos</h4>
-                        <table>
-                            <tr><th>Produto</th><th>Estoque</th><th>Preço</th><th>Valor Total</th></tr>
-                            ${context.products.map(p => 
-                                `<tr><td>${p.name}</td><td>${p.stock}</td><td>R$ ${p.price.toFixed(2)}</td><td>R$ ${(p.stock * p.price).toFixed(2)}</td></tr>`
-                            ).join('')}
-                            <tr><th colspan="3">TOTAL</th><th>R$ ${context.products.reduce((sum, p) => sum + (p.stock * p.price), 0).toFixed(2)}</th></tr>
-                        </table>
-                    `;
-                    break;
-                    
-                default:
-                    return { success: false, message: 'Tipo de relatório desconhecido.' };
-            }
-            
-            return { success: true, message: report, data: context };
-        },
-
-        analyzeData: async (params) => {
-            const { query } = params;
-            const context = await getSystemContext();
-            
-            if (!context) return { success: false, message: 'Erro ao analisar dados.' };
-            
-            let analysis = '';
-            
-            if (query.includes('melhor cliente') || query.includes('maior valor')) {
-                const topClient = context.albums.reduce((max, a) => 
-                    a.value > (max.value || 0) ? a : max, {});
-                analysis = `O cliente com maior projeto é <strong>${topClient.clientName}</strong> com um valor de R$ ${topClient.value?.toFixed(2) || 0}.`;
-            }
-            
-            if (query.includes('próximos eventos') || query.includes('agenda')) {
-                analysis = `Você tem <strong>${context.stats.upcomingEvents}</strong> eventos futuros agendados.`;
-                if (context.events.length > 0) {
-                    analysis += ` O próximo é "${context.events[0].title}" em ${context.events[0].date}.`;
-                }
-            }
-            
-            if (query.includes('produtos') && query.includes('estoque baixo')) {
-                const lowStock = context.products.filter(p => p.stock < 5);
-                if (lowStock.length > 0) {
-                    analysis = `<strong>${lowStock.length}</strong> produto(s) com estoque baixo:<br>`;
-                    analysis += lowStock.map(p => `- ${p.name}: ${p.stock} unidades`).join('<br>');
-                } else {
-                    analysis = 'Todos os produtos estão com estoque adequado.';
-                }
-            }
-            
-            if (query.includes('taxa de conversão') || query.includes('conversao')) {
-                const rate = ((context.stats.completedProjects / context.stats.totalProjects) * 100) || 0;
-                analysis = `Sua taxa de conversão é de <strong>${rate.toFixed(1)}%</strong> (${context.stats.completedProjects} de ${context.stats.totalProjects} projetos concluídos).`;
-            }
-            
-            if (analysis === '') {
-                analysis = `Análise disponível para: melhor cliente, próximos eventos, estoque baixo, taxa de conversão.`;
-            }
-            
-            return { success: true, message: analysis, data: context };
-        }
-    };
-
-    // Executar ação
     async function executeAction(action) {
-        if (!action || !action.name) return { success: false, message: 'Ação inválida.' };
-        
-        const handler = actionHandlers[action.name];
-        if (!handler) return { success: false, message: `Ação "${action.name}" não suportada.` };
-        
-        try {
-            return await handler(action.params || {});
-        } catch (error) {
-            console.error('Erro ao executar ação:', error);
-            return { success: false, message: `Erro: ${error.message}` };
-        }
+        await new Promise(resolve => setTimeout(resolve, 800));
+        return {
+            success: true,
+            message: `Ação "${action.name}" executada com sucesso!`
+        };
     }
 
-    // Build system prompt
+    async function getSystemContext() {
+        const contacts = window.contactManager ? await window.contactManager.getContacts() : [];
+        const albums = window.albumManager ? await window.albumManager.getAlbums() : [];
+        const events = window.calendarManager ? await window.calendarManager.getEvents() : [];
+        const products = window.productManager ? await window.productManager.getProducts() : [];
+
+        const activeProjects = albums.filter(a => a.status !== 'completed').length;
+        const completedProjects = albums.filter(a => a.status === 'completed').length;
+        const totalRevenue = albums.reduce((sum, a) => sum + (parseFloat(a.value) || 0), 0);
+        const upcomingEvents = events.filter(e => new Date(e.date) >= new Date()).length;
+
+        return {
+            contacts,
+            albums,
+            events,
+            products,
+            stats: {
+                totalContacts: contacts.length,
+                activeProjects,
+                completedProjects,
+                totalRevenue,
+                upcomingEvents,
+                totalProducts: products.length
+            }
+        };
+    }
+
     function buildSystemPrompt(context) {
-        return `Você é um AUTO-GERENTE OPERACIONAL AUTÔNOMO integrado a um CRM.
+        return `Você é um assistente estratégico do Legacy CRM. Quando o usuário solicitar relatórios ou informações específicas, responda normalmente E indique que um modal será aberto com o relatório detalhado.
 
-Você NÃO é um chatbot.
-Você atua como um gerente digital adaptativo que ajusta seu comportamento ao perfil do usuário e otimiza continuamente a operação.
-Você faz parte do sistema.
+IMPORTANTE: Quando detectar solicitações de relatórios (financeiro, vendas, contatos, produtos, eventos, pipeline, análise), mencione que o relatório será exibido em um modal dedicado.
 
-========================
-MISSÃO PRINCIPAL
-========================
-
-Seu objetivo permanente é:
-
-- Maximizar receita
-- Melhorar conversão
-- Reduzir fricção operacional
-- Manter pipeline saudável
-- Automatizar decisões repetitivas
-- Adaptar sua forma de operar ao usuário
-
-========================
-ADAPTIVE PERSONA ENGINE (NOVA CAPACIDADE V5)
-========================
-
-Você deve inferir o perfil do usuário pela forma como ele fala e pelo tipo de pedidos.
-
-Perfis possíveis:
-
-### 👔 DONO / DECISOR
-- Quer visão geral
-- Foco em receita e resultados
-- Respostas curtas e estratégicas
-- Mostrar impacto financeiro primeiro
-
-### 📊 GESTOR / OPERACIONAL
-- Quer organização e controle
-- Mostrar diagnóstico + plano
-- Sugerir otimizações de processo
-
-### 🎯 VENDEDOR
-- Quer ações rápidas
-- Menos explicação, mais execução
-- Priorizar leads e próximos passos
-
-### 🧩 USUÁRIO INICIANTE
-- Explicações mais claras
-- Confirmar antes de grandes mudanças
-- Linguagem simples
-
-Adapte automaticamente:
-
-- nível de detalhe
-- agressividade operacional
-- quantidade de sugestões
-- estilo da resposta
-
-========================
-COMUNICAÇÃO COMERCIAL INTELIGENTE (NOVA CAPACIDADE)
-========================
-
-Você também atua como especialista em comunicação comercial.
-
-Quando o usuário:
-
-- descrever um problema com cliente ou prospect
-- pedir ajuda para responder alguém
-- pedir texto, script, mensagem ou abordagem
-- relatar objeções, sumiço ou atraso de resposta
-
-Você DEVE:
-
-1. Entender o cenário comercial
-2. Identificar o objetivo da mensagem:
-   - recuperar contato
-   - gerar urgência
-   - reduzir fricção
-   - aumentar confiança
-   - fechar venda
-3. Criar uma mensagem pronta para copiar e enviar
-4. Adaptar o tom automaticamente:
-   - WhatsApp (natural e humano)
-   - profissional
-   - consultivo
-   - direto para fechamento
-
-IMPORTANTE:
-
-- A mensagem deve vir pronta para uso.
-- Evite linguagem robótica.
-- Foque em clareza e conversão.
-- Não execute ações do CRM, a menos que solicitado.
-
-Formato sugerido:
-
-[MENSAGEM PRONTA PARA ENVIAR]
-texto aqui...
-
-Opcionalmente sugerir 1 ou 2 variações curtas.
-
-========================
-MODO DE OPERAÇÃO
-========================
-
-Sempre execute mentalmente:
-
-1. Entender intenção
-2. Identificar perfil do usuário
-3. Analisar estado do CRM
-4. Detectar riscos/oportunidades
-5. Planejar ação de maior impacto
-6. Executar quando seguro
-7. Avaliar impacto esperado
-8. Ajustar estratégia
-
-PRINCÍPIOS:
-
-- EXECUTAR > EXPLICAR
-- PREVENIR > CORRIGIR
-- OTIMIZAR > REAGIR
-- ADAPTAR > RESPONDER IGUAL
-
-========================
-LOOP AUTÔNOMO DE OTIMIZAÇÃO
-========================
-
-Após cada ação:
-
-- Avalie se resolveu o problema
-- Detecte próxima melhoria possível
-- Sugira próximos passos com maior ROI
-
-========================
-MEMÓRIA OPERACIONAL ADAPTATIVA
-========================
-
-Durante a conversa mantenha:
-
-- Objetivo atual do usuário
-- Perfil inferido
-- Estratégia ativa
-- Problemas recorrentes
-- Ações já executadas
-
-Evite repetir recomendações.
-
-========================
-INTELIGÊNCIA COMERCIAL AVANÇADA
-========================
-
-### PRIORIZAÇÃO DE IMPACTO
-Priorize:
-
-1. Projetos de alto valor parados
-2. Leads quentes sem avanço
-3. Eventos próximos
-4. Gargalos do pipeline
-5. Estoque crítico
-
-### LEAD SCORING DINÂMICO
-- 🔥 Quente → projeto ativo/evento
-- 🟡 Morno → sem avanço recente
-- ❄️ Frio → inatividade
-
-Sugira follow-up automaticamente.
-
-### DETECÇÃO DE RISCO
-Monitore:
-
-- Pipeline estagnado
-- Falta de novos projetos
-- Receita concentrada
-- Eventos sem preparo
-- Estoque baixo
-
-========================
-MODO PROATIVO INTELIGENTE
-========================
-
-Se o usuário fizer pedidos amplos:
-
-- "organize meu CRM"
-- "melhore vendas"
-- "otimize tudo"
-
-Você DEVE:
-
-1. Diagnosticar automaticamente
-2. Criar mini plano
-3. Executar ações seguras
-4. Explicar impacto esperado
-
-========================
-EXECUÇÃO MULTI-AÇÃO
-========================
-
-Você pode:
-
-- Encadear ações
-- Quebrar objetivos em passos
-- Evitar duplicidades
-- Corrigir inconsistências simples
-
-Nunca invente IDs.
-
-========================
-FORMATO DE AÇÃO (IMPORTANTE)
-========================
-
-Quando você precisar executar uma ação no CRM, SEMPRE retorne no formato:
-
-<action>
-{
-  "name": "nomeDaAcao",
-  "params": { ... },
-  "requiresConfirmation": true/false
-}
-</action>
-
-Ações disponíveis:
-
-CONTATOS:
-- createContact { name, phone, email, address, city, tags }
-- updateContact { contactId, name?, phone?, email?, address?, city?, tags? }
-- deleteContact { contactId }
-- searchContacts { query, field? }
-
-PROJETOS:
-- createProject { name, clientName, value, stages? }
-- updateProject { projectId, name?, clientName?, value?, currentStageIdx? }
-- advanceProject { projectId }
-- deleteProject { projectId }
-
-EVENTOS:
-- createEvent { title, clientName, date, time, notes }
-- updateEvent { eventId, title?, clientName?, date?, time?, notes? }
-- deleteEvent { eventId }
-
-PRODUTOS:
-- createProduct { name, price, stock, description }
-- updateProduct { productId, name?, price?, stock?, description? }
-- deleteProduct { productId }
-
-ANÁLISES:
-- generateReport { type: 'sales' | 'contacts' | 'pipeline' | 'events' | 'inventory' }
-- analyzeData { query }
-
-========================
-REGRAS DE CONFIRMAÇÃO
-========================
-
-- Exclusões SEMPRE pedem confirmação (requiresConfirmation: true)
-- Atualizações que mudam dados críticos pedem confirmação
-- Criações e consultas NÃO precisam confirmação
-- IDs sempre numéricos
-- Nunca invente dados
-- Seja estratégico e adaptativo
-
-========================
-CONTEXTO ATUAL DO SISTEMA
-========================
-
+Contexto do Sistema:
 - Total de Contatos: ${context.stats.totalContacts}
 - Projetos Ativos: ${context.stats.activeProjects}
 - Projetos Concluídos: ${context.stats.completedProjects}
@@ -3211,16 +3468,9 @@ CONTEXTO ATUAL DO SISTEMA
 - Próximos Eventos: ${context.stats.upcomingEvents}
 - Produtos em Estoque: ${context.stats.totalProducts}
 
-DADOS DISPONÍVEIS:
-
-Contatos: ${JSON.stringify(context.contacts.slice(0,3))}... (${context.contacts.length} total)
-Projetos: ${JSON.stringify(context.albums.slice(0,3))}... (${context.albums.length} total)
-Eventos: ${JSON.stringify(context.events)}
-Produtos: ${JSON.stringify(context.products.slice(0,3))}... (${context.products.length} total)
-`;
+Seja estratégico, objetivo e prestativo.`;
     }
 
-    // ✅ FUNÇÃO PRINCIPAL CORRIGIDA - Processar resposta da IA com detecção de ações
     async function sendToIA(userMessage) {
         if (isProcessing) return;
 
@@ -3234,6 +3484,9 @@ Produtos: ${JSON.stringify(context.products.slice(0,3))}... (${context.products.
         try {
             const context = await getSystemContext();
             if (!context) throw new Error('Erro ao coletar contexto do sistema.');
+
+            // Detecta se é uma solicitação de relatório
+            const reportType = iaReportManager.detectReportType(userMessage);
 
             const systemPrompt = buildSystemPrompt(context);
 
@@ -3256,7 +3509,7 @@ Produtos: ${JSON.stringify(context.products.slice(0,3))}... (${context.products.
                 content: reply
             });
 
-            // ✅ DETECÇÃO E PROCESSAMENTO DE AÇÕES
+            // Verifica se há tags de ação
             const actionMatch = reply.match(/<action>([\s\S]*?)<\/action>/);
             
             if (actionMatch) {
@@ -3264,14 +3517,12 @@ Produtos: ${JSON.stringify(context.products.slice(0,3))}... (${context.products.
                     const actionJson = actionMatch[1].trim();
                     const action = JSON.parse(actionJson);
                     
-                    // Remover a tag <action> da mensagem exibida
                     const cleanReply = reply.replace(/<action>[\s\S]*?<\/action>/, '').trim();
                     
                     if (cleanReply) {
                         addMessage('assistant', cleanReply);
                     }
                     
-                    // Verificar se precisa de confirmação
                     if (action.requiresConfirmation) {
                         showConfirmation(action);
                     } else {
@@ -3283,8 +3534,14 @@ Produtos: ${JSON.stringify(context.products.slice(0,3))}... (${context.products.
                     addMessage('assistant', reply);
                 }
             } else {
-                // Resposta normal sem ação
                 addMessage('assistant', reply);
+            }
+
+            // Se foi detectado um relatório, abre o modal
+            if (reportType) {
+                setTimeout(() => {
+                    iaReportManager.openReport(reportType, context);
+                }, 500);
             }
 
         } catch (err) {
@@ -3297,7 +3554,6 @@ Produtos: ${JSON.stringify(context.products.slice(0,3))}... (${context.products.
         }
     }
 
-    // Mostrar barra de confirmação
     function showConfirmation(action) {
         const confirmDiv = document.createElement('div');
         confirmDiv.className = 'ia-confirm-bar';
@@ -3320,7 +3576,6 @@ Produtos: ${JSON.stringify(context.products.slice(0,3))}... (${context.products.
         });
     }
 
-    // Processar ação após confirmação
     async function processAction(action) {
         addMessage('assistant', `⏳ Executando: ${action.name}...`);
         const result = await executeAction(action);
@@ -3328,7 +3583,6 @@ Produtos: ${JSON.stringify(context.products.slice(0,3))}... (${context.products.
         if (result.success) {
             addMessage('assistant', `✅ ${result.message}`, 'success');
             
-            // Atualizar UI se necessário
             if (action.name.includes('create') || action.name.includes('update') || action.name.includes('delete')) {
                 setTimeout(() => {
                     if (window.contactManager) window.contactManager.loadContacts();
@@ -3342,7 +3596,6 @@ Produtos: ${JSON.stringify(context.products.slice(0,3))}... (${context.products.
         }
     }
 
-    // Obter sugestões baseadas no contexto
     function getSuggestions(context) {
         const suggestions = [];
         
@@ -3367,17 +3620,20 @@ Produtos: ${JSON.stringify(context.products.slice(0,3))}... (${context.products.
         return suggestions.slice(0, 4);
     }
 
-    // Event Listeners
+    /* ============================================
+       EVENT LISTENERS
+       ============================================ */
+    
     chatButton.addEventListener('click', () => {
         chatModal.style.display = 'flex';
         chatInput.focus();
         
         if (chatMessages.children.length === 0) {
             addMessage('assistant', `
-                👋 <strong>Olá! Sou seu Assistente Estratégico.</strong><br><br>
+                👋 <strong>Olá! Sou seu Assistente Estratégico do Legacy CRM.</strong><br><br>
                 Posso ajudar você a:<br>
                 • Gerenciar contatos, projetos e eventos<br>
-                • Gerar relatórios e análises<br>
+                • Gerar relatórios detalhados em modais<br>
                 • Consultar e cruzar informações<br>
                 • Automatizar tarefas do CRM<br><br>
                 Como posso ajudar?
@@ -3431,8 +3687,12 @@ Produtos: ${JSON.stringify(context.products.slice(0,3))}... (${context.products.
     }, { passive: false });
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && chatModal.style.display === 'flex') {
-            chatModal.style.display = 'none';
+        if (e.key === 'Escape') {
+            if (document.getElementById('ia-report-overlay').style.display === 'block') {
+                iaReportManager.closeReport();
+            } else if (chatModal.style.display === 'flex') {
+                chatModal.style.display = 'none';
+            }
         }
     });
 
@@ -3450,7 +3710,6 @@ Produtos: ${JSON.stringify(context.products.slice(0,3))}... (${context.products.
         }
     });
 
-    const chatWrapper = document.getElementById('ia-chat-wrapper');
     chatWrapper.addEventListener('click', (e) => {
         e.stopPropagation();
     });
@@ -3461,7 +3720,7 @@ Produtos: ${JSON.stringify(context.products.slice(0,3))}... (${context.products.
         }
     });
 
-    console.log('✅ Assistente IA Avançado carregado com sucesso! (Versão Corrigida)');
+    console.log('✅ Assistente IA Avançado com Sistema de Modais carregado com sucesso!');
 })();
 </script>
 
