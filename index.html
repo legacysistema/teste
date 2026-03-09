@@ -1,2996 +1,1548 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FotoSelect — Sistema de Seleção de Fotos</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<style>
-:root {
-  --bg: #07080b;
-  --bg2: #0d0f14;
-  --bg3: #13161d;
-  --surface: rgba(255,255,255,0.035);
-  --surface2: rgba(255,255,255,0.065);
-  --surface3: rgba(255,255,255,0.1);
-  --border: rgba(255,255,255,0.08);
-  --border2: rgba(255,255,255,0.13);
-  --text: #ede8e1;
-  --text2: #9b958e;
-  --text3: #5c5852;
-  --green: #22c55e;
-  --green-glow: rgba(34,197,94,0.25);
-  --gold: #f0a94b;
-  --gold-glow: rgba(240,169,75,0.2);
-  --blue: #60a5fa;
-  --blue-glow: rgba(96,165,250,0.2);
-  --red: #f87171;
-  --font-display: 'Cormorant Garamond', Georgia, serif;
-  --font-ui: 'Outfit', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  --r: 12px;
-  --r2: 18px;
-  --shadow: 0 24px 48px rgba(0,0,0,0.6), 0 8px 16px rgba(0,0,0,0.4);
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body {
-  font-family: var(--font-ui);
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(34,197,94,0.04) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(240,169,75,0.03) 0%, transparent 50%);
-  pointer-events: none;
-  z-index: 0;
-}
-/* SCROLLBAR */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
-/* LOADING */
-#loading-screen {
-  position: fixed; inset: 0; background: var(--bg);
-  display: flex; align-items: center; justify-content: center;
-  flex-direction: column; gap: 20px; z-index: 9999;
-  transition: opacity 0.5s, visibility 0.5s;
-}
-#loading-screen.hidden { opacity: 0; visibility: hidden; }
-.loader-logo {
-  font-family: var(--font-display);
-  font-size: 2.5rem; font-weight: 300; letter-spacing: 0.2em;
-  color: var(--text);
-}
-.loader-logo span { color: var(--green); }
-.loader-bar {
-  width: 160px; height: 2px; background: var(--surface3);
-  border-radius: 2px; overflow: hidden;
-}
-.loader-bar::after {
-  content: '';
-  display: block; height: 100%; width: 40%;
-  background: var(--green);
-  border-radius: 2px;
-  animation: loaderAnim 1s ease-in-out infinite alternate;
-}
-@keyframes loaderAnim { from { transform: translateX(0); } to { transform: translateX(300%); } }
-/* TOAST */
-#toast-container {
-  position: fixed; top: 20px; right: 20px;
-  display: flex; flex-direction: column; gap: 10px;
-  z-index: 8000; pointer-events: none;
-}
-.toast {
-  background: var(--bg3);
-  border: 1px solid var(--border2);
-  border-radius: var(--r);
-  padding: 14px 20px;
-  font-size: 0.875rem;
-  font-family: var(--font-ui);
-  min-width: 280px;
-  display: flex; align-items: center; gap: 10px;
-  backdrop-filter: blur(20px);
-  box-shadow: var(--shadow);
-  animation: toastIn 0.3s ease;
-  pointer-events: auto;
-  transition: opacity 0.3s, transform 0.3s;
-}
-.toast.removing { opacity: 0; transform: translateX(20px); }
-.toast.success { border-left: 3px solid var(--green); }
-.toast.error { border-left: 3px solid var(--red); }
-.toast.info { border-left: 3px solid var(--blue); }
-.toast.warning { border-left: 3px solid var(--gold); }
-@keyframes toastIn { from { opacity: 0; transform: translateX(20px); } }
-/* HIDDEN */
-.hidden { display: none !important; }
-/* ADMIN PANEL */
-#admin-panel {
-  display: flex; min-height: 100vh; position: relative; z-index: 1;
-}
-#sidebar {
-  width: 260px; min-height: 100vh; background: var(--bg2);
-  border-right: 1px solid var(--border);
-  display: flex; flex-direction: column;
-  padding: 28px 0; position: sticky; top: 0; height: 100vh;
-  overflow-y: auto;
-}
-.sidebar-logo {
-  padding: 0 24px 28px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 24px;
-}
-.sidebar-logo h1 {
-  font-family: var(--font-display);
-  font-size: 1.8rem; font-weight: 300;
-  letter-spacing: 0.08em;
-}
-.sidebar-logo h1 span { color: var(--green); }
-.sidebar-logo small {
-  display: block; font-size: 0.7rem; letter-spacing: 0.15em;
-  color: var(--text3); text-transform: uppercase; margin-top: 4px;
-}
-.nav-label {
-  font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--text3); padding: 0 24px; margin-bottom: 8px;
-}
-.nav-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 24px; cursor: pointer;
-  color: var(--text2); font-size: 0.9rem; font-weight: 400;
-  border-left: 2px solid transparent;
-  transition: all 0.2s; user-select: none;
-}
-.nav-item:hover { color: var(--text); background: var(--surface); }
-.nav-item.active {
-  color: var(--green); border-left-color: var(--green);
-  background: rgba(34,197,94,0.05);
-}
-.nav-item svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.8; }
-.nav-item.active svg { opacity: 1; }
-.sidebar-bottom {
-  margin-top: auto; padding: 20px 24px 0;
-  border-top: 1px solid var(--border);
-}
-.sidebar-supabase-status {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 0.75rem; color: var(--text3);
-}
-.status-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--text3);
-}
-.status-dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green-glow); }
-/* MAIN CONTENT */
-#main-content {
-  flex: 1; padding: 40px; overflow-y: auto; min-height: 100vh;
-}
-.page-header {
-  margin-bottom: 36px;
-}
-.page-header h2 {
-  font-family: var(--font-display);
-  font-size: 2rem; font-weight: 400; letter-spacing: 0.03em;
-  margin-bottom: 6px;
-}
-.page-header p { color: var(--text2); font-size: 0.9rem; }
-/* CARDS / PANELS */
-.glass-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r2);
-  padding: 28px;
-  backdrop-filter: blur(10px);
-}
-.glass-card + .glass-card { margin-top: 20px; }
-.card-title {
-  font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--text3); margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
-}
-.card-title::before {
-  content: '';
-  display: inline-block; width: 16px; height: 1px; background: var(--text3);
-}
-/* FORM */
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.form-grid.col3 { grid-template-columns: 1fr 1fr 1fr; }
-.form-grid.col1 { grid-template-columns: 1fr; }
-.field { display: flex; flex-direction: column; gap: 7px; }
-.field label {
-  font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--text2); font-weight: 500;
-}
-.field input, .field select, .field textarea {
-  background: var(--bg3);
-  border: 1px solid var(--border2);
-  border-radius: var(--r);
-  padding: 11px 14px;
-  color: var(--text);
-  font-family: var(--font-ui);
-  font-size: 0.9rem;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.field input:focus, .field select:focus, .field textarea:focus {
-  border-color: var(--green);
-  box-shadow: 0 0 0 3px var(--green-glow);
-}
-.field textarea { resize: vertical; min-height: 80px; }
-.field select option { background: var(--bg3); }
-/* BUTTONS */
-.btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 11px 22px; border-radius: var(--r);
-  font-family: var(--font-ui); font-size: 0.875rem; font-weight: 500;
-  cursor: pointer; border: none; outline: none;
-  transition: all 0.2s; user-select: none; white-space: nowrap;
-  letter-spacing: 0.02em;
-}
-.btn svg { width: 16px; height: 16px; }
-.btn-primary {
-  background: var(--green);
-  color: #030a05;
-  box-shadow: 0 4px 16px var(--green-glow);
-}
-.btn-primary:hover {
-  background: #4ade80;
-  box-shadow: 0 6px 24px rgba(34,197,94,0.4);
-  transform: translateY(-1px);
-}
-.btn-secondary {
-  background: var(--surface2);
-  color: var(--text);
-  border: 1px solid var(--border2);
-}
-.btn-secondary:hover { background: var(--surface3); }
-.btn-gold {
-  background: var(--gold);
-  color: #150900;
-  box-shadow: 0 4px 16px var(--gold-glow);
-}
-.btn-gold:hover { background: #fbbf6a; box-shadow: 0 6px 24px rgba(240,169,75,0.4); transform: translateY(-1px); }
-.btn-ghost {
-  background: transparent; color: var(--text2);
-  border: 1px solid var(--border);
-}
-.btn-ghost:hover { color: var(--text); border-color: var(--border2); background: var(--surface); }
-.btn-danger {
-  background: rgba(248,113,113,0.15);
-  color: var(--red);
-  border: 1px solid rgba(248,113,113,0.3);
-}
-.btn-danger:hover { background: rgba(248,113,113,0.25); }
-.btn-sm { padding: 7px 14px; font-size: 0.8rem; }
-.btn-lg { padding: 14px 30px; font-size: 1rem; }
-.btn-block { width: 100%; }
-.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
-/* BADGES */
-.badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 3px 10px; border-radius: 20px;
-  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
-}
-.badge-green { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
-.badge-gold { background: rgba(240,169,75,0.15); color: var(--gold); border: 1px solid rgba(240,169,75,0.3); }
-.badge-red { background: rgba(248,113,113,0.15); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
-.badge-gray { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
-.badge-blue { background: rgba(96,165,250,0.15); color: var(--blue); border: 1px solid rgba(96,165,250,0.3); }
-/* STATS GRID */
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
-.stat-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r2);
-  padding: 22px;
-}
-.stat-card .stat-label { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; }
-.stat-card .stat-value { font-family: var(--font-display); font-size: 2.2rem; font-weight: 300; line-height: 1; }
-.stat-card .stat-value.green { color: var(--green); }
-.stat-card .stat-value.gold { color: var(--gold); }
-.stat-card .stat-sub { font-size: 0.75rem; color: var(--text3); margin-top: 6px; }
-/* CLIENTS TABLE */
-.data-table { width: 100%; border-collapse: collapse; }
-.data-table th {
-  font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--text3); font-weight: 500; padding: 10px 14px;
-  text-align: left; border-bottom: 1px solid var(--border);
-}
-.data-table td {
-  padding: 14px 14px; border-bottom: 1px solid var(--border);
-  font-size: 0.875rem; vertical-align: middle;
-}
-.data-table tr:last-child td { border-bottom: none; }
-.data-table tr:hover td { background: var(--surface); }
-.data-table .client-name { font-weight: 500; }
-.data-table .client-event { color: var(--text2); font-size: 0.82rem; }
-/* UPLOAD AREA */
-#upload-drop-zone {
-  border: 2px dashed var(--border2);
-  border-radius: var(--r2);
-  padding: 48px 24px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.25s;
-  background: var(--surface);
-}
-#upload-drop-zone:hover, #upload-drop-zone.drag-over {
-  border-color: var(--green);
-  background: rgba(34,197,94,0.04);
-}
-#upload-drop-zone svg { color: var(--text3); margin-bottom: 14px; }
-#upload-drop-zone h3 { font-family: var(--font-display); font-size: 1.3rem; font-weight: 400; margin-bottom: 6px; }
-#upload-drop-zone p { color: var(--text2); font-size: 0.85rem; }
-/* ADMIN GALLERY */
-#admin-gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 10px; margin-top: 20px;
-}
-.admin-photo-item {
-  aspect-ratio: 1; border-radius: 10px; overflow: hidden;
-  position: relative; background: var(--surface);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-.admin-photo-item:hover { transform: scale(1.03); }
-.admin-photo-item img { width: 100%; height: 100%; object-fit: cover; }
-.admin-photo-item .photo-delete {
-  position: absolute; top: 6px; right: 6px;
-  width: 26px; height: 26px;
-  background: rgba(248,113,113,0.85);
-  border-radius: 50%; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0; transition: opacity 0.2s;
-}
-.admin-photo-item:hover .photo-delete { opacity: 1; }
-.admin-photo-item .photo-order {
-  position: absolute; bottom: 6px; left: 6px;
-  background: rgba(0,0,0,0.6); color: #fff;
-  padding: 2px 7px; border-radius: 6px;
-  font-size: 0.7rem; font-family: var(--font-mono);
-}
-/* LINK BOX */
-.link-box {
-  display: flex; align-items: center; gap: 10px;
-  background: var(--bg3); border: 1px solid var(--border2);
-  border-radius: var(--r); padding: 12px 16px;
-  font-family: var(--font-mono); font-size: 0.8rem;
-  color: var(--blue); overflow: hidden;
-  flex-wrap: wrap;
-}
-.link-box span { flex: 1; word-break: break-all; }
-/* MODAL */
-.modal-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.75);
-  backdrop-filter: blur(8px);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 5000; padding: 20px;
-  animation: fadeIn 0.2s ease;
-}
-.modal-overlay.hidden { display: none !important; }
-@keyframes fadeIn { from { opacity: 0; } }
-.modal-box {
-  background: var(--bg2);
-  border: 1px solid var(--border2);
-  border-radius: var(--r2);
-  padding: 32px;
-  width: 100%; max-width: 540px;
-  max-height: 90vh; overflow-y: auto;
-  box-shadow: var(--shadow);
-  animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.modal-box.wide { max-width: 700px; }
-@keyframes modalIn { from { opacity: 0; transform: scale(0.94) translateY(10px); } }
-.modal-header {
-  display: flex; justify-content: space-between; align-items: flex-start;
-  margin-bottom: 24px;
-}
-.modal-header h3 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 400; }
-.modal-close {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: var(--surface2); border: none; color: var(--text2);
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s; flex-shrink: 0;
-}
-.modal-close:hover { background: var(--surface3); color: var(--text); }
-/* ====== CLIENT PANEL ====== */
-#client-panel {
-  position: relative; z-index: 1;
-  min-height: 100vh; background: var(--bg);
-  padding-bottom: 180px;
-}
-#client-header {
-  position: sticky; top: 0; z-index: 100;
-  background: rgba(7,8,11,0.9);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
-  padding: 0 24px;
-}
-.client-header-inner {
-  max-width: 1400px; margin: 0 auto;
-  display: flex; align-items: center; gap: 20px;
-  padding: 16px 0;
-  flex-wrap: wrap;
-}
-.client-logo {
-  font-family: var(--font-display);
-  font-size: 1.4rem; font-weight: 300; letter-spacing: 0.08em;
-  margin-right: auto;
-}
-.client-logo span { color: var(--green); }
-.counter-chips {
-  display: flex; gap: 8px; flex-wrap: wrap;
-}
-.counter-chip {
-  display: flex; flex-direction: column; align-items: center;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 8px 16px; min-width: 80px;
-}
-.counter-chip .chip-val {
-  font-family: var(--font-display);
-  font-size: 1.5rem; font-weight: 400; line-height: 1;
-}
-.counter-chip .chip-val.green { color: var(--green); }
-.counter-chip .chip-val.gold { color: var(--gold); }
-.counter-chip .chip-val.red { color: var(--red); }
-.counter-chip .chip-label {
-  font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--text3); margin-top: 3px;
-}
-/* CLIENT GALLERY */
-.client-gallery-container {
-  max-width: 1400px; margin: 0 auto;
-  padding: 32px 24px;
-}
-.client-gallery-header {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
-}
-.client-gallery-title {
-  font-family: var(--font-display);
-  font-size: 1.8rem; font-weight: 300;
-}
-.client-gallery-title span { color: var(--text2); font-size: 1.1rem; }
-.filter-btns { display: flex; gap: 8px; }
-.filter-btn {
-  padding: 7px 16px;
-  border-radius: 20px; border: 1px solid var(--border);
-  background: transparent; color: var(--text2);
-  font-family: var(--font-ui); font-size: 0.8rem;
-  cursor: pointer; transition: all 0.2s;
-}
-.filter-btn.active {
-  background: var(--green); color: #030a05;
-  border-color: var(--green);
-}
-#client-gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
-}
-.client-photo-item {
-  aspect-ratio: 3/4;
-  border-radius: 12px; overflow: hidden;
-  position: relative; background: var(--surface);
-  border: 2px solid transparent;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.client-photo-item:hover { transform: scale(1.02); border-color: rgba(255,255,255,0.2); }
-.client-photo-item.selected {
-  border-color: var(--green);
-  box-shadow: 0 0 0 1px var(--green), 0 8px 24px var(--green-glow);
-}
-.client-photo-item img {
-  width: 100%; height: 100%; object-fit: cover;
-  pointer-events: none; user-select: none;
-  -webkit-user-drag: none;
-  transition: filter 0.25s;
-}
-.client-photo-item.selected img { filter: brightness(0.85); }
-.photo-check {
-  position: absolute; top: 10px; right: 10px;
-  width: 32px; height: 32px; border-radius: 50%;
-  background: var(--green);
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0; transform: scale(0.5);
-  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  z-index: 2;
-  box-shadow: 0 4px 12px var(--green-glow);
-}
-.client-photo-item.selected .photo-check {
-  opacity: 1; transform: scale(1);
-}
-.photo-check svg { width: 16px; height: 16px; color: #030a05; }
-.photo-num {
-  position: absolute; bottom: 8px; left: 10px;
-  background: rgba(0,0,0,0.6); color: rgba(255,255,255,0.7);
-  padding: 2px 8px; border-radius: 6px;
-  font-size: 0.7rem; font-family: var(--font-mono);
-}
-.photo-view-btn {
-  position: absolute; bottom: 8px; right: 10px;
-  background: rgba(0,0,0,0.6); color: rgba(255,255,255,0.7);
-  padding: 4px 8px; border-radius: 6px;
-  font-size: 0.7rem; cursor: pointer;
-  opacity: 0; transition: opacity 0.2s;
-  display: flex; align-items: center; gap: 4px;
-}
-.client-photo-item:hover .photo-view-btn { opacity: 1; }
-/* FLOATING ACTION BAR */
-#action-bar {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  z-index: 200;
-  padding: 16px 24px;
-  background: rgba(7,8,11,0.95);
-  backdrop-filter: blur(24px);
-  border-top: 1px solid var(--border);
-}
-.action-bar-inner {
-  max-width: 1400px; margin: 0 auto;
-  display: flex; align-items: center; gap: 16px;
-  flex-wrap: wrap;
-}
-.action-bar-info {
-  flex: 1;
-}
-.action-bar-info .total-label { font-size: 0.75rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; }
-.action-bar-info .total-value { font-family: var(--font-display); font-size: 1.6rem; color: var(--gold); }
-.action-bar-btns { display: flex; gap: 10px; flex-wrap: wrap; }
-/* PIX MODAL CONTENT */
-#qrcode-container {
-  background: #fff; border-radius: 12px;
-  padding: 20px; margin: 20px auto;
-  width: fit-content;
-}
-.pix-amount {
-  text-align: center; margin-bottom: 20px;
-}
-.pix-amount .amount-label { font-size: 0.75rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; }
-.pix-amount .amount-value { font-family: var(--font-display); font-size: 2.5rem; color: var(--gold); }
-.pix-copy-paste {
-  background: var(--bg3); border: 1px solid var(--border2);
-  border-radius: var(--r); padding: 12px;
-  font-family: var(--font-mono); font-size: 0.72rem;
-  color: var(--text2); word-break: break-all;
-  max-height: 80px; overflow-y: auto;
-  margin-bottom: 16px;
-  user-select: all; cursor: text;
-}
-/* PHOTO LIGHTBOX */
-#lightbox {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.95);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 7000;
-  animation: fadeIn 0.2s;
-}
-#lightbox.hidden { display: none !important; }
-#lightbox img {
-  max-width: 90vw; max-height: 90vh;
-  object-fit: contain;
-  border-radius: 8px;
-  pointer-events: none; user-select: none;
-  -webkit-user-drag: none;
-}
-#lightbox-close {
-  position: absolute; top: 20px; right: 20px;
-  width: 44px; height: 44px; border-radius: 50%;
-  background: rgba(255,255,255,0.1); border: none;
-  color: #fff; cursor: pointer; font-size: 1.5rem;
-  display: flex; align-items: center; justify-content: center;
-  transition: background 0.2s;
-}
-#lightbox-close:hover { background: rgba(255,255,255,0.2); }
-#lightbox-prev, #lightbox-next {
-  position: absolute; top: 50%;
-  transform: translateY(-50%);
-  width: 48px; height: 48px; border-radius: 50%;
-  background: rgba(255,255,255,0.1); border: none;
-  color: #fff; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: background 0.2s;
-}
-#lightbox-prev { left: 20px; }
-#lightbox-next { right: 20px; }
-#lightbox-prev:hover, #lightbox-next:hover { background: rgba(255,255,255,0.2); }
-#lightbox-info {
-  position: absolute; bottom: 20px;
-  background: rgba(0,0,0,0.7); padding: 8px 20px;
-  border-radius: 20px; color: rgba(255,255,255,0.7);
-  font-size: 0.85rem;
-}
-/* SELECTION SUMMARY */
-.selection-summary-grid {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 12px; margin: 20px 0;
-}
-.summary-item {
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 14px 16px;
-}
-.summary-item .s-label { font-size: 0.72rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
-.summary-item .s-val { font-family: var(--font-display); font-size: 1.4rem; }
-/* PROGRESS BAR */
-.progress-wrap { margin: 8px 0; }
-.progress-label { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text2); margin-bottom: 6px; }
-.progress-bar { height: 6px; background: var(--surface3); border-radius: 3px; overflow: hidden; }
-.progress-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.4s ease; }
-.progress-fill.over { background: var(--gold); }
-/* PHOTO PREVIEW THUMB */
-.selection-thumbs {
-  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px;
-  max-height: 200px; overflow-y: auto;
-}
-.sel-thumb {
-  width: 60px; height: 60px; object-fit: cover;
-  border-radius: 6px; border: 1px solid var(--border);
-}
-/* EMPTY STATE */
-.empty-state {
-  text-align: center; padding: 60px 20px;
-  color: var(--text3);
-}
-.empty-state svg { width: 48px; height: 48px; opacity: 0.4; margin-bottom: 16px; }
-.empty-state h3 { font-family: var(--font-display); font-size: 1.3rem; font-weight: 400; color: var(--text2); margin-bottom: 8px; }
-.empty-state p { font-size: 0.85rem; }
-/* UPLOAD PROGRESS */
-.upload-progress-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 0; border-bottom: 1px solid var(--border);
-  font-size: 0.85rem;
-}
-.upload-progress-item:last-child { border-bottom: none; }
-.upload-icon { width: 32px; height: 32px; border-radius: 6px; overflow: hidden; background: var(--surface2); flex-shrink: 0; }
-.upload-icon img { width: 100%; height: 100%; object-fit: cover; }
-.upload-info { flex: 1; }
-.upload-info .upload-name { font-size: 0.82rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
-.upload-bar { height: 3px; background: var(--surface3); border-radius: 2px; margin-top: 4px; overflow: hidden; }
-.upload-bar-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.3s; }
-/* ADMIN SELECTION DETAIL */
-.selected-photos-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 8px; margin-top: 12px;
-}
-.sel-admin-photo {
-  aspect-ratio: 1; border-radius: 8px; overflow: hidden;
-  position: relative; background: var(--surface);
-  border: 1px solid var(--border);
-}
-.sel-admin-photo img { width: 100%; height: 100%; object-fit: cover; }
-.sel-admin-photo .sel-num {
-  position: absolute; bottom: 4px; left: 4px;
-  background: rgba(0,0,0,0.7); color: #fff;
-  padding: 1px 6px; border-radius: 4px; font-size: 0.65rem;
-  font-family: var(--font-mono);
-}
-/* CONFIG */
-.config-section-title {
-  font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--text3); padding-bottom: 12px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 20px;
-}
-.sql-block {
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 16px;
-  font-family: var(--font-mono); font-size: 0.75rem;
-  color: var(--text2); line-height: 1.7;
-  white-space: pre-wrap; word-break: break-word;
-  overflow-x: auto; max-height: 200px; overflow-y: auto;
-}
-/* ANIMATIONS */
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-.pulse { animation: pulse 2s ease-in-out infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-.spin { animation: spin 1s linear infinite; }
-/* RESPONSIVE */
-@media (max-width: 768px) {
-  #sidebar { display: none; }
-  #main-content { padding: 20px 16px; }
-  .form-grid, .form-grid.col3 { grid-template-columns: 1fr; }
-  #client-gallery-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
-  .counter-chips { gap: 6px; }
-  .counter-chip { min-width: 60px; padding: 6px 10px; }
-  .counter-chip .chip-val { font-size: 1.2rem; }
-  .action-bar-inner { gap: 10px; }
-  .modal-box { padding: 20px; }
-  .selection-summary-grid { grid-template-columns: 1fr; }
-}
-/* CLIENT INFO PANEL */
-#client-info-banner {
-  max-width: 1400px; margin: 0 auto;
-  padding: 20px 24px 0;
-}
-.info-banner {
-  background: linear-gradient(135deg, rgba(34,197,94,0.06), rgba(34,197,94,0.02));
-  border: 1px solid rgba(34,197,94,0.2);
-  border-radius: var(--r2);
-  padding: 20px 24px;
-  display: flex; gap: 24px; flex-wrap: wrap; align-items: center;
-}
-.info-banner-main h2 { font-family: var(--font-display); font-size: 1.6rem; font-weight: 400; }
-.info-banner-main p { color: var(--text2); font-size: 0.85rem; margin-top: 4px; }
-.info-banner-stats { display: flex; gap: 20px; flex-wrap: wrap; }
-.ib-stat { text-align: center; }
-.ib-stat .ib-val { font-family: var(--font-display); font-size: 1.8rem; font-weight: 300; }
-.ib-stat .ib-label { font-size: 0.7rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; }
-/* DIVIDER */
-.divider { height: 1px; background: var(--border); margin: 20px 0; }
-/* TABS (mobile admin) */
-.mobile-tabs {
-  display: none; overflow-x: auto; gap: 8px;
-  padding: 12px 16px; border-bottom: 1px solid var(--border);
-  background: var(--bg2);
-}
-@media (max-width: 768px) {
-  .mobile-tabs { display: flex; }
-}
-.mobile-tab {
-  flex-shrink: 0; padding: 8px 16px;
-  border-radius: 20px; border: 1px solid var(--border);
-  background: transparent; color: var(--text2);
-  font-family: var(--font-ui); font-size: 0.8rem;
-  cursor: pointer; transition: all 0.2s;
-}
-.mobile-tab.active {
-  background: var(--green); color: #030a05; border-color: var(--green);
-}
-/* BACK TO ADMIN */
-#back-to-admin-btn {
-  position: fixed; bottom: 160px; right: 20px;
-  z-index: 300;
-}
-/* STORAGE CLEANUP NOTICE */
-.cleanup-notice {
-  background: rgba(240,169,75,0.07);
-  border: 1px solid rgba(240,169,75,0.2);
-  border-radius: var(--r);
-  padding: 12px 14px;
-  font-size: 0.8rem;
-  color: var(--gold);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 12px;
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FotoSelect — Seleção de Fotos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <style>
+    /* ============================================================
+       RESET & VARIABLES
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0d0d;
+      --surface:   #161616;
+      --surface2:  #1f1f1f;
+      --border:    #2a2a2a;
+      --accent:    #c9a84c;
+      --accent2:   #e8c97a;
+      --green:     #4caf79;
+      --red:       #e05c5c;
+      --text:      #f0ede8;
+      --muted:     #7a7672;
+      --font-head: 'Playfair Display', serif;
+      --font-body: 'DM Sans', sans-serif;
+      --radius:    10px;
+      --shadow:    0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ============================================================
+       UTILITY
+    ============================================================ */
+    .hidden   { display: none !important; }
+    .flex     { display: flex; }
+    .col      { flex-direction: column; }
+    .gap-1    { gap: 8px; }
+    .gap-2    { gap: 16px; }
+    .gap-3    { gap: 24px; }
+    .center   { align-items: center; justify-content: center; }
+    .between  { justify-content: space-between; align-items: center; }
+    .wrap     { flex-wrap: wrap; }
+
+    /* ============================================================
+       TYPOGRAPHY
+    ============================================================ */
+    h1, h2, h3 { font-family: var(--font-head); font-weight: 700; }
+    h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); letter-spacing: -0.02em; }
+    h2 { font-size: clamp(1.3rem, 3vw, 1.8rem); letter-spacing: -0.01em; }
+    h3 { font-size: 1.1rem; }
+
+    /* ============================================================
+       SCROLLBAR
+    ============================================================ */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ============================================================
+       BUTTONS
+    ============================================================ */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 20px;
+      border: none; border-radius: var(--radius);
+      font-family: var(--font-body); font-size: 0.875rem; font-weight: 500;
+      cursor: pointer; transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0d0d0d;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent2);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(201,168,76,0.3);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--red);
+      border: 1px solid rgba(224,92,92,0.3);
+    }
+    .btn-danger:hover:not(:disabled) {
+      background: rgba(224,92,92,0.1);
+      border-color: var(--red);
+    }
+
+    .btn-green {
+      background: var(--green);
+      color: #fff;
+    }
+    .btn-green:hover:not(:disabled) {
+      background: #5ec88a;
+      transform: translateY(-1px);
+    }
+
+    .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+    .btn-lg { padding: 14px 28px; font-size: 1rem; }
+    .btn-full { width: 100%; justify-content: center; }
+
+    /* ============================================================
+       INPUTS & FORMS
+    ============================================================ */
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 0.8rem; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+    input, select, textarea {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      padding: 10px 14px;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    input::placeholder { color: var(--muted); }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    /* ============================================================
+       CARDS & SURFACES
+    ============================================================ */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+    }
+
+    .card-accent {
+      border-color: rgba(201,168,76,0.3);
+    }
+
+    /* ============================================================
+       TOAST
+    ============================================================ */
+    #toast-container {
+      position: fixed; bottom: 24px; right: 24px;
+      display: flex; flex-direction: column; gap: 10px;
+      z-index: 9999;
+    }
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 18px;
+      font-size: 0.875rem;
+      max-width: 320px;
+      box-shadow: var(--shadow);
+      animation: slideIn 0.3s ease;
+    }
+    .toast.success { border-color: var(--green); }
+    .toast.error   { border-color: var(--red); }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to   { transform: translateX(0);   opacity: 1; }
+    }
+
+    /* ============================================================
+       MODAL
+    ============================================================ */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .modal-close {
+      background: none; border: none; color: var(--muted);
+      font-size: 1.4rem; cursor: pointer; line-height: 1;
+      transition: color 0.2s;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    /* ============================================================
+       LOADING SPINNER
+    ============================================================ */
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-screen {
+      position: fixed; inset: 0;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 16px; z-index: 500;
+    }
+
+    /* ============================================================
+       BADGE / PILL
+    ============================================================ */
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: 0.72rem; font-weight: 500;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .badge-pending  { background: rgba(201,168,76,0.15); color: var(--accent); border: 1px solid rgba(201,168,76,0.3); }
+    .badge-awaiting { background: rgba(100,149,237,0.15); color: #6495ed;      border: 1px solid rgba(100,149,237,0.3); }
+    .badge-paid     { background: rgba(76,175,121,0.15);  color: var(--green);  border: 1px solid rgba(76,175,121,0.3); }
+    .badge-none     { background: rgba(255,255,255,0.05); color: var(--muted);  border: 1px solid var(--border); }
+
+    /* ============================================================
+       LOGO / HEADER
+    ============================================================ */
+    #app-header {
+      padding: 18px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(13,13,13,0.9);
+      backdrop-filter: blur(12px);
+    }
+    .logo {
+      font-family: var(--font-head);
+      font-size: 1.35rem;
+      color: var(--accent);
+      letter-spacing: -0.01em;
+    }
+    .logo span { color: var(--text); }
+
+    /* ============================================================
+       ADMIN LAYOUT
+    ============================================================ */
+    #admin-view {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px 80px;
+    }
+
+    .admin-tabs {
+      display: flex; gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 32px;
+    }
+    .tab-btn {
+      padding: 9px 20px;
+      border: none; border-radius: 9px;
+      background: transparent;
+      color: var(--muted);
+      font-family: var(--font-body); font-size: 0.875rem; font-weight: 500;
+      cursor: pointer; transition: all 0.2s;
+      flex: 1; text-align: center;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #0d0d0d;
+    }
+    .tab-btn:hover:not(.active) { color: var(--text); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ============================================================
+       CLIENTS TABLE
+    ============================================================ */
+    .clients-table-wrap { overflow-x: auto; }
+    .clients-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    .clients-table th {
+      text-align: left; padding: 10px 14px;
+      color: var(--muted); font-weight: 500;
+      text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border);
+    }
+    .clients-table td {
+      padding: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
+    }
+    .clients-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .clients-table .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* ============================================================
+       UPLOAD AREA
+    ============================================================ */
+    .upload-drop {
+      border: 2px dashed var(--border);
+      border-radius: 14px;
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .upload-drop:hover, .upload-drop.drag-over {
+      border-color: var(--accent);
+      background: rgba(201,168,76,0.05);
+    }
+    .upload-drop input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+      width: 100%; height: 100%;
+    }
+    .upload-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .upload-progress { margin-top: 20px; }
+    .progress-bar-wrap {
+      background: var(--surface2);
+      border-radius: 99px; height: 6px;
+      overflow: hidden; margin-top: 8px;
+    }
+    .progress-bar {
+      height: 100%; background: var(--accent);
+      border-radius: 99px;
+      transition: width 0.3s;
+    }
+
+    /* ============================================================
+       CLIENT VIEW
+    ============================================================ */
+    #client-view {
+      min-height: 100vh;
+    }
+
+    /* Sticky counter bar */
+    #counter-bar {
+      position: sticky; top: 65px; z-index: 90;
+      background: rgba(13,13,13,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+    }
+    .counter-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .counter-stats {
+      display: flex; gap: 24px; flex-wrap: wrap;
+    }
+    .counter-stat { display: flex; flex-direction: column; }
+    .counter-stat .val {
+      font-family: var(--font-head);
+      font-size: 1.4rem; font-weight: 700;
+      line-height: 1;
+    }
+    .counter-stat .lbl {
+      font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .counter-stat.extras .val { color: var(--accent); }
+    .counter-stat.valor .val  { color: var(--green); }
+
+    /* Client hero */
+    #client-hero {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 32px 24px 16px;
+    }
+    .client-meta {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-top: 8px;
+    }
+    .meta-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 4px 14px;
+      font-size: 0.8rem; color: var(--muted);
+    }
+
+    /* Photo grid */
+    #photo-grid-wrap {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 8px 24px 120px;
+    }
+    #photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+    }
+    .photo-item {
+      position: relative;
+      aspect-ratio: 1;
+      overflow: hidden;
+      border-radius: 10px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.2s, transform 0.15s;
+      user-select: none;
+    }
+    .photo-item:hover { transform: scale(1.02); }
+    .photo-item img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      pointer-events: none;
+      -webkit-user-drag: none;
+      draggable: false;
+    }
+    .photo-item.selected {
+      border-color: var(--green);
+    }
+    .photo-check {
+      position: absolute; top: 8px; right: 8px;
+      width: 26px; height: 26px;
+      background: var(--green);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transform: scale(0.6);
+      transition: all 0.2s;
+      font-size: 0.8rem;
+    }
+    .photo-item.selected .photo-check {
+      opacity: 1; transform: scale(1);
+    }
+    .photo-num {
+      position: absolute; bottom: 6px; left: 8px;
+      font-size: 0.7rem; color: rgba(255,255,255,0.5);
+    }
+
+    /* Bottom finalize bar */
+    #finalize-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(13,13,13,0.97);
+      border-top: 1px solid var(--border);
+      padding: 14px 24px;
+      z-index: 90;
+      backdrop-filter: blur(12px);
+    }
+    .finalize-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex; align-items: center; justify-content: flex-end;
+      gap: 16px;
+    }
+
+    /* PIX Area */
+    #pix-area {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .pix-card {
+      background: linear-gradient(135deg, rgba(201,168,76,0.08), rgba(201,168,76,0.02));
+      border: 1px solid rgba(201,168,76,0.3);
+      border-radius: 16px;
+      padding: 32px;
+      text-align: center;
+    }
+    .pix-value {
+      font-family: var(--font-head);
+      font-size: 2.5rem;
+      color: var(--accent);
+      margin: 12px 0;
+    }
+    .pix-key-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      font-size: 0.875rem;
+      word-break: break-all;
+      margin: 16px 0;
+      position: relative;
+    }
+
+    /* Selection already saved */
+    #already-selected-view {
+      max-width: 520px;
+      margin: 60px auto;
+      padding: 24px;
+      text-align: center;
+    }
+    .check-circle {
+      width: 72px; height: 72px;
+      background: rgba(76,175,121,0.15);
+      border: 2px solid var(--green);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 2rem;
+    }
+
+    /* ============================================================
+       EMPTY STATES
+    ============================================================ */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+    .empty-state p { color: var(--muted); margin-top: 8px; font-size: 0.9rem; }
+
+    /* ============================================================
+       SECTION HEADERS
+    ============================================================ */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .divider {
+      border: none; border-top: 1px solid var(--border);
+      margin: 24px 0;
+    }
+
+    /* ============================================================
+       SELECTION DETAILS (Admin)
+    ============================================================ */
+    .selection-detail-row {
+      display: flex; justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 0.875rem;
+    }
+    .selection-detail-row:last-child { border-bottom: none; }
+    .selection-detail-row .key { color: var(--muted); }
+    .selection-detail-row .val { font-weight: 500; }
+
+    /* ============================================================
+       CONTEXT MENU PREVENTION
+    ============================================================ */
+    img { -webkit-user-select: none; user-select: none; }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 640px) {
+      #app-header { padding: 14px 16px; }
+      #photo-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; }
+      .counter-stats { gap: 14px; }
+      .admin-tabs { flex-direction: column; }
+      .modal { padding: 20px; }
+    }
+  </style>
 </head>
 <body>
 
-<!-- LOADING SCREEN -->
-<div id="loading-screen">
-  <div class="loader-logo">Foto<span>Select</span></div>
-  <div class="loader-bar"></div>
-</div>
-
-<!-- TOAST CONTAINER -->
+<!-- ============================================================
+     TOAST CONTAINER
+============================================================ -->
 <div id="toast-container"></div>
 
-<!-- LIGHTBOX -->
-<div id="lightbox" class="hidden">
-  <button id="lightbox-close" onclick="closeLightbox()">✕</button>
-  <button id="lightbox-prev" onclick="lightboxNav(-1)">&#8249;</button>
-  <img id="lightbox-img" src="" alt="Foto">
-  <button id="lightbox-next" onclick="lightboxNav(1)">&#8250;</button>
-  <div id="lightbox-info">1 / 1</div>
+<!-- ============================================================
+     LOADING SCREEN
+============================================================ -->
+<div id="loading-screen" class="loading-screen">
+  <div class="spinner"></div>
+  <p style="color:var(--muted);font-size:0.875rem;">Carregando...</p>
 </div>
 
-<!-- ========================= ADMIN PANEL ========================= -->
-<div id="admin-panel" class="hidden">
-  <!-- Mobile Tabs -->
-  <div class="mobile-tabs">
-    <button class="mobile-tab active" onclick="switchTab('dashboard')">Dashboard</button>
-    <button class="mobile-tab" onclick="switchTab('clientes')">Clientes</button>
-    <button class="mobile-tab" onclick="switchTab('galeria')">Galeria</button>
-    <button class="mobile-tab" onclick="switchTab('config')">Config</button>
+<!-- ============================================================
+     APP HEADER
+============================================================ -->
+<header id="app-header" class="hidden">
+  <div class="logo">Foto<span>Select</span></div>
+  <div id="header-right"></div>
+</header>
+
+<!-- ============================================================
+     ADMIN VIEW
+============================================================ -->
+<div id="admin-view" class="hidden">
+
+  <!-- Page title -->
+  <div style="margin-bottom:28px;">
+    <h1>Painel Administrativo</h1>
+    <p style="color:var(--muted);margin-top:6px;font-size:0.9rem;">Gerencie clientes e galerias de fotos</p>
   </div>
 
-  <div id="sidebar">
-    <div class="sidebar-logo">
-      <h1>Foto<span>Select</span></h1>
-      <small>Painel Administrativo</small>
+  <!-- Tabs -->
+  <div class="admin-tabs">
+    <button class="tab-btn active" data-tab="clients">👥 Clientes</button>
+    <button class="tab-btn" data-tab="new-client">➕ Novo Cliente</button>
+    <button class="tab-btn" data-tab="upload">📤 Upload Fotos</button>
+  </div>
+
+  <!-- TAB: Clients list -->
+  <div id="tab-clients" class="tab-panel active">
+    <div class="section-header">
+      <h2>Clientes</h2>
+      <button class="btn btn-ghost btn-sm" id="btn-refresh-clients">↻ Atualizar</button>
     </div>
-    <div class="nav-label">Menu Principal</div>
-    <div class="nav-item active" onclick="switchTab('dashboard')" id="nav-dashboard">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-      Dashboard
-    </div>
-    <div class="nav-item" onclick="switchTab('clientes')" id="nav-clientes">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Clientes
-    </div>
-    <div class="nav-item" onclick="switchTab('galeria')" id="nav-galeria">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-      Galerias
-    </div>
-    <div class="nav-item" onclick="switchTab('config')" id="nav-config">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      Configurações
-    </div>
-    <div class="sidebar-bottom">
-      <div class="sidebar-supabase-status">
-        <div class="status-dot" id="supabase-dot"></div>
-        <span id="supabase-status-text">Supabase: Local</span>
+    <div id="clients-list">
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <h3>Nenhum cliente ainda</h3>
+        <p>Crie o primeiro cliente na aba "Novo Cliente"</p>
       </div>
     </div>
   </div>
 
-  <main id="main-content">
-    <!-- ===== DASHBOARD ===== -->
-    <section id="tab-dashboard">
-      <div class="page-header">
-        <h2>Dashboard</h2>
-        <p>Visão geral de todos os clientes e seleções</p>
-      </div>
-      <div class="stats-grid" id="dashboard-stats">
-        <div class="stat-card"><div class="stat-label">Total Clientes</div><div class="stat-value green" id="stat-total-clients">0</div><div class="stat-sub">cadastrados</div></div>
-        <div class="stat-card"><div class="stat-label">Seleções Recebidas</div><div class="stat-value" id="stat-selections">0</div><div class="stat-sub">confirmadas</div></div>
-        <div class="stat-card"><div class="stat-label">Pagamentos Extras</div><div class="stat-value gold" id="stat-payments">0</div><div class="stat-sub">recebidos</div></div>
-        <div class="stat-card"><div class="stat-label">Fotos Total</div><div class="stat-value" id="stat-photos">0</div><div class="stat-sub">no sistema</div></div>
-      </div>
-      <div class="glass-card">
-        <div class="card-title">Clientes e Status</div>
-        <div id="dashboard-clients-table">
-          <div class="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-            <h3>Nenhum cliente cadastrado</h3>
-            <p>Vá para "Clientes" e adicione o primeiro cliente</p>
-          </div>
+  <!-- TAB: New client form -->
+  <div id="tab-new-client" class="tab-panel">
+    <h2 style="margin-bottom:20px;">Novo Cliente</h2>
+    <div class="card" style="max-width:680px;">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nome do Cliente *</label>
+          <input type="text" id="nc-name" placeholder="Ex: Ana & João" />
+        </div>
+        <div class="form-group">
+          <label>Evento</label>
+          <input type="text" id="nc-event" placeholder="Ex: Casamento, Ensaio" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="nc-email" placeholder="cliente@email.com" />
+        </div>
+        <div class="form-group">
+          <label>Data do Evento</label>
+          <input type="date" id="nc-date" />
+        </div>
+        <div class="form-group">
+          <label>Fotos Inclusas</label>
+          <input type="number" id="nc-included" value="20" min="1" />
+        </div>
+        <div class="form-group">
+          <label>Valor por Foto Extra (R$)</label>
+          <input type="number" id="nc-price" value="25.00" min="0" step="0.01" />
         </div>
       </div>
-    </section>
+      <hr class="divider" />
+      <button class="btn btn-primary" id="btn-create-client">Criar Cliente</button>
+    </div>
+  </div>
 
-    <!-- ===== CLIENTES ===== -->
-    <section id="tab-clientes" class="hidden">
-      <div class="page-header">
-        <h2>Clientes</h2>
-        <p>Gerencie seus clientes e gere links de acesso</p>
+  <!-- TAB: Upload -->
+  <div id="tab-upload" class="tab-panel">
+    <h2 style="margin-bottom:20px;">Upload de Fotos</h2>
+    <div class="card" style="max-width:680px;">
+      <div class="form-group" style="margin-bottom:20px;">
+        <label>Selecionar Cliente *</label>
+        <select id="upload-client-select">
+          <option value="">— Escolha um cliente —</option>
+        </select>
       </div>
-      <div class="glass-card">
-        <div class="card-title">Novo Cliente</div>
-        <div class="form-grid">
-          <div class="field">
-            <label>Nome do Cliente *</label>
-            <input type="text" id="client-name" placeholder="Ex: Maria Silva">
-          </div>
-          <div class="field">
-            <label>Nome do Evento</label>
-            <input type="text" id="client-event" placeholder="Ex: Casamento Silva & Santos">
-          </div>
-          <div class="field">
-            <label>Fotos Incluídas no Pacote *</label>
-            <input type="number" id="client-included" placeholder="Ex: 20" min="1">
-          </div>
-          <div class="field">
-            <label>Valor por Foto Extra (R$)</label>
-            <input type="number" id="client-price" placeholder="Ex: 25.00" step="0.01" min="0">
-          </div>
-          <div class="field">
-            <label>Email do Cliente</label>
-            <input type="email" id="client-email" placeholder="cliente@email.com">
-          </div>
-          <div class="field">
-            <label>Data do Evento</label>
-            <input type="date" id="client-date">
-          </div>
-        </div>
-        <div style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="saveClient()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-            Salvar Cliente
-          </button>
-          <button class="btn btn-ghost" onclick="clearClientForm()">Limpar</button>
-        </div>
-      </div>
-      <div class="glass-card" style="margin-top:24px;">
-        <div class="card-title">Lista de Clientes</div>
-        <div id="clients-list-table"></div>
-      </div>
-    </section>
 
-    <!-- ===== GALERIA ===== -->
-    <section id="tab-galeria" class="hidden">
-      <div class="page-header">
-        <h2>Galerias</h2>
-        <p>Faça upload das fotos para cada cliente</p>
+      <div class="upload-drop" id="upload-drop">
+        <input type="file" id="upload-input" multiple accept="image/*" />
+        <div class="upload-icon">📸</div>
+        <p style="font-size:0.95rem;font-weight:500;">Clique ou arraste as fotos aqui</p>
+        <p style="color:var(--muted);font-size:0.8rem;margin-top:6px;">JPG, PNG, WEBP • Múltiplos arquivos</p>
       </div>
-      <div class="glass-card">
-        <div class="card-title">Selecionar Cliente</div>
-        <div class="form-grid" style="grid-template-columns: 1fr auto;">
-          <div class="field">
-            <label>Cliente</label>
-            <select id="gallery-client-select" onchange="loadGallery()">
-              <option value="">— Selecione um cliente —</option>
-            </select>
-          </div>
-          <div style="display:flex; align-items:flex-end;">
-            <button class="btn btn-ghost btn-sm" onclick="refreshGalleryClientList()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.9-5.89"/></svg>
-              Atualizar
-            </button>
-          </div>
+
+      <div id="upload-progress-wrap" class="upload-progress hidden">
+        <div class="flex between" style="font-size:0.85rem;margin-bottom:6px;">
+          <span id="upload-status-text">Enviando...</span>
+          <span id="upload-pct">0%</span>
         </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+        </div>
+        <p id="upload-file-name" style="font-size:0.75rem;color:var(--muted);margin-top:6px;"></p>
       </div>
-      <div id="gallery-upload-section" class="hidden">
-        <div class="glass-card" style="margin-top:16px;">
-          <div class="card-title">Upload de Fotos</div>
-          <div id="upload-drop-zone" onclick="document.getElementById('file-input').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="width:48px;height:48px;margin:0 auto 12px;display:block;">
-              <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
-              <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
-            </svg>
-            <h3>Arraste fotos aqui ou clique para selecionar</h3>
-            <p style="margin-top:6px;">Suporta JPG, PNG, WebP — múltiplos arquivos</p>
-          </div>
-          <input type="file" id="file-input" multiple accept="image/*" style="display:none" onchange="handleFileSelect(event)">
-          <div id="upload-progress-list" style="margin-top:16px;"></div>
-        </div>
-        <div class="glass-card" style="margin-top:16px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-            <div class="card-title" style="margin-bottom:0;">Fotos da Galeria <span id="gallery-photo-count" style="color:var(--text2);font-size:0.8rem;"></span></div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <button class="btn btn-secondary btn-sm" onclick="generateClientLink()" id="generate-link-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                Gerar Link
-              </button>
-              <button class="btn btn-danger btn-sm" onclick="clearGallery()" id="clear-gallery-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-                Limpar Galeria
-              </button>
-            </div>
-          </div>
-          <div id="admin-gallery-grid"></div>
-        </div>
-        <div class="glass-card" id="client-link-section" style="margin-top:16px;" class="hidden">
-          <div class="card-title">Link do Cliente</div>
-          <div class="link-box" id="client-link-display">
-            <span id="client-link-url">—</span>
-            <button class="btn btn-sm btn-ghost" onclick="copyClientLink()">Copiar</button>
-          </div>
-        </div>
-      </div>
-    </section>
+    </div>
+  </div>
 
-    <!-- ===== CONFIG ===== -->
-    <section id="tab-config" class="hidden">
-      <div class="page-header">
-        <h2>Configurações</h2>
-        <p>Configure Supabase e dados do PIX</p>
-      </div>
-      <div class="glass-card">
-        <div class="config-section-title">Integração Supabase</div>
-        <div style="background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.2);border-radius:var(--r);padding:12px 16px;margin-bottom:16px;font-size:0.82rem;color:var(--blue);">
-          💡 Use a <strong>service_role key</strong> no admin — ela bypassa o RLS. Encontre em: Dashboard → Settings → API → <em>service_role secret</em>
-        </div>
-        <div class="form-grid col1">
-          <div class="field">
-            <label>Supabase URL</label>
-            <input type="text" id="config-supabase-url" placeholder="https://xxxxxxx.supabase.co" value="https://rjyxkouegrropsarrhje.supabase.co">
-          </div>
-          <div class="field">
-            <label>Service Role Key <span style="color:var(--green);font-size:0.7rem;">(Admin — bypassa RLS)</span></label>
-            <input type="password" id="config-supabase-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... (service_role)">
-            <span style="font-size:0.72rem;color:var(--text3);margin-top:4px;">Dashboard → Settings → API → service_role secret</span>
-          </div>
-          <div class="field">
-            <label>Anon Key <span style="color:var(--text3);font-size:0.7rem;">(Área do cliente — opcional)</span></label>
-            <input type="password" id="config-supabase-anon" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... (anon public)">
-            <span style="font-size:0.72rem;color:var(--text3);margin-top:4px;">Dashboard → Settings → API → anon public</span>
-          </div>
-          <div class="field">
-            <label>Nome do Bucket de Storage <span style="color:var(--text3);font-size:0.7rem;">(padrão: galeria)</span></label>
-            <input type="text" id="config-storage-bucket" placeholder="galeria" value="galeria">
-            <span style="font-size:0.72rem;color:var(--text3);margin-top:4px;">Nome do bucket criado no Supabase Storage para armazenar as fotos</span>
-          </div>
-        </div>
-        <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="saveSupabaseConfig()">Salvar e Conectar</button>
-          <button class="btn btn-ghost" onclick="testSupabaseConnection()">Testar Conexão</button>
-          <button class="btn btn-danger btn-sm" onclick="clearSupabaseCredentials()">🗑 Limpar Credenciais Salvas</button>
-        </div>
-        <div style="margin-top:12px;background:rgba(248,113,113,0.07);border:1px solid rgba(248,113,113,0.2);border-radius:var(--r);padding:12px 14px;font-size:0.8rem;color:var(--text2);">
-          <strong style="color:var(--red);">⚠️ Se ainda der erro:</strong> Clique em <strong>"Limpar Credenciais Salvas"</strong> primeiro, depois cole a <strong>service_role secret</strong> (não a anon key) e clique Salvar e Conectar novamente.
-        </div>
-        <div class="divider"></div>
-        <p style="font-size:0.8rem;color:var(--text3);margin-bottom:10px;">Execute este SQL no Supabase para criar as tabelas:</p>
-        <div class="sql-block">-- ⚠️ Tabelas com prefixo fs_ para não conflitar com tabelas existentes
-
--- Clientes do FotoSelect
-CREATE TABLE IF NOT EXISTS fs_clients (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  event TEXT,
-  email TEXT,
-  event_date DATE,
-  included_count INTEGER DEFAULT 20,
-  price_per_extra DECIMAL(10,2) DEFAULT 25.00,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Fotos (metadados + URL do storage)
-CREATE TABLE IF NOT EXISTS fs_photos (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  client_id UUID REFERENCES fs_clients(id) ON DELETE CASCADE,
-  filename TEXT,
-  storage_url TEXT,
-  storage_path TEXT,  -- caminho do arquivo no bucket (ex: client_id/photo_id)
-  photo_order INTEGER,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Seleções dos clientes
-CREATE TABLE IF NOT EXISTS fs_selections (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  client_id UUID REFERENCES fs_clients(id) ON DELETE CASCADE UNIQUE,
-  selected_photo_ids TEXT[],
-  extras_count INTEGER DEFAULT 0,
-  total_value DECIMAL(10,2) DEFAULT 0,
-  payment_status TEXT DEFAULT 'pending',
-  confirmed_at TIMESTAMP,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Storage bucket para as fotos (ajuste o nome conforme o campo "Nome do Bucket" acima)
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('galeria', 'galeria', true)
-ON CONFLICT DO NOTHING;
-
--- RLS
-ALTER TABLE fs_clients ENABLE ROW LEVEL SECURITY;
-ALTER TABLE fs_photos ENABLE ROW LEVEL SECURITY;
-ALTER TABLE fs_selections ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "fs_clients_all" ON fs_clients FOR ALL TO anon USING (true) WITH CHECK (true);
-CREATE POLICY "fs_photos_all" ON fs_photos FOR ALL TO anon USING (true) WITH CHECK (true);
-CREATE POLICY "fs_selections_all" ON fs_selections FOR ALL TO anon USING (true) WITH CHECK (true);
-
-CREATE POLICY "fs_storage_insert" ON storage.objects FOR INSERT TO anon WITH CHECK (bucket_id = 'galeria');
-CREATE POLICY "fs_storage_select" ON storage.objects FOR SELECT TO anon USING (bucket_id = 'galeria');
-CREATE POLICY "fs_storage_delete" ON storage.objects FOR DELETE TO anon USING (bucket_id = 'galeria');</div>
-      </div>
-      <div class="glass-card" style="margin-top:20px;">
-        <div class="config-section-title">Dados PIX para Cobrança</div>
-        <div class="form-grid">
-          <div class="field">
-            <label>Chave PIX</label>
-            <input type="text" id="config-pix-key" placeholder="email@dominio.com ou CPF ou telefone">
-          </div>
-          <div class="field">
-            <label>Tipo da Chave</label>
-            <select id="config-pix-type">
-              <option value="email">E-mail</option>
-              <option value="cpf">CPF</option>
-              <option value="phone">Telefone</option>
-              <option value="random">Chave Aleatória</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Nome do Recebedor (PIX)</label>
-            <input type="text" id="config-pix-name" placeholder="Nome como aparece no PIX" maxlength="25">
-          </div>
-          <div class="field">
-            <label>Cidade</label>
-            <input type="text" id="config-pix-city" placeholder="São Paulo" maxlength="15">
-          </div>
-        </div>
-        <button class="btn btn-primary" onclick="savePixConfig()" style="margin-top:16px;">Salvar Dados PIX</button>
-      </div>
-      <div class="glass-card" style="margin-top:20px;">
-        <div class="config-section-title">Dados do Sistema</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="btn btn-secondary btn-sm" onclick="exportData()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Exportar Dados JSON
-          </button>
-          <button class="btn btn-danger btn-sm" onclick="confirmClearAll()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
-            Limpar Tudo
-          </button>
-        </div>
-      </div>
-    </section>
-  </main>
 </div>
 
-<!-- ========================= CLIENT PANEL ========================= -->
-<div id="client-panel" class="hidden">
-  <header id="client-header">
-    <div class="client-header-inner">
-      <div class="client-logo">Foto<span>Select</span></div>
-      <div class="counter-chips">
-        <div class="counter-chip">
-          <div class="chip-val green" id="chip-selected">0</div>
-          <div class="chip-label">Selecionadas</div>
-        </div>
-        <div class="counter-chip">
-          <div class="chip-val" id="chip-included">0</div>
-          <div class="chip-label">Incluídas</div>
-        </div>
-        <div class="counter-chip">
-          <div class="chip-val gold" id="chip-extras">0</div>
-          <div class="chip-label">Extras</div>
-        </div>
-        <div class="counter-chip">
-          <div class="chip-val gold" id="chip-total">R$0</div>
-          <div class="chip-label">A Pagar</div>
-        </div>
-      </div>
-    </div>
-  </header>
+<!-- ============================================================
+     CLIENT VIEW
+============================================================ -->
+<div id="client-view" class="hidden">
 
-  <div id="client-info-banner">
-    <div class="info-banner">
-      <div class="info-banner-main" style="flex:1;">
-        <h2 id="banner-event-name">Evento</h2>
-        <p id="banner-client-name">Cliente</p>
+  <!-- Sticky counter -->
+  <div id="counter-bar">
+    <div class="counter-inner">
+      <div class="counter-stats">
+        <div class="counter-stat">
+          <span class="val" id="cnt-selected">0</span>
+          <span class="lbl">Selecionadas</span>
+        </div>
+        <div class="counter-stat">
+          <span class="val" id="cnt-included">0</span>
+          <span class="lbl">Inclusas</span>
+        </div>
+        <div class="counter-stat extras">
+          <span class="val" id="cnt-extras">0</span>
+          <span class="lbl">Extras</span>
+        </div>
+        <div class="counter-stat valor">
+          <span class="val" id="cnt-value">R$ 0,00</span>
+          <span class="lbl">Valor extras</span>
+        </div>
       </div>
-      <div class="info-banner-stats">
-        <div class="ib-stat">
-          <div class="ib-val" id="banner-included">—</div>
-          <div class="ib-label">Fotos Inclusas</div>
-        </div>
-        <div class="ib-stat">
-          <div class="ib-val" id="banner-price" style="color:var(--gold);">—</div>
-          <div class="ib-label">Valor Extra</div>
-        </div>
-        <div class="ib-stat">
-          <div class="ib-val" id="banner-total-photos">—</div>
-          <div class="ib-label">Total Fotos</div>
-        </div>
-      </div>
+      <div id="counter-bar-right"></div>
     </div>
   </div>
 
-  <div class="client-gallery-container">
-    <div class="client-gallery-header">
-      <div>
-        <div class="client-gallery-title">Galeria de Fotos <span id="gallery-total-label"></span></div>
-        <p style="color:var(--text2);font-size:0.85rem;margin-top:4px;">Clique nas fotos para selecionar as que deseja</p>
-      </div>
-      <div class="filter-btns">
-        <button class="filter-btn active" onclick="filterGallery('all')" id="filter-all">Todas</button>
-        <button class="filter-btn" onclick="filterGallery('selected')" id="filter-selected">Selecionadas</button>
-        <button class="filter-btn" onclick="filterGallery('unselected')" id="filter-unselected">Não Selecionadas</button>
-      </div>
-    </div>
-    <div id="progress-container" style="margin-bottom:20px;">
-      <div class="progress-wrap">
-        <div class="progress-label"><span>Progresso da seleção</span><span id="progress-text">0 / 0</span></div>
-        <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-      </div>
-    </div>
-    <div id="client-gallery-grid"></div>
+  <!-- Hero -->
+  <div id="client-hero">
+    <h1 id="client-title">—</h1>
+    <div class="client-meta" id="client-meta"></div>
   </div>
 
-  <div id="action-bar">
-    <div class="action-bar-inner">
-      <div class="action-bar-info">
-        <div class="total-label">Total a Pagar</div>
-        <div class="total-value" id="action-total">R$ 0,00</div>
-      </div>
-      <div class="action-bar-btns">
-        <button class="btn btn-ghost" id="btn-deselect-all" onclick="deselectAll()">Limpar Seleção</button>
-        <button class="btn btn-gold" id="btn-pay" onclick="openPixModal()" style="display:none;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-          Pagar Fotos Extras
-        </button>
-        <button class="btn btn-primary" id="btn-confirm" onclick="openConfirmModal()" disabled>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-          Confirmar Seleção
-        </button>
-      </div>
+  <!-- Grid -->
+  <div id="photo-grid-wrap">
+    <div id="photo-grid"></div>
+    <div id="grid-loading" class="empty-state">
+      <div class="spinner"></div>
     </div>
   </div>
+
+  <!-- Finalize bar -->
+  <div id="finalize-bar">
+    <div class="finalize-inner">
+      <span id="finalize-hint" style="font-size:0.82rem;color:var(--muted);"></span>
+      <button class="btn btn-green btn-lg" id="btn-finalize">✓ Finalizar Seleção</button>
+    </div>
+  </div>
+
 </div>
 
-<!-- ========================= MODALS ========================= -->
+<!-- ============================================================
+     ALREADY SELECTED VIEW
+============================================================ -->
+<div id="already-selected-view" class="hidden">
+  <div class="check-circle">✓</div>
+  <h2>Seleção enviada!</h2>
+  <p style="color:var(--muted);margin-top:10px;font-size:0.9rem;" id="already-msg">
+    Você já enviou sua seleção de fotos. Obrigado!
+  </p>
+  <div id="already-detail" style="margin-top:24px;"></div>
+</div>
 
-<!-- PIX PAYMENT MODAL -->
-<div class="modal-overlay hidden" id="modal-pix">
-  <div class="modal-box" style="max-width:460px;">
+<!-- ============================================================
+     MODAL: View Selection (Admin)
+============================================================ -->
+<div id="modal-selection" class="modal-overlay hidden">
+  <div class="modal">
     <div class="modal-header">
-      <h3>🟢 Pagar via PIX</h3>
-      <button class="modal-close" onclick="closeModal('modal-pix')">✕</button>
+      <h3>Seleção do Cliente</h3>
+      <button class="modal-close" onclick="closeModal('modal-selection')">×</button>
     </div>
-    <div style="text-align:center;margin-bottom:24px;">
-      <div style="font-size:0.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:6px;">Valor a Pagar</div>
-      <div style="font-family:var(--font-display);font-size:3rem;font-weight:300;color:var(--gold);line-height:1;" id="pix-amount-display">R$ 0,00</div>
-      <div style="color:var(--text2);font-size:0.82rem;margin-top:6px;" id="pix-extras-detail"></div>
+    <div id="modal-selection-body"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: PIX Payment
+============================================================ -->
+<div id="modal-pix" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>💛 Pagamento PIX</h3>
+      <button class="modal-close" onclick="closeModal('modal-pix')">×</button>
     </div>
-    <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:16px 18px;margin-bottom:14px;">
-      <div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:8px;">Chave PIX</div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="flex:1;font-family:var(--font-mono);font-size:0.95rem;color:var(--text);word-break:break-all;" id="pix-key-display">—</div>
-        <button class="btn btn-sm btn-primary" onclick="copyPixKey()" style="flex-shrink:0;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          Copiar
-        </button>
+    <div id="pix-area">
+      <div class="pix-card">
+        <p style="color:var(--muted);font-size:0.875rem;">Valor total a pagar</p>
+        <div class="pix-value" id="pix-value-display">R$ 0,00</div>
+        <p style="font-size:0.8rem;color:var(--muted);margin-bottom:12px;">Chave PIX:</p>
+        <div class="pix-key-box" id="pix-key-display">—</div>
+        <button class="btn btn-primary btn-full" id="btn-copy-pix">📋 Copiar Chave PIX</button>
       </div>
+      <hr class="divider" />
+      <p style="font-size:0.85rem;color:var(--muted);text-align:center;margin-bottom:16px;">
+        Após realizar o pagamento, clique no botão abaixo:
+      </p>
+      <button class="btn btn-green btn-full btn-lg" id="btn-paid">✓ Já paguei — Enviar Seleção</button>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:0.82rem;color:var(--text2);">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:15px;height:15px;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      Tipo: <span id="pix-type-display" style="color:var(--text);font-weight:500;">—</span>
-      &nbsp;·&nbsp; Favorecido: <span id="pix-name-display" style="color:var(--text);font-weight:500;">—</span>
-    </div>
-    <div class="divider"></div>
-    <div style="margin:16px 0;">
-      <div style="font-size:0.78rem;color:var(--text2);line-height:1.7;">
-        <div style="margin-bottom:6px;">1. Abra o app do seu banco</div>
-        <div style="margin-bottom:6px;">2. Vá em <strong style="color:var(--text);">PIX → Transferir → Chave PIX</strong></div>
-        <div style="margin-bottom:6px;">3. Cole a chave copiada acima</div>
-        <div>4. Confirme o valor de <strong style="color:var(--gold);" id="pix-amount-inline">—</strong> e envie</div>
-      </div>
-    </div>
-    <div class="divider"></div>
-    <div style="background:rgba(240,169,75,0.07);border:1px solid rgba(240,169,75,0.2);border-radius:var(--r);padding:12px 14px;margin:16px 0;font-size:0.82rem;color:var(--gold);">
-      ⚠️ Após enviar o PIX, clique em <strong>"Já Paguei"</strong> abaixo para liberar a confirmação da seleção.
-    </div>
-    <button class="btn btn-gold btn-block btn-lg" onclick="onPaymentConfirmed()">
-      ✅ Já Paguei — Liberar Seleção
-    </button>
   </div>
 </div>
 
-<!-- CONFIRM SELECTION MODAL -->
-<div class="modal-overlay hidden" id="modal-confirm">
-  <div class="modal-box wide">
+<!-- ============================================================
+     MODAL: Copy Link
+============================================================ -->
+<div id="modal-link" class="modal-overlay hidden">
+  <div class="modal">
     <div class="modal-header">
-      <h3>✅ Confirmar Seleção</h3>
-      <button class="modal-close" onclick="closeModal('modal-confirm')">✕</button>
+      <h3>🔗 Link da Galeria</h3>
+      <button class="modal-close" onclick="closeModal('modal-link')">×</button>
     </div>
-    <p style="color:var(--text2);font-size:0.88rem;margin-bottom:20px;">Revise sua seleção antes de confirmar. Após confirmação, as fotos escolhidas serão enviadas ao fotógrafo.</p>
-    <div class="selection-summary-grid">
-      <div class="summary-item"><div class="s-label">Fotos Selecionadas</div><div class="s-val green" id="confirm-selected">0</div></div>
-      <div class="summary-item"><div class="s-label">Incluídas no Pacote</div><div class="s-val" id="confirm-included">0</div></div>
-      <div class="summary-item"><div class="s-label">Fotos Extras</div><div class="s-val gold" id="confirm-extras">0</div></div>
-      <div class="summary-item"><div class="s-label">Total Pago</div><div class="s-val gold" id="confirm-total">R$ 0,00</div></div>
-    </div>
-    <div style="margin-bottom:16px;">
-      <div style="font-size:0.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">Fotos Selecionadas</div>
-      <div class="selection-thumbs" id="confirm-thumbs"></div>
-    </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="btn btn-ghost" onclick="downloadSelectionPDF()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Baixar PDF da Seleção
-      </button>
-      <button class="btn btn-primary btn-block" onclick="confirmSelection()" id="btn-final-confirm">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-        Confirmar e Enviar ao Fotógrafo
-      </button>
-    </div>
+    <p style="font-size:0.875rem;color:var(--muted);margin-bottom:14px;">
+      Compartilhe este link com o cliente:
+    </p>
+    <div class="pix-key-box" id="link-display">—</div>
+    <button class="btn btn-primary btn-full" id="btn-copy-link" style="margin-top:14px;">📋 Copiar Link</button>
   </div>
 </div>
 
-<!-- SUCCESS MODAL -->
-<div class="modal-overlay hidden" id="modal-success">
-  <div class="modal-box" style="text-align:center;">
-    <div style="font-size:4rem;margin-bottom:16px;">🎉</div>
-    <h3 style="font-family:var(--font-display);font-size:1.8rem;font-weight:400;margin-bottom:12px;">Seleção Enviada!</h3>
-    <p style="color:var(--text2);font-size:0.9rem;margin-bottom:24px;">Sua seleção foi confirmada com sucesso. O fotógrafo já pode visualizar as fotos escolhidas.</p>
-    <div id="success-summary" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:20px;text-align:left;"></div>
-    <button class="btn btn-primary btn-block" onclick="downloadSelectionPDF()">
-      📄 Baixar Comprovante PDF
-    </button>
-  </div>
-</div>
-
-<!-- SELECTION DETAIL MODAL (admin) -->
-<div class="modal-overlay hidden" id="modal-selection-detail">
-  <div class="modal-box wide">
-    <div class="modal-header">
-      <h3 id="sel-detail-title">Detalhes da Seleção</h3>
-      <button class="modal-close" onclick="closeModal('modal-selection-detail')">✕</button>
-    </div>
-    <div id="sel-detail-content"></div>
-    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-      <button class="btn btn-ghost" onclick="downloadAdminSelectionPDF()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Baixar PDF
-      </button>
-      <button class="btn btn-secondary btn-sm" onclick="promptCleanupClientPhotos()" id="btn-cleanup-photos" title="Remove todas as fotos do Storage e tabela fs_photos após seleção finalizada">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
-        Limpar Fotos do Storage
-      </button>
-      <button class="btn btn-danger btn-sm" onclick="deleteSelection()" id="btn-delete-selection">
-        Excluir Seleção
-      </button>
-    </div>
-    <div class="cleanup-notice" id="cleanup-notice" style="display:none;">
-      ⚠️ Use "Limpar Fotos do Storage" apenas após a entrega final das fotos ao cliente. Esta ação remove os arquivos do bucket permanentemente.
-    </div>
-  </div>
-</div>
-
-<!-- CONFIRM CLEAR ALL -->
-<div class="modal-overlay hidden" id="modal-clear-confirm">
-  <div class="modal-box" style="max-width:400px;">
-    <div class="modal-header">
-      <h3>⚠️ Confirmar Exclusão</h3>
-      <button class="modal-close" onclick="closeModal('modal-clear-confirm')">✕</button>
-    </div>
-    <p style="color:var(--text2);margin-bottom:24px;">Isso irá apagar TODOS os dados do sistema incluindo clientes, fotos e seleções. Esta ação não pode ser desfeita.</p>
-    <div style="display:flex;gap:10px;">
-      <button class="btn btn-ghost" onclick="closeModal('modal-clear-confirm')" style="flex:1;">Cancelar</button>
-      <button class="btn btn-danger" onclick="clearAllData()" style="flex:1;">Apagar Tudo</button>
-    </div>
-  </div>
-</div>
-
+<!-- ============================================================
+     JAVASCRIPT
+============================================================ -->
 <script>
-// ============================================================
-// CONSTANTS
-// ============================================================
-const SUPABASE_URL_DEFAULT = 'https://rjyxkouegrropsarrhje.supabase.co';
-const DB_NAME = 'fotoselectDB';
-const DB_VERSION = 2;
+/* ================================================================
+   CONFIG
+================================================================ */
+const SUPABASE_URL  = 'https://rjyxkouegrropsarrhje.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqeXhrb3VlZ3Jyb3BzYXJyaGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NjYxNjcsImV4cCI6MjA4NTE0MjE2N30.UjNPnVBVhQcUSirXeWZ3RmYmAhDMqqbbVUChG_Mv57U';
+const BUCKET        = 'client-photos';
+const PIX_KEY       = '22992497662'; // ← substitua pela sua chave PIX
 
-// Nome do bucket no Supabase Storage — configurável via UI
-let STORAGE_BUCKET = 'galeria';
+/* ================================================================
+   STATE
+================================================================ */
+let supabase;
+let currentClient  = null;
+let selectedIds    = new Set();
+let allPhotos      = [];
 
-let db = null;
-let supabaseClient = null;
-let currentClientData = null;
-let selectedPhotoIds = new Set();
-let allClientPhotos = [];
-let paymentStatus = 'none'; // 'none' | 'paid'
-let currentGalleryClientId = null;
-let lightboxIndex = 0;
-let lightboxPhotos = [];
-let selectionDetailClientId = null;
-let activeFilter = 'all';
-
-// ============================================================
-// INDEXEDDB SETUP
-// ============================================================
-function initDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onerror = () => reject(req.error);
-    req.onsuccess = () => { db = req.result; resolve(db); };
-    req.onupgradeneeded = (e) => {
-      const d = e.target.result;
-      if (!d.objectStoreNames.contains('clients')) {
-        const cs = d.createObjectStore('clients', { keyPath: 'id' });
-        cs.createIndex('name', 'name', { unique: false });
-      }
-      if (!d.objectStoreNames.contains('photos')) {
-        const ps = d.createObjectStore('photos', { keyPath: 'id' });
-        ps.createIndex('clientId', 'clientId', { unique: false });
-      }
-      if (!d.objectStoreNames.contains('selections')) {
-        d.createObjectStore('selections', { keyPath: 'clientId' });
-      }
-      if (!d.objectStoreNames.contains('settings')) {
-        d.createObjectStore('settings', { keyPath: 'key' });
-      }
-    };
-  });
+/* ================================================================
+   INIT
+================================================================ */
+function initSupabase() {
+  const { createClient } = window.supabase;
+  supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 }
 
-function dbSet(store, value) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(store, 'readwrite');
-    const req = tx.objectStore(store).put(value);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-function dbGet(store, key) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(store, 'readonly');
-    const req = tx.objectStore(store).get(key);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-function dbGetAll(store) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(store, 'readonly');
-    const req = tx.objectStore(store).getAll();
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-function dbGetByIndex(store, indexName, value) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(store, 'readonly');
-    const idx = tx.objectStore(store).index(indexName);
-    const req = idx.getAll(value);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-function dbDelete(store, key) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(store, 'readwrite');
-    const req = tx.objectStore(store).delete(key);
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
-  });
-}
-
-function dbClear(store) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(store, 'readwrite');
-    const req = tx.objectStore(store).clear();
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
-  });
-}
-
-// ============================================================
-// SUPABASE SETUP
-// ============================================================
-async function initSupabase() {
-  try {
-    const urlSetting    = await dbGet('settings', 'supabase_url');
-    const keySetting    = await dbGet('settings', 'supabase_key');
-    const anonSetting   = await dbGet('settings', 'supabase_anon');
-    const bucketSetting = await dbGet('settings', 'storage_bucket');
-    const url    = (urlSetting    && urlSetting.value)    || SUPABASE_URL_DEFAULT;
-    const key    = keySetting    && keySetting.value;
-    const anon   = anonSetting   && anonSetting.value;
-    const bucket = bucketSetting && bucketSetting.value;
-
-    if (bucket) STORAGE_BUCKET = bucket;
-
-    const urlEl    = document.getElementById('config-supabase-url');
-    const keyEl    = document.getElementById('config-supabase-key');
-    const anonEl   = document.getElementById('config-supabase-anon');
-    const bucketEl = document.getElementById('config-storage-bucket');
-    if (urlEl)          urlEl.value    = url;
-    if (keyEl  && key)  keyEl.value    = key;
-    if (anonEl && anon) anonEl.value   = anon;
-    if (bucketEl)       bucketEl.value = STORAGE_BUCKET;
-
-    if (key) {
-      connectSupabase(url, key, anon || key);
-    } else {
-      updateSupabaseStatus(false);
-    }
-  } catch(e) {
-    updateSupabaseStatus(false);
-  }
-}
-
-function connectSupabase(url, serviceKey, anonKey) {
-  try {
-    if (!serviceKey || serviceKey.length < 10) { updateSupabaseStatus(false); return null; }
-    supabaseClient = window.supabase.createClient(url, serviceKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false
-      },
-      global: {
-        headers: { Authorization: 'Bearer ' + serviceKey }
-      }
-    });
-    window._supabaseAnon = anonKey
-      ? window.supabase.createClient(url, anonKey, { auth: { persistSession: false } })
-      : supabaseClient;
-    updateSupabaseStatus(true);
-    return supabaseClient;
-  } catch(e) {
-    updateSupabaseStatus(false);
-    return null;
-  }
-}
-
-function updateSupabaseStatus(connected) {
-  const dot = document.getElementById('supabase-dot');
-  const txt = document.getElementById('supabase-status-text');
-  if (connected) {
-    dot.classList.add('connected');
-    txt.textContent = 'Supabase: Conectado';
-  } else {
-    dot.classList.remove('connected');
-    txt.textContent = 'Supabase: Local';
-  }
-}
-
-async function saveSupabaseConfig() {
-  const url    = document.getElementById('config-supabase-url').value.trim();
-  const key    = document.getElementById('config-supabase-key').value.trim();
-  const anonEl = document.getElementById('config-supabase-anon');
-  const anon   = anonEl ? anonEl.value.trim() : '';
-  const bucketEl = document.getElementById('config-storage-bucket');
-  const bucket = bucketEl ? bucketEl.value.trim() || 'galeria' : 'galeria';
-
-  if (!url) { showToast('Informe a URL do Supabase', 'warning'); return; }
-  if (!key) { showToast('Informe a service_role key', 'warning'); return; }
-  if (key.length < 100) { showToast('Essa parece ser a anon key — cole a service_role secret (mais longa)', 'warning'); return; }
-
-  await dbSet('settings', { key: 'supabase_url',    value: url });
-  await dbSet('settings', { key: 'supabase_key',    value: key });
-  await dbSet('settings', { key: 'supabase_anon',   value: anon });
-  await dbSet('settings', { key: 'storage_bucket',  value: bucket });
-
-  STORAGE_BUCKET = bucket;
-
-  const client = connectSupabase(url, key, anon);
-  if (client) {
-    await testSupabaseConnection(true);
-  } else {
-    showToast('Erro ao conectar — verifique a URL', 'error');
-  }
-}
-
-async function clearSupabaseCredentials() {
-  await dbDelete('settings', 'supabase_key');
-  await dbDelete('settings', 'supabase_anon');
-  supabaseClient = null;
-  document.getElementById('config-supabase-key').value = '';
-  const anonEl = document.getElementById('config-supabase-anon');
-  if (anonEl) anonEl.value = '';
-  updateSupabaseStatus(false);
-  showToast('Credenciais removidas — cole as novas chaves', 'info');
-}
-
-async function testSupabaseConnection(silent) {
-  if (!supabaseClient) { showToast('Configure o Supabase primeiro', 'warning'); return; }
-  try {
-    const url = document.getElementById('config-supabase-url').value.trim();
-    const key = document.getElementById('config-supabase-key').value.trim();
-    const res = await fetch(url + '/rest/v1/fs_clients?select=id&limit=1', {
-      headers: {
-        'apikey': key,
-        'Authorization': 'Bearer ' + key,
-        'Content-Type': 'application/json'
-      }
-    });
-    if (res.status === 401 || res.status === 403) {
-      const body = await res.text();
-      throw new Error('Acesso negado (' + res.status + '): ' + body);
-    }
-    if (res.status === 404) throw new Error('Tabela fs_clients não encontrada — execute o SQL de criação');
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    if (!silent) showToast('✅ Conexão OK! Tabela fs_clients acessível.', 'success');
-    updateSupabaseStatus(true);
-  } catch(e) {
-    updateSupabaseStatus(false);
-    showToast('Erro: ' + (e.message || 'Falha na conexão'), 'error');
-    console.error('Supabase test error:', e);
-  }
-}
-
-// ============================================================
-// ROUTER
-// ============================================================
 async function init() {
-  try {
-    await initDB();
-    const params = new URLSearchParams(window.location.search);
-    const clienteId = params.get('cliente');
-
-    await initSupabase();
-    await loadPixConfig();
-
-    if (clienteId) {
-      await loadClientArea(clienteId);
-    } else {
-      await initAdmin();
-    }
-
-    setTimeout(() => {
-      document.getElementById('loading-screen').classList.add('hidden');
-    }, 600);
-
-  } catch(err) {
-    console.error('Init error:', err);
-    document.getElementById('loading-screen').classList.add('hidden');
-    showToast('Erro ao inicializar: ' + err.message, 'error');
-  }
-}
-
-// ============================================================
-// ADMIN INIT
-// ============================================================
-async function initAdmin() {
-  document.getElementById('admin-panel').classList.remove('hidden');
-  await loadDashboard();
-  await refreshClientsList();
-  await refreshGalleryClientList();
-  await loadConfigForm();
-}
-
-// ============================================================
-// ADMIN — CLIENTS
-// ============================================================
-async function saveClient() {
-  const name     = document.getElementById('client-name').value.trim();
-  const event    = document.getElementById('client-event').value.trim();
-  const included = parseInt(document.getElementById('client-included').value);
-  const price    = parseFloat(document.getElementById('client-price').value) || 0;
-  const email    = document.getElementById('client-email').value.trim();
-  const date     = document.getElementById('client-date').value;
-
-  if (!name) { showToast('Nome do cliente é obrigatório', 'warning'); return; }
-  if (!included || included < 1) { showToast('Informe a quantidade de fotos incluídas', 'warning'); return; }
-
-  const client = {
-    id: generateId(),
-    name, event: event || name, email, eventDate: date,
-    includedCount: included, pricePerExtra: price,
-    createdAt: new Date().toISOString()
-  };
-
-  await dbSet('clients', client);
-
-  if (supabaseClient) {
-    try {
-      await supabaseClient.from('fs_clients').upsert({
-        id: client.id, name: client.name, event: client.event,
-        email: client.email, event_date: client.eventDate,
-        included_count: client.includedCount, price_per_extra: client.pricePerExtra
-      });
-    } catch(e) { console.warn('Supabase sync failed:', e); }
-  }
-
-  showToast(`Cliente "${name}" cadastrado!`, 'success');
-  clearClientForm();
-  await refreshClientsList();
-  await loadDashboard();
-  await refreshGalleryClientList();
-}
-
-function clearClientForm() {
-  ['client-name','client-event','client-included','client-price','client-email','client-date'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-}
-
-async function refreshClientsList() {
-  const clients = await dbGetAll('clients');
-  const container = document.getElementById('clients-list-table');
-  if (!clients.length) {
-    container.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><h3>Nenhum cliente</h3><p>Adicione clientes acima</p></div>`;
-    return;
-  }
-  const rows = await Promise.all(clients.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).map(async c => {
-    const photos = await dbGetByIndex('photos', 'clientId', c.id);
-    const sel = await dbGet('selections', c.id);
-    const status = sel
-      ? (sel.paymentStatus === 'paid'
-          ? `<span class="badge badge-green">✓ Pago</span>`
-          : sel.paymentStatus === 'confirmed'
-            ? `<span class="badge badge-blue">Seleção Recebida</span>`
-            : `<span class="badge badge-gold">Pendente</span>`)
-      : `<span class="badge badge-gray">Aguardando</span>`;
-    const link = await buildClientLink(c.id);
-    return `<tr>
-      <td><div class="client-name">${escHtml(c.name)}</div><div class="client-event">${escHtml(c.event)}</div></td>
-      <td>${c.includedCount}</td>
-      <td>${photos.length}</td>
-      <td>${sel ? sel.selectedPhotoIds.length : '—'}</td>
-      <td>${status}</td>
-      <td>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="btn btn-sm btn-secondary" onclick="switchTab('galeria');selectGalleryClient('${c.id}')">Galeria</button>
-          <button class="btn btn-sm btn-ghost" onclick="copyText('${escHtml(link)}')">Link</button>
-          ${sel ? `<button class="btn btn-sm btn-ghost" onclick="viewSelectionDetail('${c.id}')">Ver Seleção</button>` : ''}
-          <button class="btn btn-sm btn-danger" onclick="deleteClient('${c.id}')">✕</button>
-        </div>
-      </td>
-    </tr>`;
-  }));
-  container.innerHTML = `<table class="data-table"><thead><tr><th>Cliente</th><th>Fotos Incl.</th><th>Fotos Upload</th><th>Selecionadas</th><th>Status</th><th>Ações</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
-}
-
-// ─────────────────────────────────────────────────────────────
-// deleteClient — limpa Storage + DB antes de excluir o cliente
-// ─────────────────────────────────────────────────────────────
-async function deleteClient(id) {
-  if (!confirm('Excluir este cliente, todas as suas fotos do Storage e registros?\nEsta ação não pode ser desfeita.')) return;
-
-  showToast('Removendo fotos do Storage…', 'info', 2000);
-
-  // 1. Remove fotos do Storage e registros fs_photos
-  const result = await clearClientPhotosFromStorage(id);
-  if (!result.success) {
-    console.warn('Alguns erros ao limpar fotos do Storage:', result.errors);
-    showToast(`Atenção: ${result.errors.length} erro(s) ao limpar Storage`, 'warning');
-  }
-
-  // 2. Remove seleção local e cliente local
-  await dbDelete('selections', id);
-  await dbDelete('clients', id);
-
-  // 3. Remove cliente do Supabase (cascade elimina fs_photos e fs_selections via FK)
-  if (supabaseClient) {
-    try {
-      await supabaseClient.from('fs_clients').delete().eq('id', id);
-    } catch(e) { console.warn('Supabase client delete failed:', e); }
-  }
-
-  showToast('Cliente excluído com sucesso', 'info');
-  await refreshClientsList();
-  await loadDashboard();
-  await refreshGalleryClientList();
-}
-
-// ============================================================
-// ADMIN — DASHBOARD
-// ============================================================
-async function loadDashboard() {
-  const clients    = await dbGetAll('clients');
-  const photos     = await dbGetAll('photos');
-  const selections = await dbGetAll('selections');
-  const paid = selections.filter(s => s.paymentStatus === 'paid' || s.paymentStatus === 'confirmed').length;
-
-  document.getElementById('stat-total-clients').textContent = clients.length;
-  document.getElementById('stat-selections').textContent    = selections.filter(s => s.paymentStatus === 'confirmed').length;
-  document.getElementById('stat-payments').textContent      = paid;
-  document.getElementById('stat-photos').textContent        = photos.length;
-
-  const container = document.getElementById('dashboard-clients-table');
-  if (!clients.length) {
-    container.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><h3>Nenhum cliente cadastrado</h3><p>Vá para "Clientes" e adicione o primeiro cliente</p></div>`;
-    return;
-  }
-  const rows = await Promise.all(clients.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).map(async c => {
-    const cPhotos = photos.filter(p => p.clientId === c.id);
-    const sel = await dbGet('selections', c.id);
-    const extras   = sel ? Math.max(0, sel.selectedPhotoIds.length - c.includedCount) : 0;
-    const totalVal = extras * c.pricePerExtra;
-    let statusBadge = `<span class="badge badge-gray">Aguardando</span>`;
-    if (sel) {
-      if (sel.paymentStatus === 'confirmed') statusBadge = `<span class="badge badge-green">✓ Seleção Recebida</span>`;
-      else if (sel.paymentStatus === 'paid')  statusBadge = `<span class="badge badge-gold">Pago — Aguardando Confirmação</span>`;
-      else statusBadge = `<span class="badge badge-gold">Em andamento</span>`;
-    }
-    return `<tr>
-      <td><div class="client-name">${escHtml(c.name)}</div><div class="client-event">${escHtml(c.event)}</div></td>
-      <td>${c.includedCount}</td>
-      <td>${cPhotos.length}</td>
-      <td style="color:var(--green);">${sel ? sel.selectedPhotoIds.length : '—'}</td>
-      <td style="color:${extras>0?'var(--gold)':'inherit'};">${sel ? extras : '—'}</td>
-      <td style="color:var(--gold);">${totalVal > 0 ? formatCurrency(totalVal) : '—'}</td>
-      <td>${statusBadge}</td>
-      <td>${sel ? `<button class="btn btn-sm btn-ghost" onclick="viewSelectionDetail('${c.id}')">Detalhes</button>` : `<button class="btn btn-sm btn-ghost" onclick="switchTab('galeria');selectGalleryClient('${c.id}')">Ver Galeria</button>`}</td>
-    </tr>`;
-  }));
-  container.innerHTML = `<table class="data-table" style="min-width:700px;"><thead><tr><th>Cliente</th><th>Incluso</th><th>Upload</th><th>Selecionadas</th><th>Extras</th><th>Valor</th><th>Status</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
-}
-
-// ============================================================
-// ADMIN — GALLERY
-// ============================================================
-async function refreshGalleryClientList() {
-  const clients = await dbGetAll('clients');
-  const sel = document.getElementById('gallery-client-select');
-  const current = sel.value;
-  sel.innerHTML = '<option value="">— Selecione um cliente —</option>';
-  clients.sort((a,b)=>a.name.localeCompare(b.name)).forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c.id; opt.textContent = `${c.name} — ${c.event}`;
-    sel.appendChild(opt);
-  });
-  if (current) sel.value = current;
-}
-
-async function selectGalleryClient(id) {
-  document.getElementById('gallery-client-select').value = id;
-  await loadGallery();
-}
-
-async function loadGallery() {
-  const id = document.getElementById('gallery-client-select').value;
-  currentGalleryClientId = id;
-  const uploadSection = document.getElementById('gallery-upload-section');
-  if (!id) { uploadSection.classList.add('hidden'); return; }
-  uploadSection.classList.remove('hidden');
-  await renderAdminGallery(id);
-}
-
-async function renderAdminGallery(clientId) {
-  const photos   = await dbGetByIndex('photos', 'clientId', clientId);
-  const grid     = document.getElementById('admin-gallery-grid');
-  const countEl  = document.getElementById('gallery-photo-count');
-  countEl.textContent = `(${photos.length} fotos)`;
-  if (!photos.length) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><h3>Galeria vazia</h3><p>Faça upload das fotos acima</p></div>`;
-    return;
-  }
-  photos.sort((a,b)=>a.order-b.order);
-  grid.innerHTML = photos.map((p, i) => `
-    <div class="admin-photo-item" onclick="openLightboxAdmin('${p.id}', ${i}, event)">
-      <img src="${p.dataUrl}" alt="${escHtml(p.filename)}" loading="lazy">
-      <div class="photo-order">#${i+1}</div>
-      <div class="photo-delete" onclick="deletePhoto('${p.id}', event)" title="Excluir foto">
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="width:12px;height:12px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </div>
-    </div>
-  `).join('');
-
-  const link = await buildClientLink(clientId);
-  document.getElementById('client-link-url').textContent = link;
-  document.getElementById('client-link-section').classList.remove('hidden');
-}
-
-function handleDragOver(e)  { e.preventDefault(); document.getElementById('upload-drop-zone').classList.add('drag-over'); }
-function handleDragLeave(e) { document.getElementById('upload-drop-zone').classList.remove('drag-over'); }
-function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById('upload-drop-zone').classList.remove('drag-over');
-  handleFiles(Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')));
-}
-function handleFileSelect(e) { handleFiles(Array.from(e.target.files)); e.target.value = ''; }
-
-async function handleFiles(files) {
-  if (!currentGalleryClientId) { showToast('Selecione um cliente primeiro', 'warning'); return; }
-  if (!files.length) return;
-  const progressList = document.getElementById('upload-progress-list');
-
-  const items = files.map(f => {
-    const itemId = generateId();
-    const div = document.createElement('div');
-    div.className = 'upload-progress-item';
-    div.id = `upload-${itemId}`;
-    div.innerHTML = `
-      <div class="upload-icon"><img id="thumb-${itemId}" src="" style="display:none"></div>
-      <div class="upload-info">
-        <div class="upload-name">${escHtml(f.name)}</div>
-        <div class="upload-bar"><div class="upload-bar-fill" id="bar-${itemId}" style="width:0%"></div></div>
-      </div>
-      <span id="status-${itemId}" style="font-size:0.75rem;color:var(--text3);">0%</span>
-    `;
-    progressList.appendChild(div);
-    return { file: f, itemId };
-  });
-
-  for (const { file, itemId } of items) {
-    try {
-      await processAndSavePhoto(file, itemId);
-    } catch(e) {
-      document.getElementById(`status-${itemId}`).textContent = '✕';
-      document.getElementById(`status-${itemId}`).style.color = 'var(--red)';
-    }
-  }
-
-  await renderAdminGallery(currentGalleryClientId);
-  await loadDashboard();
-  showToast(`${files.length} foto(s) adicionada(s)!`, 'success');
-  setTimeout(() => { progressList.innerHTML = ''; }, 3000);
-}
-
-function processAndSavePhoto(file, itemId) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onprogress = (e) => {
-      if (e.lengthComputable) {
-        const pct = Math.round((e.loaded / e.total) * 80);
-        document.getElementById(`bar-${itemId}`).style.width = pct + '%';
-        document.getElementById(`status-${itemId}`).textContent = pct + '%';
-      }
-    };
-    reader.onload = async (e) => {
-      const dataUrl = e.target.result;
-      const thumbImg = document.getElementById(`thumb-${itemId}`);
-      if (thumbImg) { thumbImg.src = dataUrl; thumbImg.style.display = 'block'; }
-      document.getElementById(`bar-${itemId}`).style.width = '90%';
-
-      const compressed = await compressImage(dataUrl, 1200, 0.82);
-
-      const existing = await dbGetByIndex('photos', 'clientId', currentGalleryClientId);
-      const order    = existing.length;
-
-      // Gerar ID antes de montar o path para garantir consistência
-      const photoId    = generateId();
-      const storagePath = `${currentGalleryClientId}/${photoId}`;
-
-      const photo = {
-        id:          photoId,
-        clientId:    currentGalleryClientId,
-        filename:    file.name,
-        dataUrl:     compressed,
-        storagePath, // ← armazena o caminho para deleção futura
-        order,
-        createdAt:   new Date().toISOString()
-      };
-
-      await dbSet('photos', photo);
-
-      // Upload para o Supabase Storage
-      if (supabaseClient) {
-        try {
-          const blob = await (await fetch(compressed)).blob();
-          const { error: uploadError } = await supabaseClient.storage
-            .from(STORAGE_BUCKET)
-            .upload(storagePath, blob, { upsert: true, contentType: file.type });
-
-          if (uploadError) {
-            console.warn('Storage upload warning:', uploadError.message);
-          } else {
-            const { data: urlData } = supabaseClient.storage
-              .from(STORAGE_BUCKET)
-              .getPublicUrl(storagePath);
-
-            // Persiste metadados incluindo o storage_path para deleção segura
-            const { error: dbError } = await supabaseClient.from('fs_photos').upsert({
-              id:           photo.id,
-              client_id:    photo.clientId,
-              filename:     photo.filename,
-              storage_url:  urlData.publicUrl,
-              storage_path: storagePath,   // ← salvo também na tabela
-              photo_order:  photo.order
-            });
-            if (dbError) console.warn('fs_photos upsert warning:', dbError.message);
-          }
-        } catch(err) {
-          console.warn('Supabase photo sync failed:', err);
-        }
-      }
-
-      document.getElementById(`bar-${itemId}`).style.width = '100%';
-      document.getElementById(`status-${itemId}`).textContent = '✓';
-      document.getElementById(`status-${itemId}`).style.color = 'var(--green)';
-      resolve(photo);
-    };
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-}
-
-function compressImage(dataUrl, maxWidth, quality) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      let w = img.width, h = img.height;
-      if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
-      canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL('image/jpeg', quality));
-    };
-    img.src = dataUrl;
-  });
-}
-
-// ─────────────────────────────────────────────────────────────
-// deletePhoto — fluxo correto:
-//   1. Lê metadados da foto (para obter storagePath)
-//   2. Remove arquivo do Supabase Storage
-//   3. Remove registro de fs_photos
-//   4. Remove do IndexedDB local
-// ─────────────────────────────────────────────────────────────
-async function deletePhoto(photoId, e) {
-  e.stopPropagation();
-
-  // 1. Obter metadados antes de qualquer exclusão
-  const photo = await dbGet('photos', photoId);
-
-  if (supabaseClient) {
-    // 2. Remover arquivo do Storage
-    try {
-      // Usa o storagePath salvo, ou reconstrói com clientId + photoId como fallback
-      const storagePath = (photo && photo.storagePath)
-        || (photo ? `${photo.clientId}/${photoId}` : `${currentGalleryClientId}/${photoId}`);
-
-      const { error: storageError } = await supabaseClient.storage
-        .from(STORAGE_BUCKET)
-        .remove([storagePath]);
-
-      if (storageError) {
-        // "Object not found" não é um erro crítico — o arquivo pode já ter sido removido
-        if (!storageError.message.toLowerCase().includes('not found')) {
-          console.warn('Storage delete warning:', storageError.message);
-          showToast('Aviso: arquivo não removido do Storage: ' + storageError.message, 'warning');
-        }
-      }
-    } catch (err) {
-      console.warn('Erro ao remover arquivo do Storage:', err);
-    }
-
-    // 3. Remover registro de fs_photos
-    try {
-      const { error: dbError } = await supabaseClient
-        .from('fs_photos')
-        .delete()
-        .eq('id', photoId);
-      if (dbError) console.warn('Erro ao remover registro fs_photos:', dbError.message);
-    } catch (err) {
-      console.warn('Erro ao remover de fs_photos:', err);
-    }
-  }
-
-  // 4. Remover do IndexedDB local
-  await dbDelete('photos', photoId);
-
-  await renderAdminGallery(currentGalleryClientId);
-  showToast('Foto removida', 'info');
-}
-
-// ─────────────────────────────────────────────────────────────
-// clearGallery — remove TODAS as fotos de uma galeria:
-//   1. Batch delete no Storage (lotes de 100)
-//   2. Delete em fs_photos por client_id
-//   3. Delete no IndexedDB local
-// ─────────────────────────────────────────────────────────────
-async function clearGallery() {
-  if (!currentGalleryClientId) return;
-  if (!confirm('Remover TODAS as fotos desta galeria do Storage e do banco?\nEsta ação não pode ser desfeita.')) return;
-
-  const photos = await dbGetByIndex('photos', 'clientId', currentGalleryClientId);
-
-  if (photos.length && supabaseClient) {
-    // 1. Batch delete no Storage
-    try {
-      const storagePaths = photos.map(p =>
-        p.storagePath || `${p.clientId}/${p.id}`
-      );
-
-      // Processar em lotes de 100 (limite do Supabase)
-      for (let i = 0; i < storagePaths.length; i += 100) {
-        const batch = storagePaths.slice(i, i + 100);
-        const { error } = await supabaseClient.storage.from(STORAGE_BUCKET).remove(batch);
-        if (error && !error.message.toLowerCase().includes('not found')) {
-          console.warn(`Storage batch delete (lote ${i/100 + 1}) warning:`, error.message);
-        }
-      }
-    } catch (err) {
-      console.warn('Erro ao limpar arquivos do Storage:', err);
-    }
-
-    // 2. Delete todos os registros de fs_photos deste cliente
-    try {
-      const { error } = await supabaseClient
-        .from('fs_photos')
-        .delete()
-        .eq('client_id', currentGalleryClientId);
-      if (error) console.warn('Erro ao limpar fs_photos:', error.message);
-    } catch (err) {
-      console.warn('Erro ao limpar registros fs_photos:', err);
-    }
-  }
-
-  // 3. Delete no IndexedDB local
-  for (const p of photos) await dbDelete('photos', p.id);
-
-  await renderAdminGallery(currentGalleryClientId);
-  showToast('Galeria limpa com sucesso', 'info');
-}
-
-// ─────────────────────────────────────────────────────────────
-// clearClientPhotosFromStorage (nova função)
-// Remove todos os arquivos de um cliente do Supabase Storage
-// e os registros de fs_photos — chamada após seleção finalizada
-// ou ao excluir um cliente.
-// Retorna { success, count, errors }
-// ─────────────────────────────────────────────────────────────
-async function clearClientPhotosFromStorage(clientId) {
-  const photos = await dbGetByIndex('photos', 'clientId', clientId);
-  if (!photos.length) return { success: true, count: 0, errors: [] };
-
-  const errors = [];
-
-  if (supabaseClient) {
-    // 1. Montar lista de caminhos no Storage
-    const storagePaths = photos.map(p =>
-      p.storagePath || `${p.clientId}/${p.id}`
-    );
-
-    // 2. Batch delete no Storage (lotes de 100)
-    try {
-      for (let i = 0; i < storagePaths.length; i += 100) {
-        const batch = storagePaths.slice(i, i + 100);
-        const { error } = await supabaseClient.storage.from(STORAGE_BUCKET).remove(batch);
-        if (error && !error.message.toLowerCase().includes('not found')) {
-          errors.push(`Storage lote ${Math.floor(i/100)+1}: ${error.message}`);
-          console.warn(`Storage batch delete error (lote ${Math.floor(i/100)+1}):`, error);
-        }
-      }
-    } catch (err) {
-      errors.push(`Storage exception: ${err.message}`);
-      console.warn('Erro ao limpar Storage do cliente:', err);
-    }
-
-    // 3. Remover registros de fs_photos para este cliente
-    try {
-      const { error } = await supabaseClient
-        .from('fs_photos')
-        .delete()
-        .eq('client_id', clientId);
-      if (error) {
-        errors.push(`DB: ${error.message}`);
-        console.warn('Erro ao remover registros fs_photos:', error);
-      }
-    } catch (err) {
-      errors.push(`DB exception: ${err.message}`);
-      console.warn('Erro ao limpar fs_photos:', err);
-    }
-  }
-
-  // 4. Remover do IndexedDB local
-  for (const p of photos) await dbDelete('photos', p.id);
-
-  return {
-    success: errors.length === 0,
-    count:   photos.length,
-    errors
-  };
-}
-
-// ─────────────────────────────────────────────────────────────
-// promptCleanupClientPhotos — chamado pelo botão no modal de
-// detalhe da seleção (admin). Confirma e executa limpeza.
-// ─────────────────────────────────────────────────────────────
-async function promptCleanupClientPhotos() {
-  if (!selectionDetailClientId) return;
-  const client = await dbGet('clients', selectionDetailClientId);
-  const photos = await dbGetByIndex('photos', 'clientId', selectionDetailClientId);
-
-  if (!photos.length) {
-    showToast('Este cliente não possui fotos armazenadas localmente', 'info');
-    return;
-  }
-
-  if (!confirm(
-    `Remover as ${photos.length} foto(s) de "${client ? client.name : 'cliente'}" do Storage e da tabela fs_photos?\n\n` +
-    `⚠️ Use apenas após a entrega final das fotos ao cliente.\n` +
-    `Esta ação não pode ser desfeita.`
-  )) return;
-
-  showToast('Removendo fotos do Storage…', 'info', 3000);
-
-  const result = await clearClientPhotosFromStorage(selectionDetailClientId);
-
-  if (result.success) {
-    showToast(`✅ ${result.count} foto(s) removida(s) do Storage com sucesso`, 'success');
+  initSupabase();
+
+  const params   = new URLSearchParams(window.location.search);
+  const isAdmin  = params.has('admin');
+  const clientId = params.get('client');
+
+  hideEl('loading-screen');
+  showEl('app-header');
+
+  if (isAdmin) {
+    await loadAdmin();
+  } else if (clientId) {
+    await loadClient(clientId);
   } else {
-    showToast(
-      `Concluído com ${result.errors.length} erro(s). Verifique o console.`,
-      'warning'
-    );
-    console.error('Erros na limpeza:', result.errors);
+    // Default: show admin hint
+    document.body.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;font-family:'DM Sans',sans-serif;color:#f0ede8;">
+        <div style="font-family:'Playfair Display',serif;font-size:2rem;color:#c9a84c;">FotoSelect</div>
+        <p style="color:#7a7672;">Acesse <strong>?admin</strong> para o painel administrativo</p>
+        <p style="color:#7a7672;font-size:0.85rem;">ou <strong>?client=ID</strong> para a galeria do cliente</p>
+      </div>`;
   }
-
-  // Recarrega a view de detalhes para refletir 0 fotos
-  await viewSelectionDetail(selectionDetailClientId);
 }
 
-async function buildClientLink(clientId) {
-  const baseUrl     = window.location.href.split('?')[0];
-  const urlSetting  = await dbGet('settings', 'supabase_url');
-  const anonSetting = await dbGet('settings', 'supabase_anon');
-  const keySetting  = await dbGet('settings', 'supabase_key');
-  const bucketSt    = await dbGet('settings', 'storage_bucket');
-  const sbUrl  = (urlSetting  && urlSetting.value)  || '';
-  const sbKey  = (anonSetting && anonSetting.value) || (keySetting && keySetting.value) || '';
-  const bucket = (bucketSt   && bucketSt.value)    || 'galeria';
-  let link = `${baseUrl}?cliente=${clientId}`;
-  if (sbUrl)  link += `&sbu=${encodeURIComponent(sbUrl)}`;
-  if (sbKey)  link += `&sbk=${encodeURIComponent(sbKey)}`;
-  if (bucket) link += `&sb_bucket=${encodeURIComponent(bucket)}`;
-  return link;
+/* ================================================================
+   ADMIN: LOAD
+================================================================ */
+async function loadAdmin() {
+  showEl('admin-view');
+  document.getElementById('header-right').innerHTML = `<span style="font-size:0.8rem;color:var(--muted);">Modo Admin</span>`;
+
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  document.getElementById('btn-refresh-clients').addEventListener('click', loadClientsList);
+  document.getElementById('btn-create-client').addEventListener('click', createClient);
+  setupUpload();
+  await loadClientsList();
 }
 
-async function generateClientLink() {
-  if (!currentGalleryClientId) return;
-  const link = await buildClientLink(currentGalleryClientId);
-  document.getElementById('client-link-url').textContent = link;
-  document.getElementById('client-link-section').classList.remove('hidden');
-  copyText(link);
-  showToast('Link copiado! (com credenciais para acesso mobile)', 'success');
-}
+/* ================================================================
+   ADMIN: LOAD CLIENTS LIST
+================================================================ */
+async function loadClientsList() {
+  const container = document.getElementById('clients-list');
+  container.innerHTML = `<div class="empty-state"><div class="spinner"></div></div>`;
 
-function copyClientLink() {
-  const link = document.getElementById('client-link-url').textContent;
-  copyText(link);
-  showToast('Link copiado!', 'success');
-}
+  const { data: clients, error } = await supabase
+    .from('fs_clients')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-// ============================================================
-// ADMIN — SELECTION DETAIL
-// ============================================================
-async function viewSelectionDetail(clientId) {
-  selectionDetailClientId = clientId;
-  const client    = await dbGet('clients', clientId);
-  const sel       = await dbGet('selections', clientId);
-  const allPhotos = await dbGetByIndex('photos', 'clientId', clientId);
-  if (!sel) { showToast('Nenhuma seleção recebida ainda', 'warning'); return; }
+  if (error) { toast('Erro ao carregar clientes', 'error'); return; }
 
-  document.getElementById('sel-detail-title').textContent = `Seleção — ${client.name}`;
+  // Refresh upload select
+  const sel = document.getElementById('upload-client-select');
+  sel.innerHTML = '<option value="">— Escolha um cliente —</option>';
+  (clients || []).forEach(c => {
+    sel.innerHTML += `<option value="${c.id}">${c.name} — ${c.event || 'Sem evento'}</option>`;
+  });
 
-  const selPhotos = allPhotos.filter(p => sel.selectedPhotoIds.includes(p.id));
-  selPhotos.sort((a,b) => sel.selectedPhotoIds.indexOf(a.id) - sel.selectedPhotoIds.indexOf(b.id));
-
-  const extras = Math.max(0, sel.selectedPhotoIds.length - client.includedCount);
-  const total  = extras * client.pricePerExtra;
-
-  let statusBadge = '';
-  if      (sel.paymentStatus === 'confirmed') statusBadge = `<span class="badge badge-green">✓ Seleção Confirmada</span>`;
-  else if (sel.paymentStatus === 'paid')      statusBadge = `<span class="badge badge-gold">Pago</span>`;
-  else                                         statusBadge = `<span class="badge badge-gray">Pendente</span>`;
-
-  document.getElementById('sel-detail-content').innerHTML = `
-    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
-      <div style="flex:1;min-width:200px;">
-        <div style="font-size:0.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">Cliente</div>
-        <div style="font-weight:500;">${escHtml(client.name)}</div>
-        <div style="font-size:0.82rem;color:var(--text2);">${escHtml(client.event)}</div>
-      </div>
-      <div>${statusBadge}</div>
-    </div>
-    <div class="selection-summary-grid" style="margin-bottom:16px;">
-      <div class="summary-item"><div class="s-label">Fotos Selecionadas</div><div class="s-val green">${sel.selectedPhotoIds.length}</div></div>
-      <div class="summary-item"><div class="s-label">Incluídas no Pacote</div><div class="s-val">${client.includedCount}</div></div>
-      <div class="summary-item"><div class="s-label">Fotos Extras</div><div class="s-val gold">${extras}</div></div>
-      <div class="summary-item"><div class="s-label">Valor Total Extras</div><div class="s-val gold">${formatCurrency(total)}</div></div>
-    </div>
-    ${sel.confirmedAt ? `<div style="font-size:0.8rem;color:var(--text3);margin-bottom:16px;">Confirmado em: ${new Date(sel.confirmedAt).toLocaleString('pt-BR')}</div>` : ''}
-    <div style="font-size:0.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">
-      Fotos Escolhidas (${selPhotos.length})
-      ${allPhotos.length === 0 ? '<span style="color:var(--gold);margin-left:8px;">— fotos removidas do storage</span>' : ''}
-    </div>
-    ${selPhotos.length
-      ? `<div class="selected-photos-grid">
-          ${selPhotos.map((p,i) => `<div class="sel-admin-photo"><img src="${p.dataUrl}" alt="#${i+1}" loading="lazy"><div class="sel-num">#${i+1}</div></div>`).join('')}
-        </div>`
-      : `<div style="font-size:0.85rem;color:var(--text3);padding:12px 0;">Nenhuma foto disponível localmente — podem ter sido removidas do Storage após a entrega.</div>`
-    }
-  `;
-
-  // Mostrar aviso de limpeza
-  const notice = document.getElementById('cleanup-notice');
-  if (notice) notice.style.display = 'flex';
-
-  openModal('modal-selection-detail');
-}
-
-async function deleteSelection() {
-  if (!selectionDetailClientId) return;
-  if (!confirm('Excluir esta seleção?')) return;
-  await dbDelete('selections', selectionDetailClientId);
-  if (supabaseClient) {
-    try { await supabaseClient.from('fs_selections').delete().eq('client_id', selectionDetailClientId); } catch(e) {}
-  }
-  closeModal('modal-selection-detail');
-  await loadDashboard();
-  await refreshClientsList();
-  showToast('Seleção excluída', 'info');
-}
-
-async function downloadAdminSelectionPDF() {
-  if (!selectionDetailClientId) return;
-  const client    = await dbGet('clients', selectionDetailClientId);
-  const sel       = await dbGet('selections', selectionDetailClientId);
-  const allPhotos = await dbGetByIndex('photos', 'clientId', selectionDetailClientId);
-  if (!sel) return;
-  const selPhotos = allPhotos.filter(p => sel.selectedPhotoIds.includes(p.id));
-  await generatePDF(client, sel, selPhotos, 'admin');
-}
-
-// ============================================================
-// ADMIN — CONFIG
-// ============================================================
-async function loadConfigForm() {
-  try {
-    const pix = await dbGet('settings', 'pix_config');
-    if (pix && pix.value) {
-      const { key, type, name, city } = pix.value;
-      document.getElementById('config-pix-key').value  = key  || '';
-      document.getElementById('config-pix-type').value = type || 'email';
-      document.getElementById('config-pix-name').value = name || '';
-      document.getElementById('config-pix-city').value = city || '';
-    }
-  } catch(e) {}
-}
-
-async function savePixConfig() {
-  const key  = document.getElementById('config-pix-key').value.trim();
-  const type = document.getElementById('config-pix-type').value;
-  const name = document.getElementById('config-pix-name').value.trim();
-  const city = document.getElementById('config-pix-city').value.trim();
-  if (!key) { showToast('Informe a chave PIX', 'warning'); return; }
-  await dbSet('settings', { key: 'pix_config', value: { key, type, name, city } });
-  showToast('Dados PIX salvos!', 'success');
-}
-
-async function loadPixConfig() {
-  try {
-    const pix = await dbGet('settings', 'pix_config');
-    return (pix && pix.value) || null;
-  } catch(e) { return null; }
-}
-
-// ============================================================
-// CLIENT AREA
-// ============================================================
-async function loadClientArea(clientId) {
-  const urlParams  = new URLSearchParams(window.location.search);
-  const sbUrlParam = urlParams.get('sbu');
-  const sbKeyParam = urlParams.get('sbk');
-  const sbBucket   = urlParams.get('sb_bucket');
-
-  if (sbBucket) STORAGE_BUCKET = decodeURIComponent(sbBucket);
-
-  if (sbUrlParam && sbKeyParam && !supabaseClient) {
-    try {
-      supabaseClient = window.supabase.createClient(
-        decodeURIComponent(sbUrlParam),
-        decodeURIComponent(sbKeyParam),
-        { auth: { persistSession: false, autoRefreshToken: false } }
-      );
-      console.log('Supabase conectado via URL params');
-    } catch(e) { console.warn('Falha ao conectar Supabase via URL:', e); }
-  }
-
-  let client = await dbGet('clients', clientId);
-
-  if (!client && supabaseClient) {
-    try {
-      const { data } = await supabaseClient.from('fs_clients').select('*').eq('id', clientId).single();
-      if (data) {
-        client = {
-          id: data.id, name: data.name, event: data.event,
-          email: data.email, eventDate: data.event_date,
-          includedCount: data.included_count, pricePerExtra: data.price_per_extra,
-          createdAt: data.created_at
-        };
-        await dbSet('clients', client);
-      }
-    } catch(e) { console.warn('Supabase client fetch failed:', e); }
-  }
-
-  if (!client) {
-    document.getElementById('loading-screen').classList.add('hidden');
-    document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:var(--font-ui);color:var(--text);background:var(--bg);flex-direction:column;gap:16px;padding:20px;text-align:center;"><div style="font-size:3rem;">📷</div><h2 style="font-family:var(--font-display);font-size:1.8rem;font-weight:400;">Galeria não encontrada</h2><p style="color:var(--text2);">Este link pode ter expirado ou ser inválido.</p><a href="${window.location.pathname}" style="color:var(--green);">Ir para o painel admin</a></div>`;
+  if (!clients || clients.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <h3>Nenhum cliente ainda</h3>
+        <p>Crie o primeiro cliente na aba "Novo Cliente"</p>
+      </div>`;
     return;
   }
 
-  let photos = await dbGetByIndex('photos', 'clientId', clientId);
+  // Load photos counts & selections
+  const { data: photos } = await supabase.from('fs_photos').select('client_id');
+  const { data: selections } = await supabase.from('fs_selections').select('*');
 
-  if (!photos.length && supabaseClient) {
-    try {
-      const { data } = await supabaseClient.from('fs_photos').select('*').eq('client_id', clientId).order('photo_order');
-      if (data && data.length) {
-        photos = data.map(p => ({
-          id: p.id, clientId: p.client_id, filename: p.filename,
-          dataUrl: p.storage_url, storagePath: p.storage_path || `${p.client_id}/${p.id}`,
-          order: p.photo_order, createdAt: p.created_at
-        }));
-        for (const p of photos) await dbSet('photos', p);
-      }
-    } catch(e) { console.warn('Supabase photos fetch failed:', e); }
-  }
+  const photoCount   = {};
+  const selectionMap = {};
+  (photos || []).forEach(p => { photoCount[p.client_id] = (photoCount[p.client_id] || 0) + 1; });
+  (selections || []).forEach(s => { selectionMap[s.client_id] = s; });
 
-  currentClientData = client;
-  allClientPhotos   = photos.sort((a,b) => a.order - b.order);
-  selectedPhotoIds  = new Set();
-  paymentStatus     = 'none';
-
-  const existingSel = await dbGet('selections', clientId);
-  if (existingSel && existingSel.paymentStatus === 'confirmed') {
-    showAlreadyConfirmedState(existingSel, client, photos);
-    return;
-  }
-  if (existingSel) {
-    selectedPhotoIds = new Set(existingSel.selectedPhotoIds);
-    if (existingSel.paymentStatus === 'paid') paymentStatus = 'paid';
-  }
-
-  document.getElementById('client-panel').classList.remove('hidden');
-  document.getElementById('banner-event-name').textContent     = client.event || client.name;
-  document.getElementById('banner-client-name').textContent    = `Cliente: ${client.name}`;
-  document.getElementById('banner-included').textContent       = client.includedCount;
-  document.getElementById('banner-price').textContent          = formatCurrency(client.pricePerExtra) + '/foto';
-  document.getElementById('banner-total-photos').textContent   = photos.length;
-  document.getElementById('gallery-total-label').innerHTML     = `<span>(${photos.length} fotos)</span>`;
-
-  renderClientGallery();
-  updateClientCounter();
-
-  if (paymentStatus === 'paid') {
-    document.getElementById('btn-confirm').disabled = false;
-  }
-}
-
-function renderClientGallery() {
-  const grid = document.getElementById('client-gallery-grid');
-  if (!allClientPhotos.length) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><h3>Galeria vazia</h3><p>O fotógrafo ainda não enviou as fotos.</p></div>`;
-    return;
-  }
-
-  let photosToShow = allClientPhotos;
-  if (activeFilter === 'selected')   photosToShow = allClientPhotos.filter(p =>  selectedPhotoIds.has(p.id));
-  else if (activeFilter === 'unselected') photosToShow = allClientPhotos.filter(p => !selectedPhotoIds.has(p.id));
-
-  lightboxPhotos = photosToShow;
-
-  grid.innerHTML = photosToShow.map((photo, i) => {
-    const isSelected = selectedPhotoIds.has(photo.id);
-    return `
-      <div class="client-photo-item ${isSelected ? 'selected' : ''}"
-           id="photo-item-${photo.id}"
-           onclick="togglePhoto('${photo.id}')">
-        <img src="${photo.dataUrl}" alt="Foto ${i+1}" loading="lazy" draggable="false">
-        <div class="photo-check">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <div class="photo-num">#${allClientPhotos.indexOf(photo)+1}</div>
-        <div class="photo-view-btn" onclick="openLightboxClient(${i}, event)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          Ver
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function togglePhoto(photoId) {
-  if (selectedPhotoIds.has(photoId)) {
-    selectedPhotoIds.delete(photoId);
-  } else {
-    selectedPhotoIds.add(photoId);
-  }
-  const item = document.getElementById(`photo-item-${photoId}`);
-  if (item) item.classList.toggle('selected', selectedPhotoIds.has(photoId));
-  updateClientCounter();
-  autoSaveDraft();
-}
-
-function autoSaveDraft() {
-  if (!currentClientData) return;
-  const { extras, totalValue } = calculateExtras();
-  dbSet('selections', {
-    clientId:        currentClientData.id,
-    selectedPhotoIds: Array.from(selectedPhotoIds),
-    extrasCount:     extras,
-    totalValue,
-    paymentStatus:   paymentStatus === 'paid' ? 'paid' : 'pending',
-    confirmedAt:     null,
-    createdAt:       new Date().toISOString()
-  }).catch(() => {});
-}
-
-function updateClientCounter() {
-  const selected = selectedPhotoIds.size;
-  const { extras, totalValue } = calculateExtras();
-
-  document.getElementById('chip-selected').textContent = selected;
-  document.getElementById('chip-included').textContent = currentClientData.includedCount;
-  document.getElementById('chip-extras').textContent   = extras;
-  document.getElementById('chip-total').textContent    = extras > 0 ? formatCurrency(totalValue) : 'R$0';
-  document.getElementById('action-total').textContent  = formatCurrency(totalValue);
-
-  const pct  = Math.min(100, (selected / currentClientData.includedCount) * 100);
-  const fill = document.getElementById('progress-fill');
-  fill.style.width = pct + '%';
-  fill.classList.toggle('over', selected > currentClientData.includedCount);
-  document.getElementById('progress-text').textContent = `${selected} / ${currentClientData.includedCount}`;
-
-  const btnPay     = document.getElementById('btn-pay');
-  const btnConfirm = document.getElementById('btn-confirm');
-
-  if (selected === 0) {
-    btnPay.style.display = 'none';
-    btnConfirm.disabled  = true;
-  } else if (extras > 0 && paymentStatus !== 'paid') {
-    btnPay.style.display = 'flex';
-    btnConfirm.disabled  = true;
-  } else {
-    btnPay.style.display = 'none';
-    btnConfirm.disabled  = false;
-  }
-}
-
-function calculateExtras() {
-  const selected   = selectedPhotoIds.size;
-  const extras     = Math.max(0, selected - currentClientData.includedCount);
-  const totalValue = extras * currentClientData.pricePerExtra;
-  return { extras, totalValue };
-}
-
-function deselectAll() {
-  selectedPhotoIds.clear();
-  document.querySelectorAll('.client-photo-item.selected').forEach(el => el.classList.remove('selected'));
-  updateClientCounter();
-}
-
-function filterGallery(type) {
-  activeFilter = type;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(`filter-${type}`).classList.add('active');
-  renderClientGallery();
-}
-
-// ============================================================
-// PIX PAYMENT
-// ============================================================
-async function openPixModal() {
-  const { extras, totalValue } = calculateExtras();
-  if (extras <= 0) return;
-
-  const pixConfig = await loadPixConfig();
-  if (!pixConfig || !pixConfig.key) {
-    showToast('Chave PIX não configurada. Avise o fotógrafo.', 'error');
-    return;
-  }
-
-  const tiposLabel = { email: 'E-mail', cpf: 'CPF', phone: 'Telefone', random: 'Chave Aleatória' };
-
-  document.getElementById('pix-amount-display').textContent = formatCurrency(totalValue);
-  document.getElementById('pix-amount-inline').textContent  = formatCurrency(totalValue);
-  document.getElementById('pix-extras-detail').textContent  = `${extras} foto(s) extra × ${formatCurrency(currentClientData.pricePerExtra)}`;
-  document.getElementById('pix-key-display').textContent    = pixConfig.key;
-  document.getElementById('pix-type-display').textContent   = tiposLabel[pixConfig.type] || pixConfig.type || '—';
-  document.getElementById('pix-name-display').textContent   = pixConfig.name || '—';
-
-  openModal('modal-pix');
-}
-
-function copyPixKey() {
-  const key = document.getElementById('pix-key-display').textContent;
-  copyText(key);
-  showToast('Chave PIX copiada!', 'success');
-}
-
-function onPaymentConfirmed() {
-  paymentStatus = 'paid';
-  closeModal('modal-pix');
-  updateClientCounter();
-  showToast('Ótimo! Agora clique em "Confirmar Seleção" para enviar suas fotos.', 'success');
-}
-
-// ============================================================
-// CONFIRM SELECTION
-// ============================================================
-async function openConfirmModal() {
-  const selected = selectedPhotoIds.size;
-  if (selected === 0) { showToast('Selecione pelo menos uma foto', 'warning'); return; }
-
-  const { extras, totalValue } = calculateExtras();
-
-  document.getElementById('confirm-selected').textContent = selected;
-  document.getElementById('confirm-included').textContent = currentClientData.includedCount;
-  document.getElementById('confirm-extras').textContent   = extras;
-  document.getElementById('confirm-total').textContent    = formatCurrency(totalValue);
-
-  const thumbs = document.getElementById('confirm-thumbs');
-  thumbs.innerHTML = '';
-  for (const photoId of selectedPhotoIds) {
-    const photo = allClientPhotos.find(p => p.id === photoId);
-    if (photo) {
-      const img = document.createElement('img');
-      img.src = photo.dataUrl; img.className = 'sel-thumb'; img.alt = photo.filename;
-      thumbs.appendChild(img);
-    }
-  }
-
-  openModal('modal-confirm');
-}
-
-async function confirmSelection() {
-  const { extras, totalValue } = calculateExtras();
-  const sel = {
-    clientId:        currentClientData.id,
-    selectedPhotoIds: Array.from(selectedPhotoIds),
-    extrasCount:     extras,
-    totalValue,
-    paymentStatus:   'confirmed',
-    confirmedAt:     new Date().toISOString(),
-    createdAt:       new Date().toISOString()
+  const statusLabel = {
+    pending:              '<span class="badge badge-pending">Pendente</span>',
+    awaiting_confirmation:'<span class="badge badge-awaiting">Aguardando confirm.</span>',
+    paid:                 '<span class="badge badge-paid">Pago ✓</span>',
   };
 
-  await dbSet('selections', sel);
-
-  if (supabaseClient) {
-    try {
-      await supabaseClient.from('fs_selections').upsert({
-        client_id:          sel.clientId,
-        selected_photo_ids: sel.selectedPhotoIds,
-        extras_count:       sel.extrasCount,
-        total_value:        sel.totalValue,
-        payment_status:     sel.paymentStatus,
-        confirmed_at:       sel.confirmedAt
-      });
-    } catch(e) { console.warn('Supabase selection sync failed:', e); }
-  }
-
-  closeModal('modal-confirm');
-
-  document.getElementById('success-summary').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <div><div style="font-size:0.72rem;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">Fotos Escolhidas</div><div style="font-family:var(--font-display);font-size:1.5rem;color:var(--green);">${sel.selectedPhotoIds.length}</div></div>
-      <div><div style="font-size:0.72rem;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">Total Pago</div><div style="font-family:var(--font-display);font-size:1.5rem;color:var(--gold);">${formatCurrency(totalValue)}</div></div>
-    </div>
-    <div style="margin-top:10px;font-size:0.8rem;color:var(--text2);">Confirmado em ${new Date().toLocaleString('pt-BR')}</div>
-  `;
-  openModal('modal-success');
+  container.innerHTML = `
+    <div class="clients-table-wrap">
+      <table class="clients-table">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Evento</th>
+            <th>Data</th>
+            <th>Fotos</th>
+            <th>Seleção</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${clients.map(c => {
+            const sel = selectionMap[c.id];
+            const selStatus = sel
+              ? (statusLabel[sel.payment_status] || `<span class="badge badge-none">${sel.payment_status}</span>`)
+              : '<span class="badge badge-none">Sem seleção</span>';
+            return `
+            <tr>
+              <td><strong>${c.name}</strong></td>
+              <td>${c.event || '—'}</td>
+              <td>${c.event_date ? formatDate(c.event_date) : '—'}</td>
+              <td>${photoCount[c.id] || 0}</td>
+              <td>${selStatus}</td>
+              <td>
+                <div class="actions">
+                  <button class="btn btn-ghost btn-sm" onclick="openLink('${c.id}')">🔗 Link</button>
+                  ${sel ? `<button class="btn btn-ghost btn-sm" onclick="viewSelection('${c.id}')">👁 Seleção</button>` : ''}
+                  ${sel && sel.payment_status === 'awaiting_confirmation'
+                    ? `<button class="btn btn-green btn-sm" onclick="markPaid('${c.id}')">✓ Marcar Pago</button>` : ''}
+                  <button class="btn btn-danger btn-sm" onclick="deleteGallery('${c.id}', '${c.name}')">🗑 Deletar</button>
+                </div>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
 }
 
-function showAlreadyConfirmedState(sel, client, photos) {
-  document.getElementById('loading-screen').classList.add('hidden');
-  document.getElementById('client-panel').classList.remove('hidden');
-  const selPhotos = photos.filter(p => sel.selectedPhotoIds.includes(p.id));
+/* ================================================================
+   ADMIN: CREATE CLIENT
+================================================================ */
+async function createClient() {
+  const name     = document.getElementById('nc-name').value.trim();
+  const event    = document.getElementById('nc-event').value.trim();
+  const email    = document.getElementById('nc-email').value.trim();
+  const date     = document.getElementById('nc-date').value;
+  const included = parseInt(document.getElementById('nc-included').value) || 20;
+  const price    = parseFloat(document.getElementById('nc-price').value) || 25;
 
-  document.getElementById('banner-event-name').textContent   = client.event || client.name;
-  document.getElementById('banner-client-name').textContent  = `Cliente: ${client.name}`;
-  document.getElementById('banner-included').textContent     = client.includedCount;
-  document.getElementById('banner-price').textContent        = formatCurrency(client.pricePerExtra) + '/foto';
-  document.getElementById('banner-total-photos').textContent = photos.length;
+  if (!name) { toast('Informe o nome do cliente', 'error'); return; }
 
-  document.getElementById('chip-selected').textContent = sel.selectedPhotoIds.length;
-  document.getElementById('chip-included').textContent = client.includedCount;
-  document.getElementById('chip-extras').textContent   = sel.extrasCount;
-  document.getElementById('chip-total').textContent    = formatCurrency(sel.totalValue);
+  const btn = document.getElementById('btn-create-client');
+  btn.disabled = true; btn.textContent = 'Criando...';
 
-  document.getElementById('client-gallery-grid').innerHTML = `
-    <div style="grid-column:1/-1;text-align:center;padding:40px 20px;">
-      <div style="font-size:3rem;margin-bottom:16px;">✅</div>
-      <h2 style="font-family:var(--font-display);font-size:1.6rem;font-weight:400;margin-bottom:8px;">Seleção já confirmada!</h2>
-      <p style="color:var(--text2);margin-bottom:24px;">Você confirmou ${sel.selectedPhotoIds.length} fotos em ${new Date(sel.confirmedAt).toLocaleString('pt-BR')}.</p>
-      <button class="btn btn-primary" onclick="redownloadPDF()">📄 Baixar PDF da Seleção</button>
-    </div>
-    <div style="grid-column:1/-1;">
-      <div style="font-size:0.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;">Suas fotos selecionadas:</div>
-      <div class="selected-photos-grid">
-        ${selPhotos.map((p,i)=>`<div class="sel-admin-photo"><img src="${p.dataUrl}" loading="lazy"><div class="sel-num">#${i+1}</div></div>`).join('')}
-      </div>
-    </div>
-  `;
-  document.getElementById('action-bar').style.display       = 'none';
-  document.getElementById('progress-container').style.display = 'none';
+  const { data, error } = await supabase.from('fs_clients').insert({
+    name, event, email,
+    event_date: date || null,
+    included_count: included,
+    price_per_extra: price,
+  }).select().single();
 
-  currentClientData = client;
-  selectedPhotoIds  = new Set(sel.selectedPhotoIds);
-  allClientPhotos   = photos;
+  btn.disabled = false; btn.textContent = 'Criar Cliente';
+
+  if (error) { toast('Erro ao criar cliente: ' + error.message, 'error'); return; }
+
+  toast(`Cliente "${name}" criado!`, 'success');
+
+  // Clear form
+  ['nc-name','nc-event','nc-email','nc-date'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('nc-included').value = '20';
+  document.getElementById('nc-price').value = '25.00';
+
+  // Switch to clients tab
+  document.querySelector('[data-tab="clients"]').click();
+  await loadClientsList();
 }
 
-async function redownloadPDF() {
-  const sel    = await dbGet('selections', currentClientData.id);
-  const photos = allClientPhotos.filter(p => sel.selectedPhotoIds.includes(p.id));
-  await generatePDF(currentClientData, sel, photos, 'client');
-}
+/* ================================================================
+   ADMIN: UPLOAD PHOTOS
+================================================================ */
+function setupUpload() {
+  const drop  = document.getElementById('upload-drop');
+  const input = document.getElementById('upload-input');
 
-// ============================================================
-// PDF GENERATION
-// ============================================================
-async function downloadSelectionPDF() {
-  const sel = {
-    selectedPhotoIds: Array.from(selectedPhotoIds),
-    extrasCount:  calculateExtras().extras,
-    totalValue:   calculateExtras().totalValue,
-    paymentStatus: paymentStatus
-  };
-  const photos = allClientPhotos.filter(p => sel.selectedPhotoIds.includes(p.id));
-  await generatePDF(currentClientData, sel, photos, 'client');
-}
-
-async function generatePDF(client, sel, photos, mode) {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const W = 210, H = 297;
-
-  doc.setFillColor(7, 8, 11);
-  doc.rect(0, 0, W, H, 'F');
-
-  doc.setFillColor(13, 15, 20);
-  doc.rect(0, 0, W, 40, 'F');
-  doc.setTextColor(34, 197, 94);
-  doc.setFontSize(22);
-  doc.setFont('helvetica', 'bold');
-  doc.text('FotoSelect', 20, 18);
-  doc.setTextColor(232, 232, 225);
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Comprovante de Seleção de Fotos', 20, 27);
-
-  doc.setFontSize(9);
-  doc.setTextColor(155, 149, 142);
-  doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, W - 20, 16, { align: 'right' });
-  doc.text(`Cliente: ${client.name}  |  Evento: ${client.event}`, W - 20, 23, { align: 'right' });
-
-  doc.setFillColor(19, 22, 29);
-  doc.roundedRect(15, 48, W - 30, 28, 3, 3, 'F');
-  doc.setDrawColor(34, 197, 94);
-  doc.setLineWidth(0.5);
-  doc.roundedRect(15, 48, W - 30, 28, 3, 3, 'S');
-
-  const statsX = [30, 80, 130, 155];
-  const statsL = ['Fotos Selecionadas', 'Incluídas no Pacote', 'Fotos Extras', 'Total a Pagar'];
-  const statsV = [sel.selectedPhotoIds.length, client.includedCount, sel.extrasCount, formatCurrency(sel.totalValue)];
-  const statsC = ['#22c55e', '#ede8e1', '#f0a94b', '#f0a94b'];
-
-  statsL.forEach((label, i) => {
-    doc.setFontSize(7);
-    doc.setTextColor(155, 149, 142);
-    doc.text(label, statsX[i], 57);
-    doc.setFontSize(14);
-    const c = parseInt(statsC[i].slice(1), 16);
-    doc.setTextColor((c >> 16) & 255, (c >> 8) & 255, c & 255);
-    doc.text(String(statsV[i]), statsX[i], 68);
-  });
-
-  doc.setTextColor(155, 149, 142);
-  doc.setFontSize(8);
-  doc.text(`Fotos Escolhidas (${photos.length})`, 15, 86);
-
-  const cols = 4, thumbW = 40, thumbH = 36, gapX = 4, gapY = 6;
-  const startX = 15, startY = 90;
-  let page = 1;
-
-  for (let i = 0; i < photos.length; i++) {
-    const col = i % cols;
-    const photosPerPage = cols * 5;
-    const pageIdx = Math.floor(i / photosPerPage);
-
-    if (i > 0 && i % photosPerPage === 0) {
-      doc.addPage();
-      doc.setFillColor(7, 8, 11);
-      doc.rect(0, 0, W, H, 'F');
-      page++;
-    }
-
-    const pageRow = Math.floor((i % photosPerPage) / cols);
-    const x = startX + col * (thumbW + gapX);
-    const y = (page === 1 ? startY : 15) + pageRow * (thumbH + gapY);
-
-    doc.setFillColor(19, 22, 29);
-    doc.roundedRect(x, y, thumbW, thumbH, 2, 2, 'F');
-
-    try {
-      doc.addImage(photos[i].dataUrl, 'JPEG', x, y, thumbW, thumbH - 8);
-    } catch(e) {}
-
-    doc.setFillColor(0, 0, 0);
-    doc.rect(x, y + thumbH - 8, thumbW, 8, 'F');
-    doc.setTextColor(240, 240, 240);
-    doc.setFontSize(6);
-    doc.text(`#${allClientPhotos.indexOf(photos[i]) + 1} — ${photos[i].filename.substring(0, 18)}`, x + 2, y + thumbH - 2);
-  }
-
-  const totalPages = doc.internal.getNumberOfPages();
-  for (let p = 1; p <= totalPages; p++) {
-    doc.setPage(p);
-    doc.setFillColor(13, 15, 20);
-    doc.rect(0, H - 12, W, 12, 'F');
-    doc.setFontSize(7);
-    doc.setTextColor(92, 88, 82);
-    doc.text(`FotoSelect — ${client.name} — ${new Date().toLocaleDateString('pt-BR')}`, 15, H - 5);
-    doc.text(`Página ${p} / ${totalPages}`, W - 15, H - 5, { align: 'right' });
-  }
-
-  const fname = `selecao-${client.name.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().slice(0,10)}.pdf`;
-  doc.save(fname);
-  showToast('PDF gerado!', 'success');
-}
-
-// ============================================================
-// LIGHTBOX
-// ============================================================
-function openLightboxClient(index, e) {
-  if (e) e.stopPropagation();
-  lightboxIndex = index;
-  showLightbox();
-}
-
-function openLightboxAdmin(photoId, index, e) {
-  e.stopPropagation();
-  dbGetByIndex('photos', 'clientId', currentGalleryClientId).then(photos => {
-    lightboxPhotos = photos.sort((a,b)=>a.order-b.order);
-    lightboxIndex  = index;
-    showLightbox();
-  });
-}
-
-function showLightbox() {
-  const photo = lightboxPhotos[lightboxIndex];
-  if (!photo) return;
-  document.getElementById('lightbox-img').src     = photo.dataUrl || photo;
-  document.getElementById('lightbox-info').textContent = `${lightboxIndex + 1} / ${lightboxPhotos.length}`;
-  document.getElementById('lightbox').classList.remove('hidden');
-}
-
-function closeLightbox() {
-  document.getElementById('lightbox').classList.add('hidden');
-  document.getElementById('lightbox-img').src = '';
-}
-
-function lightboxNav(dir) {
-  lightboxIndex = (lightboxIndex + dir + lightboxPhotos.length) % lightboxPhotos.length;
-  showLightbox();
-}
-
-document.getElementById('lightbox').addEventListener('click', function(e) {
-  if (e.target === this) closeLightbox();
-});
-
-document.addEventListener('keydown', function(e) {
-  const lb = document.getElementById('lightbox');
-  if (!lb.classList.contains('hidden')) {
-    if (e.key === 'Escape')      closeLightbox();
-    if (e.key === 'ArrowLeft')   lightboxNav(-1);
-    if (e.key === 'ArrowRight')  lightboxNav(1);
-  }
-});
-
-// ============================================================
-// PIX GENERATOR
-// ============================================================
-function generatePIXPayload({ pixKey, amount, merchantName, merchantCity, txid, description }) {
-  const pad = (id, value) => {
-    const s = String(value);
-    return `${id}${String(s.length).padStart(2,'0')}${s}`;
-  };
-  const gui        = pad('00', 'BR.GOV.BCB.PIX');
-  const keyField   = pad('01', pixKey);
-  const descField  = description ? pad('02', description.substring(0, 72)) : '';
-  const merchantAccount = pad('26', gui + keyField + descField);
-  const safeName  = (merchantName  || 'Fotografo').substring(0, 25).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
-  const safeCity  = (merchantCity  || 'SAO PAULO').substring(0, 15).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
-  const safeTxid  = (txid || '***').replace(/[^A-Za-z0-9]/g,'').substring(0, 25) || '***';
-  let payload = '';
-  payload += pad('00', '01');
-  payload += pad('01', '12');
-  payload += merchantAccount;
-  payload += pad('52', '0000');
-  payload += pad('53', '986');
-  payload += pad('54', amount.toFixed(2));
-  payload += pad('58', 'BR');
-  payload += pad('59', safeName);
-  payload += pad('60', safeCity);
-  payload += pad('62', pad('05', safeTxid));
-  payload += '6304';
-  const crc = crc16CCITT(payload);
-  payload += crc.toString(16).toUpperCase().padStart(4,'0');
-  return payload;
-}
-
-function crc16CCITT(str) {
-  let crc = 0xFFFF;
-  for (let i = 0; i < str.length; i++) {
-    crc ^= str.charCodeAt(i) << 8;
-    for (let j = 0; j < 8; j++) {
-      crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
-      crc &= 0xFFFF;
-    }
-  }
-  return crc;
-}
-
-// ============================================================
-// ADMIN — TAB NAVIGATION
-// ============================================================
-function switchTab(tab) {
-  ['dashboard','clientes','galeria','config'].forEach(t => {
-    document.getElementById(`tab-${t}`).classList.add('hidden');
-    const nav = document.getElementById(`nav-${t}`);
-    if (nav) nav.classList.remove('active');
-  });
-  document.getElementById(`tab-${tab}`).classList.remove('hidden');
-  const nav = document.getElementById(`nav-${tab}`);
-  if (nav) nav.classList.add('active');
-
-  document.querySelectorAll('.mobile-tab').forEach(b => {
-    b.classList.toggle('active', b.textContent.toLowerCase().includes(tab));
-  });
-
-  if (tab === 'dashboard') loadDashboard();
-  if (tab === 'clientes')  refreshClientsList();
-}
-
-// ============================================================
-// EXPORT / CLEAR
-// ============================================================
-async function exportData() {
-  const clients    = await dbGetAll('clients');
-  const selections = await dbGetAll('selections');
-  const data = { clients, selections, exportedAt: new Date().toISOString() };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = `fotoselect-export-${new Date().toISOString().slice(0,10)}.json`;
-  a.click(); URL.revokeObjectURL(url);
-  showToast('Dados exportados!', 'success');
-}
-
-function confirmClearAll() { openModal('modal-clear-confirm'); }
-
-async function clearAllData() {
-  await dbClear('clients');
-  await dbClear('photos');
-  await dbClear('selections');
-  closeModal('modal-clear-confirm');
-  await loadDashboard();
-  await refreshClientsList();
-  await refreshGalleryClientList();
-  showToast('Todos os dados apagados', 'info');
-}
-
-// ============================================================
-// MODAL HELPERS
-// ============================================================
-function openModal(id)  { document.getElementById(id).classList.remove('hidden'); }
-function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-document.querySelectorAll('.modal-overlay').forEach(m => {
-  m.addEventListener('click', function(e) {
-    if (e.target === this) closeModal(this.id);
-  });
-});
-
-// ============================================================
-// UTILITIES
-// ============================================================
-function generateId() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = Math.random() * 16 | 0;
-    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-  });
-}
-
-function formatCurrency(val) {
-  if (!val) return 'R$ 0,00';
-  return 'R$ ' + Number(val).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-}
-
-function escHtml(str) {
-  if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function copyText(text) {
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
-  } else { fallbackCopy(text); }
-}
-
-function fallbackCopy(text) {
-  const el = document.createElement('textarea');
-  el.value = text; el.style.position = 'fixed'; el.style.opacity = '0';
-  document.body.appendChild(el); el.select();
-  document.execCommand('copy'); document.body.removeChild(el);
-}
-
-function showToast(msg, type = 'info', duration = 3500) {
-  const container = document.getElementById('toast-container');
-  const icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.innerHTML = `<span style="font-size:1rem;">${icons[type]}</span><span>${escHtml(msg)}</span>`;
-  container.appendChild(toast);
-  setTimeout(() => {
-    toast.classList.add('removing');
-    setTimeout(() => toast.remove(), 300);
-  }, duration);
-}
-
-// ============================================================
-// PREVENT CONTEXT MENU ON IMAGES (client area)
-// ============================================================
-document.addEventListener('contextmenu', function(e) {
-  if (e.target.tagName === 'IMG' && document.getElementById('client-panel') && !document.getElementById('client-panel').classList.contains('hidden')) {
+  drop.addEventListener('dragover',  e => { e.preventDefault(); drop.classList.add('drag-over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('drag-over'));
+  drop.addEventListener('drop', e => {
     e.preventDefault();
+    drop.classList.remove('drag-over');
+    uploadPhotos(e.dataTransfer.files);
+  });
+  input.addEventListener('change', e => uploadPhotos(e.target.files));
+}
+
+async function uploadPhotos(files) {
+  const clientId = document.getElementById('upload-client-select').value;
+  if (!clientId) { toast('Selecione um cliente antes de fazer upload', 'error'); return; }
+  if (!files || files.length === 0) return;
+
+  const progressWrap = document.getElementById('upload-progress-wrap');
+  const bar          = document.getElementById('progress-bar');
+  const pct          = document.getElementById('upload-pct');
+  const statusTxt    = document.getElementById('upload-status-text');
+  const fileName     = document.getElementById('upload-file-name');
+
+  showEl('upload-progress-wrap');
+  const total = files.length;
+  let done = 0;
+
+  // Get current max order
+  const { data: existing } = await supabase
+    .from('fs_photos')
+    .select('photo_order')
+    .eq('client_id', clientId)
+    .order('photo_order', { ascending: false })
+    .limit(1);
+
+  let orderStart = (existing && existing[0]) ? (existing[0].photo_order + 1) : 1;
+
+  for (const file of Array.from(files)) {
+    fileName.textContent = file.name;
+    statusTxt.textContent = `Enviando ${done + 1} de ${total}...`;
+
+    const ext  = file.name.split('.').pop();
+    const safe = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    const path = `${clientId}/${safe}`;
+
+    // Upload to storage
+    const { error: storageErr } = await supabase.storage
+      .from(BUCKET)
+      .upload(path, file, { cacheControl: '3600', upsert: false });
+
+    if (storageErr) {
+      toast(`Erro ao enviar ${file.name}`, 'error');
+      done++;
+      continue;
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path);
+
+    // Insert into fs_photos
+    await supabase.from('fs_photos').insert({
+      client_id:   clientId,
+      filename:    file.name,
+      storage_url: urlData.publicUrl,
+      photo_order: orderStart + done,
+    });
+
+    done++;
+    const p = Math.round((done / total) * 100);
+    bar.style.width = p + '%';
+    pct.textContent = p + '%';
   }
+
+  statusTxt.textContent = `✓ ${done} fotos enviadas!`;
+  bar.style.width = '100%';
+  pct.textContent = '100%';
+  document.getElementById('upload-input').value = '';
+  toast(`${done} fotos enviadas com sucesso!`, 'success');
+
+  setTimeout(() => hideEl('upload-progress-wrap'), 3000);
+  await loadClientsList();
+}
+
+/* ================================================================
+   ADMIN: OPEN LINK MODAL
+================================================================ */
+function openLink(clientId) {
+  const link = `${window.location.origin}${window.location.pathname}?client=${clientId}`;
+  document.getElementById('link-display').textContent = link;
+
+  document.getElementById('btn-copy-link').onclick = () => {
+    copyToClipboard(link);
+    toast('Link copiado!', 'success');
+  };
+
+  showEl('modal-link');
+}
+
+/* ================================================================
+   ADMIN: VIEW SELECTION
+================================================================ */
+async function viewSelection(clientId) {
+  const body = document.getElementById('modal-selection-body');
+  body.innerHTML = '<div class="spinner"></div>';
+  showEl('modal-selection');
+
+  const { data: sel } = await supabase
+    .from('fs_selections')
+    .select('*')
+    .eq('client_id', clientId)
+    .single();
+
+  const { data: client } = await supabase
+    .from('fs_clients')
+    .select('*')
+    .eq('id', clientId)
+    .single();
+
+  if (!sel) { body.innerHTML = '<p style="color:var(--muted)">Sem seleção registrada.</p>'; return; }
+
+  const statusLabel = { pending: 'Pendente', awaiting_confirmation: 'Aguardando confirmação', paid: 'Pago ✓' };
+  const numSelected = (sel.selected_photo_ids || []).length;
+
+  body.innerHTML = `
+    <div>
+      <div class="selection-detail-row"><span class="key">Cliente</span><span class="val">${client?.name || '—'}</span></div>
+      <div class="selection-detail-row"><span class="key">Fotos selecionadas</span><span class="val">${numSelected}</span></div>
+      <div class="selection-detail-row"><span class="key">Fotos inclusas</span><span class="val">${client?.included_count || 0}</span></div>
+      <div class="selection-detail-row"><span class="key">Fotos extras</span><span class="val">${sel.extras_count || 0}</span></div>
+      <div class="selection-detail-row"><span class="key">Valor total</span><span class="val" style="color:var(--accent)">R$ ${fmtMoney(sel.total_value || 0)}</span></div>
+      <div class="selection-detail-row"><span class="key">Status pagamento</span><span class="val">${statusLabel[sel.payment_status] || sel.payment_status}</span></div>
+      <div class="selection-detail-row"><span class="key">Data seleção</span><span class="val">${sel.confirmed_at ? new Date(sel.confirmed_at).toLocaleString('pt-BR') : '—'}</span></div>
+    </div>
+    ${sel.payment_status === 'awaiting_confirmation' ? `
+      <hr class="divider" />
+      <button class="btn btn-green btn-full" onclick="markPaid('${clientId}');closeModal('modal-selection');">✓ Confirmar Pagamento</button>
+    ` : ''}
+  `;
+}
+
+/* ================================================================
+   ADMIN: MARK PAID
+================================================================ */
+async function markPaid(clientId) {
+  const { error } = await supabase
+    .from('fs_selections')
+    .update({ payment_status: 'paid' })
+    .eq('client_id', clientId);
+
+  if (error) { toast('Erro ao atualizar status', 'error'); return; }
+  toast('Pagamento confirmado!', 'success');
+  await loadClientsList();
+}
+
+/* ================================================================
+   ADMIN: DELETE GALLERY
+================================================================ */
+async function deleteGallery(clientId, clientName) {
+  if (!confirm(`Deseja deletar "${clientName}" e todas as fotos? Esta ação é irreversível.`)) return;
+
+  // 1. Buscar fotos
+  const { data: photos } = await supabase
+    .from('fs_photos')
+    .select('storage_url, filename')
+    .eq('client_id', clientId);
+
+  // 2. Deletar do Storage
+  if (photos && photos.length > 0) {
+    const paths = photos.map(p => {
+      // Extract path from full URL
+      const url = new URL(p.storage_url);
+      const parts = url.pathname.split('/object/public/' + BUCKET + '/');
+      return parts[1] || p.storage_url;
+    });
+
+    const chunkSize = 100;
+    for (let i = 0; i < paths.length; i += chunkSize) {
+      await supabase.storage.from(BUCKET).remove(paths.slice(i, i + chunkSize));
+    }
+  }
+
+  // 3. Deletar registros em fs_photos
+  await supabase.from('fs_photos').delete().eq('client_id', clientId);
+
+  // 4. Deletar seleção
+  await supabase.from('fs_selections').delete().eq('client_id', clientId);
+
+  // 5. Deletar cliente
+  await supabase.from('fs_clients').delete().eq('id', clientId);
+
+  toast(`"${clientName}" deletado com sucesso`, 'success');
+  await loadClientsList();
+}
+
+/* ================================================================
+   CLIENT: LOAD
+================================================================ */
+async function loadClient(clientId) {
+  showEl('client-view');
+  hideEl('finalize-bar'); // temporarily hide
+
+  // Check if already has selection
+  const { data: existing } = await supabase
+    .from('fs_selections')
+    .select('*')
+    .eq('client_id', clientId)
+    .single();
+
+  if (existing) {
+    showAlreadySelected(existing);
+    return;
+  }
+
+  // Load client info
+  const { data: client, error: cErr } = await supabase
+    .from('fs_clients')
+    .select('*')
+    .eq('id', clientId)
+    .single();
+
+  if (cErr || !client) {
+    document.body.innerHTML = `<div style="text-align:center;padding:80px 20px;font-family:'DM Sans',sans-serif;color:#f0ede8;"><h2>Galeria não encontrada</h2><p style="color:#7a7672;margin-top:10px;">Verifique o link ou contate o fotógrafo.</p></div>`;
+    return;
+  }
+
+  currentClient = client;
+
+  // Update header
+  document.getElementById('header-right').innerHTML = `
+    <span style="font-size:0.8rem;color:var(--muted);">Galeria do Cliente</span>`;
+
+  // Update hero
+  document.getElementById('client-title').textContent = client.name;
+  const meta = document.getElementById('client-meta');
+  const chips = [
+    client.event && `📅 ${client.event}`,
+    client.event_date && formatDate(client.event_date),
+    `📷 ${client.included_count} fotos inclusas`,
+    `➕ R$ ${fmtMoney(client.price_per_extra)} por foto extra`,
+  ].filter(Boolean);
+  meta.innerHTML = chips.map(c => `<span class="meta-chip">${c}</span>`).join('');
+
+  // Update counter included
+  document.getElementById('cnt-included').textContent = client.included_count;
+
+  // Load photos
+  await loadPhotos(clientId);
+
+  // Show finalize bar
+  showEl('finalize-bar');
+
+  // Prevent right click on page
+  document.addEventListener('contextmenu', e => {
+    if (e.target.tagName === 'IMG') e.preventDefault();
+  });
+
+  // Finalize button
+  document.getElementById('btn-finalize').addEventListener('click', () => handleFinalize(clientId));
+}
+
+/* ================================================================
+   CLIENT: LOAD PHOTOS
+================================================================ */
+async function loadPhotos(clientId) {
+  const grid    = document.getElementById('photo-grid');
+  const loading = document.getElementById('grid-loading');
+
+  showEl('grid-loading');
+  grid.innerHTML = '';
+
+  const { data: photos, error } = await supabase
+    .from('fs_photos')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('photo_order', { ascending: true });
+
+  hideEl('grid-loading');
+
+  if (error || !photos || photos.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1;">
+        <div class="empty-icon">🖼</div>
+        <h3>Nenhuma foto disponível</h3>
+        <p>As fotos ainda não foram enviadas pelo fotógrafo.</p>
+      </div>`;
+    return;
+  }
+
+  allPhotos = photos;
+  updateCounter();
+
+  photos.forEach(photo => {
+    const item = document.createElement('div');
+    item.className = 'photo-item';
+    item.dataset.id = photo.id;
+    item.innerHTML = `
+      <img src="${photo.storage_url}" alt="Foto ${photo.photo_order}"
+           loading="lazy"
+           draggable="false"
+           oncontextmenu="return false;" />
+      <div class="photo-check">✓</div>
+      <span class="photo-num">#${photo.photo_order}</span>
+    `;
+    item.addEventListener('click', () => togglePhoto(photo.id, item));
+    grid.appendChild(item);
+  });
+}
+
+/* ================================================================
+   CLIENT: TOGGLE PHOTO
+================================================================ */
+function togglePhoto(id, el) {
+  if (selectedIds.has(id)) {
+    selectedIds.delete(id);
+    el.classList.remove('selected');
+  } else {
+    selectedIds.add(id);
+    el.classList.add('selected');
+  }
+  updateCounter();
+}
+
+/* ================================================================
+   CLIENT: CALCULATE EXTRAS & UPDATE COUNTER
+================================================================ */
+function calculateExtras() {
+  if (!currentClient) return { extras: 0, value: 0 };
+  const selected = selectedIds.size;
+  const extras   = Math.max(0, selected - currentClient.included_count);
+  const value    = extras * currentClient.price_per_extra;
+  return { extras, value, selected };
+}
+
+function updateCounter() {
+  const { extras, value, selected } = calculateExtras();
+  document.getElementById('cnt-selected').textContent = selected;
+  document.getElementById('cnt-extras').textContent   = extras;
+  document.getElementById('cnt-value').textContent    = 'R$ ' + fmtMoney(value);
+
+  const hint = document.getElementById('finalize-hint');
+  if (selected === 0) {
+    hint.textContent = 'Selecione pelo menos uma foto para finalizar';
+  } else if (extras > 0) {
+    hint.textContent = `${extras} foto(s) extra(s) • pagamento via PIX necessário`;
+  } else {
+    hint.textContent = `${selected} foto(s) selecionada(s) • dentro do pacote incluso`;
+  }
+}
+
+/* ================================================================
+   CLIENT: FINALIZE
+================================================================ */
+function handleFinalize(clientId) {
+  if (selectedIds.size === 0) { toast('Selecione ao menos uma foto', 'error'); return; }
+
+  const { extras, value } = calculateExtras();
+
+  if (extras > 0) {
+    // Show PIX modal
+    document.getElementById('pix-value-display').textContent = 'R$ ' + fmtMoney(value);
+    document.getElementById('pix-key-display').textContent   = PIX_KEY;
+
+    document.getElementById('btn-copy-pix').onclick = () => {
+      copyToClipboard(PIX_KEY);
+      toast('Chave PIX copiada!', 'success');
+    };
+
+    document.getElementById('btn-paid').onclick = () => {
+      closeModal('modal-pix');
+      saveSelection(clientId, 'awaiting_confirmation', extras, value);
+    };
+
+    showEl('modal-pix');
+  } else {
+    saveSelection(clientId, 'pending', 0, 0);
+  }
+}
+
+/* ================================================================
+   CLIENT: SAVE SELECTION
+================================================================ */
+async function saveSelection(clientId, status, extrasCount, totalValue) {
+  const btn = document.getElementById('btn-finalize');
+  btn.disabled = true;
+  btn.textContent = 'Salvando...';
+
+  const { error } = await supabase.from('fs_selections').upsert({
+    client_id:         clientId,
+    selected_photo_ids: Array.from(selectedIds),
+    extras_count:       extrasCount,
+    total_value:        totalValue,
+    payment_status:     status,
+    confirmed_at:       new Date().toISOString(),
+  }, { onConflict: 'client_id' });
+
+  if (error) {
+    toast('Erro ao salvar seleção: ' + error.message, 'error');
+    btn.disabled = false;
+    btn.textContent = '✓ Finalizar Seleção';
+    return;
+  }
+
+  toast('Seleção enviada com sucesso!', 'success');
+
+  // Show confirmation
+  hideEl('client-view');
+  showAlreadySelected({
+    selected_photo_ids: Array.from(selectedIds),
+    extras_count:  extrasCount,
+    total_value:   totalValue,
+    payment_status: status,
+    confirmed_at:  new Date().toISOString(),
+  }, true);
+}
+
+/* ================================================================
+   CLIENT: ALREADY SELECTED VIEW
+================================================================ */
+function showAlreadySelected(sel, justSent = false) {
+  hideEl('finalize-bar');
+  showEl('already-selected-view');
+
+  const statusMsg = {
+    pending:               'Sua seleção foi registrada sem custo extra.',
+    awaiting_confirmation: 'Seleção enviada! Aguardando confirmação do pagamento.',
+    paid:                  'Seleção confirmada e pagamento registrado. Obrigado!',
+  };
+
+  document.getElementById('already-msg').textContent =
+    justSent ? 'Sua seleção foi enviada com sucesso!' : (statusMsg[sel.payment_status] || 'Seleção enviada.');
+
+  const numSelected = (sel.selected_photo_ids || []).length;
+  document.getElementById('already-detail').innerHTML = `
+    <div class="card card-accent" style="max-width:360px;margin:0 auto;text-align:left;">
+      <div class="selection-detail-row"><span class="key">Fotos selecionadas</span><span class="val">${numSelected}</span></div>
+      <div class="selection-detail-row"><span class="key">Fotos extras</span><span class="val">${sel.extras_count || 0}</span></div>
+      ${(sel.total_value || 0) > 0 ? `<div class="selection-detail-row"><span class="key">Valor total</span><span class="val" style="color:var(--accent)">R$ ${fmtMoney(sel.total_value)}</span></div>` : ''}
+      <div class="selection-detail-row"><span class="key">Status</span><span class="val">${statusMsg[sel.payment_status] || sel.payment_status}</span></div>
+    </div>`;
+}
+
+/* ================================================================
+   MODAL HELPERS
+================================================================ */
+function closeModal(id) { hideEl(id); }
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.add('hidden');
+  });
 });
 
-// ============================================================
-// INIT
-// ============================================================
+/* ================================================================
+   TOAST
+================================================================ */
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+/* ================================================================
+   HELPERS
+================================================================ */
+function showEl(id) {
+  const el = typeof id === 'string' ? document.getElementById(id) : id;
+  if (el) el.classList.remove('hidden');
+}
+function hideEl(id) {
+  const el = typeof id === 'string' ? document.getElementById(id) : id;
+  if (el) el.classList.add('hidden');
+}
+
+function formatDate(d) {
+  if (!d) return '—';
+  const [y, m, day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+function fmtMoney(v) {
+  return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function copyToClipboard(text) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text);
+  } else {
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+  }
+}
+
+/* ================================================================
+   BOOT
+================================================================ */
 window.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
