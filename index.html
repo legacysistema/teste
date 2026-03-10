@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lumière Studio — Editor de Álbum</title>
+<title>Legacy Album — Editor de Álbum</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="window._supabaseLoadFailed=true"></script>
 <style>
 /* =============================================
    LUMIÈRE STUDIO — DESIGN SYSTEM
@@ -97,9 +97,9 @@ h1,h2,h3 { font-family: var(--font-display); font-weight: 300; letter-spacing: 0
 #loading-overlay {
   position: fixed; inset: 0; background: var(--obsidian);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  z-index: 9999; transition: opacity 0.6s ease;
+  z-index: 9999;
 }
-#loading-overlay.hidden { opacity: 0; pointer-events: none; }
+#loading-overlay.hidden { display: none; }
 .loading-logo {
   font-family: var(--font-display);
   font-size: 2.4rem; font-weight: 300;
@@ -881,7 +881,7 @@ h1,h2,h3 { font-family: var(--font-display); font-weight: 300; letter-spacing: 0
 
 <!-- LOADING -->
 <div id="loading-overlay">
-  <div class="loading-logo">Lumière</div>
+  <div class="loading-logo">Legacy Album</div>
   <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
 </div>
 
@@ -894,7 +894,7 @@ h1,h2,h3 { font-family: var(--font-display); font-weight: 300; letter-spacing: 0
   <header class="app-header">
     <div class="header-brand">
       <div class="brand-mark">L</div>
-      <div class="brand-name">Lumière <span>Studio</span></div>
+      <div class="brand-name">Legacy <span>Album</span></div>
     </div>
     <div class="header-nav" id="header-nav">
       <div class="header-info" id="header-context">Carregando…</div>
@@ -904,7 +904,7 @@ h1,h2,h3 { font-family: var(--font-display); font-weight: 300; letter-spacing: 0
   <!-- =================== LANDING VIEW =================== -->
   <div id="landing-view" class="view active">
     <div class="landing-card">
-      <div class="landing-logo">Lumière</div>
+      <div class="landing-logo">Legacy Album</div>
       <div class="landing-tagline">Sistema Profissional de Álbum Fotográfico</div>
       <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-bottom:1rem" onclick="enterAdmin()">
         <span>⬡</span> Painel Administrativo
@@ -1145,20 +1145,38 @@ let isFinalized = false;
 // =============================================
 // INIT
 // =============================================
-async function init() {
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  // Check URL for project param
-  const params = new URLSearchParams(window.location.search);
-  const projectId = params.get('projeto');
-
-  if (projectId) {
-    await loadClientView(projectId);
-  } else {
-    showView('landing');
+function hideLoading() {
+  const el = document.getElementById('loading-overlay');
+  if (el) {
+    el.style.transition = 'opacity 0.4s ease';
+    el.style.opacity = '0';
+    el.style.pointerEvents = 'none';
+    setTimeout(() => { el.style.display = 'none'; }, 450);
   }
+}
 
-  document.getElementById('loading-overlay').classList.add('hidden');
+async function init() {
+  // Hard timeout — loading ALWAYS disappears after 3s no matter what
+  const forceHide = setTimeout(hideLoading, 3000);
+
+  try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const params = new URLSearchParams(window.location.search);
+    const projectId = params.get('projeto');
+
+    if (projectId) {
+      await loadClientView(projectId);
+    } else {
+      showView('landing');
+    }
+  } catch(e) {
+    showView('landing');
+    console.error('Init error:', e);
+  } finally {
+    clearTimeout(forceHide);
+    hideLoading();
+  }
 }
 
 // =============================================
@@ -2015,7 +2033,12 @@ function statusLabel(status) {
 // =============================================
 // START
 // =============================================
-init();
+// Safe startup — works even if CDN is slow
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 </script>
 </body>
 </html>
