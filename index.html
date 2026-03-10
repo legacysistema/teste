@@ -6,7 +6,16 @@
 <title>Legacy Album — Editor de Álbum</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="window._supabaseLoadFailed=true"></script>
+<script>
+// Show UI immediately — never block on external scripts
+window.addEventListener('DOMContentLoaded', function() {
+  var ol = document.getElementById('loading-overlay');
+  if (ol) ol.style.display = 'none';
+  var lv = document.getElementById('landing-view');
+  if (lv) { lv.style.display = 'flex'; lv.classList.add('active'); }
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" async onload="onSupabaseReady()" onerror="onSupabaseError()"></script>
 <style>
 /* =============================================
    LUMIÈRE STUDIO — DESIGN SYSTEM
@@ -96,7 +105,7 @@ h1,h2,h3 { font-family: var(--font-display); font-weight: 300; letter-spacing: 0
    ============================================= */
 #loading-overlay {
   position: fixed; inset: 0; background: var(--obsidian);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  display: none;
   z-index: 9999;
 }
 #loading-overlay.hidden { display: none; }
@@ -1143,43 +1152,6 @@ let isSaving = false;
 let isFinalized = false;
 
 // =============================================
-// INIT
-// =============================================
-function hideLoading() {
-  const el = document.getElementById('loading-overlay');
-  if (el) {
-    el.style.transition = 'opacity 0.4s ease';
-    el.style.opacity = '0';
-    el.style.pointerEvents = 'none';
-    setTimeout(() => { el.style.display = 'none'; }, 450);
-  }
-}
-
-async function init() {
-  // Hard timeout — loading ALWAYS disappears after 3s no matter what
-  const forceHide = setTimeout(hideLoading, 3000);
-
-  try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    const params = new URLSearchParams(window.location.search);
-    const projectId = params.get('projeto');
-
-    if (projectId) {
-      await loadClientView(projectId);
-    } else {
-      showView('landing');
-    }
-  } catch(e) {
-    showView('landing');
-    console.error('Init error:', e);
-  } finally {
-    clearTimeout(forceHide);
-    hideLoading();
-  }
-}
-
-// =============================================
 // VIEW MANAGEMENT
 // =============================================
 function showView(name) {
@@ -2031,13 +2003,49 @@ function statusLabel(status) {
 }
 
 // =============================================
-// START
+// START — wait for Supabase CDN, then init
 // =============================================
-// Safe startup — works even if CDN is slow
+let _supabaseReady = false;
+let _domReady = false;
+
+function tryInit() {
+  if (!_supabaseReady || !_domReady) return;
+  initApp();
+}
+
+function onSupabaseReady() {
+  _supabaseReady = true;
+  tryInit();
+}
+
+function onSupabaseError() {
+  console.error('Supabase CDN failed to load');
+  toast('Erro: não foi possível conectar ao servidor. Verifique sua internet.', 'error', 8000);
+}
+
+async function initApp() {
+  try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const params = new URLSearchParams(window.location.search);
+    const projectId = params.get('projeto');
+    if (projectId) {
+      await loadClientView(projectId);
+    }
+    // landing view already shown by DOMContentLoaded handler above
+  } catch(e) {
+    console.error('initApp error:', e);
+    toast('Erro de inicialização: ' + e.message, 'error');
+  }
+}
+
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', function() {
+    _domReady = true;
+    tryInit();
+  });
 } else {
-  init();
+  _domReady = true;
+  tryInit();
 }
 </script>
 </body>
