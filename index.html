@@ -6,16 +6,7 @@
 <title>Legacy Album — Editor de Álbum</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
-<script>
-// Show UI immediately — never block on external scripts
-window.addEventListener('DOMContentLoaded', function() {
-  var ol = document.getElementById('loading-overlay');
-  if (ol) ol.style.display = 'none';
-  var lv = document.getElementById('landing-view');
-  if (lv) { lv.style.display = 'flex'; lv.classList.add('active'); }
-});
-</script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" async onload="onSupabaseReady()" onerror="onSupabaseError()"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" async></script>
 <style>
 /* =============================================
    LUMIÈRE STUDIO — DESIGN SYSTEM
@@ -105,7 +96,7 @@ h1,h2,h3 { font-family: var(--font-display); font-weight: 300; letter-spacing: 0
    ============================================= */
 #loading-overlay {
   position: fixed; inset: 0; background: var(--obsidian);
-  display: none;
+  display: none; flex-direction: column; align-items: center; justify-content: center;
   z-index: 9999;
 }
 #loading-overlay.hidden { display: none; }
@@ -1152,6 +1143,53 @@ let isSaving = false;
 let isFinalized = false;
 
 // =============================================
+// SUPABASE SAFE INIT
+// =============================================
+
+function ensureSupabase() {
+  if (!supabase) {
+    if (window.supabase) {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    } else {
+      throw new Error('Conexão com servidor não disponível. Aguarde e tente novamente.');
+    }
+  }
+  return supabase;
+}
+
+async function init() {
+  // Hide loading immediately
+  const ol = document.getElementById('loading-overlay');
+  if (ol) ol.style.display = 'none';
+
+  // Try to init supabase if already loaded
+  if (window.supabase && !supabase) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const projectId = params.get('projeto');
+
+  if (projectId) {
+    // Wait up to 5s for supabase to load
+    let attempts = 0;
+    while (!window.supabase && attempts < 50) {
+      await new Promise(r => setTimeout(r, 100));
+      attempts++;
+    }
+    if (window.supabase) {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      await loadClientView(projectId);
+    } else {
+      toast('Erro de conexão com servidor', 'error');
+      showView('landing');
+    }
+  } else {
+    showView('landing');
+  }
+}
+
+// =============================================
 // VIEW MANAGEMENT
 // =============================================
 function showView(name) {
@@ -1168,6 +1206,10 @@ function showView(name) {
 }
 
 function enterAdmin() {
+  // Init supabase if not yet done (CDN may have loaded by now)
+  if (!supabase && window.supabase) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
   showView('admin');
   document.getElementById('header-context').textContent = 'Painel Admin';
   loadProjects();
@@ -1200,7 +1242,8 @@ function closeModal(id) { document.getElementById(id).classList.remove('active')
 // =============================================
 async function loadProjects() {
   try {
-    const { data, error } = await supabase
+    const db = ensureSupabase();
+    const { data, error } = await db
       .from('album_projects')
       .select('*')
       .order('created_at', { ascending: false });
@@ -1283,7 +1326,8 @@ async function createProject() {
   if (!name || !clientName) { toast('Preencha nome e cliente', 'error'); return; }
 
   try {
-    const { data, error } = await supabase
+    const db = ensureSupabase();
+    const { data, error } = await db
       .from('album_projects')
       .insert({ name, client_name: clientName, client_email: clientEmail || null, notes: notes || null })
       .select().single();
@@ -2003,49 +2047,12 @@ function statusLabel(status) {
 }
 
 // =============================================
-// START — wait for Supabase CDN, then init
+// START — run after DOM is ready
 // =============================================
-let _supabaseReady = false;
-let _domReady = false;
-
-function tryInit() {
-  if (!_supabaseReady || !_domReady) return;
-  initApp();
-}
-
-function onSupabaseReady() {
-  _supabaseReady = true;
-  tryInit();
-}
-
-function onSupabaseError() {
-  console.error('Supabase CDN failed to load');
-  toast('Erro: não foi possível conectar ao servidor. Verifique sua internet.', 'error', 8000);
-}
-
-async function initApp() {
-  try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const params = new URLSearchParams(window.location.search);
-    const projectId = params.get('projeto');
-    if (projectId) {
-      await loadClientView(projectId);
-    }
-    // landing view already shown by DOMContentLoaded handler above
-  } catch(e) {
-    console.error('initApp error:', e);
-    toast('Erro de inicialização: ' + e.message, 'error');
-  }
-}
-
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function() {
-    _domReady = true;
-    tryInit();
-  });
+  document.addEventListener('DOMContentLoaded', init);
 } else {
-  _domReady = true;
-  tryInit();
+  init();
 }
 </script>
 </body>
