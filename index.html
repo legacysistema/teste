@@ -7,6 +7,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" async></script>
+<script>
+  // Hide loading and show landing the moment the DOM is ready — before any CDN loads
+  document.addEventListener('DOMContentLoaded', function() {
+    var ol = document.getElementById('loading-overlay');
+    if (ol) ol.style.display = 'none';
+    var lv = document.getElementById('landing-view');
+    if (lv) { lv.style.display = 'flex'; lv.classList.add('active'); }
+  });
+</script>
 <style>
 /* =============================================
    LUMIÈRE STUDIO — DESIGN SYSTEM
@@ -96,7 +105,7 @@ h1,h2,h3 { font-family: var(--font-display); font-weight: 300; letter-spacing: 0
    ============================================= */
 #loading-overlay {
   position: fixed; inset: 0; background: var(--obsidian);
-  display: none; flex-direction: column; align-items: center; justify-content: center;
+  display: none;
   z-index: 9999;
 }
 #loading-overlay.hidden { display: none; }
@@ -1129,7 +1138,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const BUCKET = 'album-fotos';
 const TOTAL_PAGES = 24; // 0=cover, 1-23=double pages
 
-let supabase;
+let _db;
 let currentView = 'landing';
 let currentProjectId = null;
 let currentProject = null;
@@ -1143,50 +1152,45 @@ let isSaving = false;
 let isFinalized = false;
 
 // =============================================
-// SUPABASE SAFE INIT
+// INIT
 // =============================================
-
-function ensureSupabase() {
-  if (!supabase) {
-    if (window.supabase) {
-      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    } else {
-      throw new Error('Conexão com servidor não disponível. Aguarde e tente novamente.');
-    }
+function getDB() {
+  if (!_db) {
+    if (!window.supabase) throw new Error('Servidor indisponível. Verifique sua conexão.');
+    _db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   }
-  return supabase;
+  return _db;
+}
+
+async function waitForSupabase(maxMs = 8000) {
+  const step = 100;
+  let elapsed = 0;
+  while (!window.supabase && elapsed < maxMs) {
+    await new Promise(r => setTimeout(r, step));
+    elapsed += step;
+  }
+  if (!window.supabase) throw new Error('Não foi possível conectar ao servidor');
+  if (!_db) _db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 }
 
 async function init() {
-  // Hide loading immediately
+  // Hide loading immediately (DOMContentLoaded handler above may have done it already)
   const ol = document.getElementById('loading-overlay');
   if (ol) ol.style.display = 'none';
-
-  // Try to init supabase if already loaded
-  if (window.supabase && !supabase) {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  }
 
   const params = new URLSearchParams(window.location.search);
   const projectId = params.get('projeto');
 
   if (projectId) {
-    // Wait up to 5s for supabase to load
-    let attempts = 0;
-    while (!window.supabase && attempts < 50) {
-      await new Promise(r => setTimeout(r, 100));
-      attempts++;
-    }
-    if (window.supabase) {
-      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    try {
+      await waitForSupabase();
       await loadClientView(projectId);
-    } else {
-      toast('Erro de conexão com servidor', 'error');
+    } catch(e) {
+      toast('Erro de conexão: ' + e.message, 'error');
       showView('landing');
     }
-  } else {
-    showView('landing');
   }
+  // If no project param, landing view is already shown by DOMContentLoaded handler
 }
 
 // =============================================
@@ -1205,14 +1209,15 @@ function showView(name) {
   }
 }
 
-function enterAdmin() {
-  // Init supabase if not yet done (CDN may have loaded by now)
-  if (!supabase && window.supabase) {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  }
+async function enterAdmin() {
   showView('admin');
   document.getElementById('header-context').textContent = 'Painel Admin';
-  loadProjects();
+  try {
+    await waitForSupabase();
+    loadProjects();
+  } catch(e) {
+    toast('Erro de conexão com servidor', 'error');
+  }
 }
 
 // =============================================
@@ -1242,8 +1247,7 @@ function closeModal(id) { document.getElementById(id).classList.remove('active')
 // =============================================
 async function loadProjects() {
   try {
-    const db = ensureSupabase();
-    const { data, error } = await db
+    const { data, error } = await getDB()
       .from('album_projects')
       .select('*')
       .order('created_at', { ascending: false });
@@ -1326,8 +1330,7 @@ async function createProject() {
   if (!name || !clientName) { toast('Preencha nome e cliente', 'error'); return; }
 
   try {
-    const db = ensureSupabase();
-    const { data, error } = await db
+    const { data, error } = await getDB()
       .from('album_projects')
       .insert({ name, client_name: clientName, client_email: clientEmail || null, notes: notes || null })
       .select().single();
@@ -1351,7 +1354,7 @@ async function openProjectDetail(projectId) {
     el.classList.toggle('selected', el.onclick.toString().includes(projectId));
   });
 
-  const { data: project, error } = await supabase
+  const { data: project, error } = await getDB()
     .from('album_projects')
     .select('*')
     .eq('id', projectId)
@@ -1450,7 +1453,7 @@ function renderThumbnails(photos, projectId) {
 
 async function loadProjectPhotos(projectId) {
   try {
-    const { data, error } = await supabase.storage
+    const { data, error } = await getDB().storage
       .from(BUCKET)
       .list(projectId + '/', { limit: 500 });
 
@@ -1459,7 +1462,7 @@ async function loadProjectPhotos(projectId) {
     return (data || []).filter(f => f.name && !f.name.endsWith('/')).map(f => ({
       path: `${projectId}/${f.name}`,
       name: f.name,
-      url: supabase.storage.from(BUCKET).getPublicUrl(`${projectId}/${f.name}`).data.publicUrl
+      url: _db ? getDB().storage.from : getDB().storage.from(BUCKET).getPublicUrl(`${projectId}/${f.name}`).data.publicUrl
     }));
   } catch (e) {
     return [];
@@ -1517,7 +1520,7 @@ async function uploadFiles(files, projectId) {
       };
       setProgress(10);
 
-      const { error } = await supabase.storage
+      const { error } = await getDB().storage
         .from(BUCKET)
         .upload(filePath, file, { contentType: file.type, upsert: false });
 
@@ -1543,13 +1546,13 @@ async function uploadFiles(files, projectId) {
   if (thumbsEl) thumbsEl.innerHTML = renderThumbnails(photos, projectId);
 
   // Update total_photos
-  await supabase.from('album_projects').update({ total_photos: photos.length }).eq('id', projectId);
+  await getDB().from('album_projects').update({ total_photos: photos.length }).eq('id', projectId);
 
   // Set cover if first photo
   if (photos.length > 0) {
-    const { data: proj } = await supabase.from('album_projects').select('cover_photo').eq('id', projectId).single();
+    const { data: proj } = await getDB().from('album_projects').select('cover_photo').eq('id', projectId).single();
     if (!proj?.cover_photo) {
-      await supabase.from('album_projects').update({ cover_photo: photos[0].url }).eq('id', projectId);
+      await getDB().from('album_projects').update({ cover_photo: photos[0].url }).eq('id', projectId);
     }
   }
 
@@ -1559,13 +1562,13 @@ async function uploadFiles(files, projectId) {
 
 async function deletePhoto(projectId, path, btn) {
   try {
-    const { error } = await supabase.storage.from(BUCKET).remove([path]);
+    const { error } = await getDB().storage.from(BUCKET).remove([path]);
     if (error) throw error;
     btn.closest('.thumb-item').remove();
     toast('Foto removida', 'success');
     // update count
     const photos = await loadProjectPhotos(projectId);
-    await supabase.from('album_projects').update({ total_photos: photos.length }).eq('id', projectId);
+    await getDB().from('album_projects').update({ total_photos: photos.length }).eq('id', projectId);
   } catch (e) {
     toast('Erro ao remover foto', 'error');
   }
@@ -1596,10 +1599,10 @@ async function executeDeleteProject() {
     // Delete storage files
     const photos = await loadProjectPhotos(deleteTargetId);
     if (photos.length) {
-      await supabase.storage.from(BUCKET).remove(photos.map(p => p.path));
+      await getDB().storage.from(BUCKET).remove(photos.map(p => p.path));
     }
     // Delete DB record (cascades to layouts)
-    const { error } = await supabase.from('album_projects').delete().eq('id', deleteTargetId);
+    const { error } = await getDB().from('album_projects').delete().eq('id', deleteTargetId);
     if (error) throw error;
 
     closeModal('modal-delete');
@@ -1613,7 +1616,7 @@ async function executeDeleteProject() {
 
 async function downloadFinalized(projectId) {
   toast('Preparando download das fotos selecionadas…', 'info');
-  const { data: layouts } = await supabase
+  const { data: layouts } = await getDB()
     .from('album_layouts')
     .select('*')
     .eq('project_id', projectId);
@@ -1648,7 +1651,7 @@ async function downloadFinalized(projectId) {
 // =============================================
 async function loadClientView(projectId) {
   // Load project
-  const { data: project, error } = await supabase
+  const { data: project, error } = await getDB()
     .from('album_projects')
     .select('*')
     .eq('id', projectId)
@@ -1671,7 +1674,7 @@ async function loadClientView(projectId) {
   projectPhotos = await loadProjectPhotos(projectId);
 
   // Load existing layout
-  const { data: layouts } = await supabase
+  const { data: layouts } = await getDB()
     .from('album_layouts')
     .select('*')
     .eq('project_id', projectId)
@@ -1702,7 +1705,7 @@ async function loadClientView(projectId) {
 
   // Mark as editing
   if (!isFinalized && project.status === 'pending') {
-    await supabase.from('album_projects').update({ status: 'editing' }).eq('id', projectId);
+    await getDB().from('album_projects').update({ status: 'editing' }).eq('id', projectId);
   }
 }
 
@@ -1975,7 +1978,7 @@ async function saveLayout() {
 
     // Batch upsert
     for (const item of upserts) {
-      await supabase.from('album_layouts').upsert(item, { onConflict: 'project_id,page_index' });
+      await getDB().from('album_layouts').upsert(item, { onConflict: 'project_id,page_index' });
     }
 
     if (statusEl) { statusEl.textContent = 'Salvo ✦'; statusEl.className = 'save-status saved'; }
@@ -1998,7 +2001,7 @@ async function finalizeAlbum() {
   closeModal('modal-finalize');
   await saveLayout();
 
-  const { error } = await supabase.from('album_projects')
+  const { error } = await getDB().from('album_projects')
     .update({ status: 'finalized', finalized_at: new Date().toISOString() })
     .eq('id', currentProjectId);
 
@@ -2047,13 +2050,9 @@ function statusLabel(status) {
 }
 
 // =============================================
-// START — run after DOM is ready
+// START
 // =============================================
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
+init();
 </script>
 </body>
 </html>
