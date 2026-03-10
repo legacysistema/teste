@@ -1,1549 +1,2021 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FotoSelect — Seleção de Fotos</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumière Studio — Editor de Álbum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* =============================================
+   LUMIÈRE STUDIO — DESIGN SYSTEM
+   Enterprise Premium Dark Theme
+   ============================================= */
+:root {
+  --obsidian: #0A0A0C;
+  --void: #111115;
+  --charcoal: #18181E;
+  --graphite: #22222C;
+  --slate: #2E2E3A;
+  --mist: #3D3D4E;
+  --smoke: #5A5A72;
+  --silver: #8C8CA8;
+  --pearl: #B8B8D0;
+  --ivory: #E8E8F0;
+  --white: #F4F4FA;
+  
+  --gold: #C9A84C;
+  --gold-light: #E2C47A;
+  --gold-dim: #8A6E2F;
+  --gold-glow: rgba(201,168,76,0.15);
+  --gold-subtle: rgba(201,168,76,0.06);
+  
+  --accent: #6B7FD7;
+  --accent-light: #8E9FE8;
+  --accent-dim: rgba(107,127,215,0.2);
+  
+  --danger: #C45C5C;
+  --danger-dim: rgba(196,92,92,0.15);
+  --success: #5C9E7A;
+  --success-dim: rgba(92,158,122,0.15);
+  --warning: #C49A5C;
+  
+  --border: rgba(255,255,255,0.06);
+  --border-hover: rgba(255,255,255,0.12);
+  --border-gold: rgba(201,168,76,0.3);
+  
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
+  --shadow-xl: 0 16px 64px rgba(0,0,0,0.7);
+  --shadow-gold: 0 0 24px rgba(201,168,76,0.2);
+  
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  
+  --font-display: 'Cormorant Garamond', serif;
+  --font-ui: 'DM Sans', sans-serif;
+  
+  --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+  --transition-slow: 0.4s cubic-bezier(0.4,0,0.2,1);
+}
 
-  <style>
-    /* ============================================================
-       RESET & VARIABLES
-    ============================================================ */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
-      --bg:        #0d0d0d;
-      --surface:   #161616;
-      --surface2:  #1f1f1f;
-      --border:    #2a2a2a;
-      --accent:    #c9a84c;
-      --accent2:   #e8c97a;
-      --green:     #4caf79;
-      --red:       #e05c5c;
-      --text:      #f0ede8;
-      --muted:     #7a7672;
-      --font-head: 'Playfair Display', serif;
-      --font-body: 'DM Sans', sans-serif;
-      --radius:    10px;
-      --shadow:    0 8px 32px rgba(0,0,0,0.5);
-    }
+html { font-size: 14px; scroll-behavior: smooth; }
 
-    html { scroll-behavior: smooth; }
+body {
+  background: var(--obsidian);
+  color: var(--ivory);
+  font-family: var(--font-ui);
+  font-weight: 300;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
 
-    body {
-      font-family: var(--font-body);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      line-height: 1.6;
-    }
+/* =============================================
+   TYPOGRAPHY
+   ============================================= */
+.font-display { font-family: var(--font-display); }
+h1,h2,h3 { font-family: var(--font-display); font-weight: 300; letter-spacing: 0.02em; }
 
-    /* ============================================================
-       UTILITY
-    ============================================================ */
-    .hidden   { display: none !important; }
-    .flex     { display: flex; }
-    .col      { flex-direction: column; }
-    .gap-1    { gap: 8px; }
-    .gap-2    { gap: 16px; }
-    .gap-3    { gap: 24px; }
-    .center   { align-items: center; justify-content: center; }
-    .between  { justify-content: space-between; align-items: center; }
-    .wrap     { flex-wrap: wrap; }
+/* =============================================
+   SCROLLBAR
+   ============================================= */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--void); }
+::-webkit-scrollbar-thumb { background: var(--slate); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--mist); }
 
-    /* ============================================================
-       TYPOGRAPHY
-    ============================================================ */
-    h1, h2, h3 { font-family: var(--font-head); font-weight: 700; }
-    h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); letter-spacing: -0.02em; }
-    h2 { font-size: clamp(1.3rem, 3vw, 1.8rem); letter-spacing: -0.01em; }
-    h3 { font-size: 1.1rem; }
+/* =============================================
+   LOADING OVERLAY
+   ============================================= */
+#loading-overlay {
+  position: fixed; inset: 0; background: var(--obsidian);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 9999; transition: opacity 0.6s ease;
+}
+#loading-overlay.hidden { opacity: 0; pointer-events: none; }
+.loading-logo {
+  font-family: var(--font-display);
+  font-size: 2.4rem; font-weight: 300;
+  color: var(--gold); letter-spacing: 0.15em;
+  margin-bottom: 2rem;
+  animation: pulse 2s ease-in-out infinite;
+}
+.loading-bar-wrap {
+  width: 200px; height: 1px;
+  background: var(--slate); overflow: hidden;
+}
+.loading-bar {
+  height: 100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold), var(--gold-dim));
+  animation: loadbar 1.5s ease-in-out infinite;
+}
+@keyframes loadbar {
+  0% { width: 0; margin-left: 0; }
+  50% { width: 60%; margin-left: 20%; }
+  100% { width: 0; margin-left: 100%; }
+}
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
 
-    /* ============================================================
-       SCROLLBAR
-    ============================================================ */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+/* =============================================
+   APP STRUCTURE
+   ============================================= */
+#app { min-height: 100vh; display: flex; flex-direction: column; }
 
-    /* ============================================================
-       BUTTONS
-    ============================================================ */
-    .btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 10px 20px;
-      border: none; border-radius: var(--radius);
-      font-family: var(--font-body); font-size: 0.875rem; font-weight: 500;
-      cursor: pointer; transition: all 0.2s;
-      white-space: nowrap;
-    }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+/* HEADER */
+.app-header {
+  background: var(--void);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+  backdrop-filter: blur(8px);
+}
+.header-brand {
+  display: flex; align-items: center; gap: 0.75rem;
+}
+.brand-mark {
+  width: 28px; height: 28px;
+  border: 1px solid var(--gold-dim);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: 0.9rem; color: var(--gold);
+}
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 1.2rem; font-weight: 300;
+  letter-spacing: 0.12em; color: var(--ivory);
+}
+.brand-name span { color: var(--gold); }
+.header-nav { display: flex; align-items: center; gap: 0.5rem; }
+.header-info {
+  font-size: 0.75rem; color: var(--smoke);
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
 
-    .btn-primary {
-      background: var(--accent);
-      color: #0d0d0d;
-    }
-    .btn-primary:hover:not(:disabled) {
-      background: var(--accent2);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 16px rgba(201,168,76,0.3);
-    }
+/* =============================================
+   TABS / VIEWS
+   ============================================= */
+.view { display: none; }
+.view.active { display: flex; flex-direction: column; flex: 1; }
 
-    .btn-ghost {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .btn-ghost:hover:not(:disabled) {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
+/* =============================================
+   BUTTONS
+   ============================================= */
+.btn {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none; border-radius: var(--radius-md);
+  font-family: var(--font-ui); font-size: 0.8rem; font-weight: 400;
+  cursor: pointer; transition: var(--transition);
+  letter-spacing: 0.04em; white-space: nowrap;
+  text-decoration: none;
+}
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-primary {
+  background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+  color: var(--obsidian); font-weight: 500;
+}
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  box-shadow: var(--shadow-gold);
+  transform: translateY(-1px);
+}
+.btn-secondary {
+  background: var(--graphite);
+  color: var(--pearl);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: var(--slate); border-color: var(--border-hover);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--silver);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover:not(:disabled) { background: var(--graphite); color: var(--ivory); }
+.btn-danger {
+  background: var(--danger-dim);
+  color: var(--danger);
+  border: 1px solid rgba(196,92,92,0.2);
+}
+.btn-danger:hover:not(:disabled) { background: rgba(196,92,92,0.25); }
+.btn-success {
+  background: var(--success-dim);
+  color: var(--success);
+  border: 1px solid rgba(92,158,122,0.2);
+}
+.btn-success:hover:not(:disabled) { background: rgba(92,158,122,0.25); }
+.btn-sm { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
+.btn-lg { padding: 0.75rem 1.5rem; font-size: 0.9rem; }
+.btn-icon { padding: 0.5rem; }
 
-    .btn-danger {
-      background: transparent;
-      color: var(--red);
-      border: 1px solid rgba(224,92,92,0.3);
-    }
-    .btn-danger:hover:not(:disabled) {
-      background: rgba(224,92,92,0.1);
-      border-color: var(--red);
-    }
+/* =============================================
+   FORMS
+   ============================================= */
+.form-group { margin-bottom: 1rem; }
+.form-label {
+  display: block; font-size: 0.75rem; color: var(--silver);
+  margin-bottom: 0.4rem; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.form-control {
+  width: 100%; padding: 0.6rem 0.85rem;
+  background: var(--graphite); border: 1px solid var(--border);
+  border-radius: var(--radius-md); color: var(--ivory);
+  font-family: var(--font-ui); font-size: 0.85rem;
+  transition: var(--transition); outline: none;
+}
+.form-control:focus { border-color: var(--gold-dim); box-shadow: 0 0 0 2px var(--gold-subtle); }
+.form-control::placeholder { color: var(--smoke); }
 
-    .btn-green {
-      background: var(--green);
-      color: #fff;
-    }
-    .btn-green:hover:not(:disabled) {
-      background: #5ec88a;
-      transform: translateY(-1px);
-    }
+/* =============================================
+   CARDS
+   ============================================= */
+.card {
+  background: var(--charcoal);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: var(--transition);
+}
+.card:hover { border-color: var(--border-hover); }
+.card-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-body { padding: 1.5rem; }
+.card-title {
+  font-family: var(--font-display); font-size: 1.1rem;
+  color: var(--ivory); font-weight: 300;
+}
 
-    .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
-    .btn-lg { padding: 14px 28px; font-size: 1rem; }
-    .btn-full { width: 100%; justify-content: center; }
+/* =============================================
+   BADGES
+   ============================================= */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 0.2rem 0.6rem; border-radius: 20px;
+  font-size: 0.7rem; font-weight: 500; letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.badge-pending { background: rgba(180,120,50,0.15); color: var(--warning); border: 1px solid rgba(196,154,92,0.2); }
+.badge-editing { background: var(--accent-dim); color: var(--accent-light); border: 1px solid rgba(107,127,215,0.2); }
+.badge-finalized { background: var(--success-dim); color: var(--success); border: 1px solid rgba(92,158,122,0.2); }
 
-    /* ============================================================
-       INPUTS & FORMS
-    ============================================================ */
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-group label { font-size: 0.8rem; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+/* =============================================
+   TOAST NOTIFICATIONS
+   ============================================= */
+#toast-container {
+  position: fixed; top: 70px; right: 1.5rem;
+  z-index: 9998; display: flex; flex-direction: column; gap: 0.5rem;
+  pointer-events: none;
+}
+.toast {
+  background: var(--graphite); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 0.75rem 1rem;
+  display: flex; align-items: center; gap: 0.75rem;
+  min-width: 280px; max-width: 380px;
+  box-shadow: var(--shadow-lg);
+  animation: toastIn 0.3s ease; pointer-events: auto;
+  font-size: 0.82rem;
+}
+.toast.hiding { animation: toastOut 0.3s ease forwards; }
+.toast-success { border-left: 3px solid var(--success); }
+.toast-error { border-left: 3px solid var(--danger); }
+.toast-info { border-left: 3px solid var(--accent); }
+.toast-icon { font-size: 1rem; flex-shrink: 0; }
+@keyframes toastIn { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform: translateX(0); } }
+@keyframes toastOut { to { opacity:0; transform: translateX(20px); } }
 
-    input, select, textarea {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      color: var(--text);
-      font-family: var(--font-body);
-      font-size: 0.9rem;
-      padding: 10px 14px;
-      transition: border-color 0.2s;
-      width: 100%;
-    }
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-    input::placeholder { color: var(--muted); }
+/* =============================================
+   MODAL
+   ============================================= */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+  z-index: 500; display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+  opacity: 0; visibility: hidden; transition: var(--transition);
+}
+.modal-overlay.active { opacity: 1; visibility: visible; }
+.modal {
+  background: var(--charcoal); border: 1px solid var(--border);
+  border-radius: var(--radius-xl); width: 100%; max-width: 520px;
+  box-shadow: var(--shadow-xl);
+  transform: scale(0.95); transition: var(--transition);
+}
+.modal-overlay.active .modal { transform: scale(1); }
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-title { font-family: var(--font-display); font-size: 1.3rem; font-weight: 300; }
+.modal-close {
+  background: none; border: none; color: var(--smoke);
+  font-size: 1.2rem; cursor: pointer; padding: 0.25rem;
+  transition: var(--transition); line-height: 1;
+}
+.modal-close:hover { color: var(--ivory); }
+.modal-body { padding: 1.5rem; }
+.modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; gap: 0.75rem; justify-content: flex-end; }
 
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 16px;
-    }
+/* =============================================
+   ADMIN VIEW
+   ============================================= */
+#admin-view {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  grid-template-rows: auto 1fr;
+  min-height: calc(100vh - 56px);
+}
+.admin-sidebar {
+  background: var(--void);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  grid-row: 1 / 3;
+  overflow: hidden;
+}
+.admin-sidebar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.admin-sidebar-title {
+  font-family: var(--font-display);
+  font-size: 0.8rem; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--smoke);
+  margin-bottom: 1rem;
+}
+.projects-list {
+  flex: 1; overflow-y: auto;
+  padding: 0.75rem;
+}
+.project-item {
+  padding: 0.85rem 1rem; border-radius: var(--radius-md);
+  cursor: pointer; transition: var(--transition);
+  border: 1px solid transparent; margin-bottom: 0.25rem;
+  display: flex; flex-direction: column; gap: 0.3rem;
+}
+.project-item:hover { background: var(--graphite); border-color: var(--border); }
+.project-item.selected { background: var(--graphite); border-color: var(--gold-dim); }
+.project-item-name { font-size: 0.85rem; color: var(--ivory); font-weight: 400; }
+.project-item-meta { font-size: 0.72rem; color: var(--smoke); display: flex; align-items: center; gap: 0.5rem; }
+.project-item-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+}
+.dot-pending { background: var(--warning); }
+.dot-editing { background: var(--accent); }
+.dot-finalized { background: var(--success); }
 
-    /* ============================================================
-       CARDS & SURFACES
-    ============================================================ */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 24px;
-    }
+.admin-main {
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.admin-toolbar {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 1rem;
+  background: var(--void);
+  flex-wrap: wrap;
+}
+.toolbar-title {
+  font-family: var(--font-display); font-size: 1.4rem;
+  font-weight: 300; flex: 1;
+}
+.admin-content { flex: 1; overflow-y: auto; padding: 1.5rem; }
 
-    .card-accent {
-      border-color: rgba(201,168,76,0.3);
-    }
+/* Project cards grid */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+.project-card {
+  background: var(--charcoal);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: var(--transition);
+  cursor: pointer;
+}
+.project-card:hover { border-color: var(--border-hover); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.project-card-cover {
+  height: 140px;
+  background: var(--graphite);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; position: relative;
+}
+.project-card-cover img { width: 100%; height: 100%; object-fit: cover; }
+.project-card-cover-placeholder {
+  font-family: var(--font-display); font-size: 2rem;
+  color: var(--mist); letter-spacing: 0.08em;
+}
+.project-card-info { padding: 1rem; }
+.project-card-name {
+  font-size: 0.9rem; color: var(--ivory); font-weight: 400;
+  margin-bottom: 0.25rem;
+}
+.project-card-client { font-size: 0.78rem; color: var(--smoke); margin-bottom: 0.75rem; }
+.project-card-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 0.75rem; border-top: 1px solid var(--border);
+  margin-top: 0.75rem;
+}
+.project-card-actions { display: flex; gap: 0.5rem; }
 
-    /* ============================================================
-       TOAST
-    ============================================================ */
-    #toast-container {
-      position: fixed; bottom: 24px; right: 24px;
-      display: flex; flex-direction: column; gap: 10px;
-      z-index: 9999;
-    }
-    .toast {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 12px 18px;
-      font-size: 0.875rem;
-      max-width: 320px;
-      box-shadow: var(--shadow);
-      animation: slideIn 0.3s ease;
-    }
-    .toast.success { border-color: var(--green); }
-    .toast.error   { border-color: var(--red); }
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to   { transform: translateX(0);   opacity: 1; }
-    }
+/* Upload zone */
+.upload-zone {
+  border: 2px dashed var(--mist); border-radius: var(--radius-lg);
+  padding: 2.5rem; text-align: center;
+  transition: var(--transition); cursor: pointer;
+  background: var(--graphite);
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--gold); background: var(--gold-subtle);
+}
+.upload-zone-icon { font-size: 2rem; color: var(--smoke); margin-bottom: 0.75rem; }
+.upload-zone-text { font-size: 0.9rem; color: var(--pearl); margin-bottom: 0.35rem; }
+.upload-zone-subtext { font-size: 0.78rem; color: var(--smoke); }
+#file-input { display: none; }
 
-    /* ============================================================
-       MODAL
-    ============================================================ */
-    .modal-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.85);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 1000;
-      padding: 20px;
-      backdrop-filter: blur(4px);
-    }
-    .modal {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 32px;
-      width: 100%;
-      max-width: 560px;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: var(--shadow);
-    }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .modal-close {
-      background: none; border: none; color: var(--muted);
-      font-size: 1.4rem; cursor: pointer; line-height: 1;
-      transition: color 0.2s;
-    }
-    .modal-close:hover { color: var(--text); }
+/* Photo thumbnails grid */
+.thumbnails-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.5rem; margin-top: 1rem;
+}
+.thumb-item {
+  aspect-ratio: 1; border-radius: var(--radius-sm);
+  overflow: hidden; position: relative;
+  background: var(--graphite);
+  cursor: pointer;
+}
+.thumb-item img { width: 100%; height: 100%; object-fit: cover; transition: var(--transition); }
+.thumb-item:hover img { transform: scale(1.05); }
+.thumb-delete {
+  position: absolute; top: 4px; right: 4px;
+  background: rgba(0,0,0,0.7); border: none; border-radius: 50%;
+  width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 0.65rem; cursor: pointer;
+  opacity: 0; transition: var(--transition);
+}
+.thumb-item:hover .thumb-delete { opacity: 1; }
 
-    /* ============================================================
-       LOADING SPINNER
-    ============================================================ */
-    .spinner {
-      width: 40px; height: 40px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+/* Project detail panel */
+.project-detail {
+  background: var(--void); height: 100%;
+  display: flex; flex-direction: column;
+}
+.project-detail-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+}
+.project-detail-title { font-family: var(--font-display); font-size: 1.6rem; font-weight: 300; }
+.project-detail-client { font-size: 0.82rem; color: var(--smoke); margin-top: 0.2rem; }
+.project-detail-body { flex: 1; overflow-y: auto; padding: 1.5rem; }
 
-    .loading-screen {
-      position: fixed; inset: 0;
-      background: var(--bg);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 16px; z-index: 500;
-    }
+.link-box {
+  background: var(--graphite); border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md); padding: 0.75rem 1rem;
+  display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;
+}
+.link-box-url { flex: 1; font-size: 0.78rem; color: var(--pearl); font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.link-box-label { font-size: 0.7rem; color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 0.2rem; }
 
-    /* ============================================================
-       BADGE / PILL
-    ============================================================ */
-    .badge {
-      display: inline-flex; align-items: center;
-      padding: 3px 10px;
-      border-radius: 99px;
-      font-size: 0.72rem; font-weight: 500;
-      text-transform: uppercase; letter-spacing: 0.04em;
-    }
-    .badge-pending  { background: rgba(201,168,76,0.15); color: var(--accent); border: 1px solid rgba(201,168,76,0.3); }
-    .badge-awaiting { background: rgba(100,149,237,0.15); color: #6495ed;      border: 1px solid rgba(100,149,237,0.3); }
-    .badge-paid     { background: rgba(76,175,121,0.15);  color: var(--green);  border: 1px solid rgba(76,175,121,0.3); }
-    .badge-none     { background: rgba(255,255,255,0.05); color: var(--muted);  border: 1px solid var(--border); }
+/* Upload progress */
+.upload-progress-list { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 1rem; }
+.upload-progress-item {
+  background: var(--graphite); border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  display: flex; flex-direction: column; gap: 0.3rem;
+}
+.upload-progress-name { font-size: 0.78rem; color: var(--pearl); display: flex; justify-content: space-between; }
+.upload-progress-bar-wrap { height: 3px; background: var(--slate); border-radius: 2px; overflow: hidden; }
+.upload-progress-bar { height: 100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); transition: width 0.3s; }
 
-    /* ============================================================
-       LOGO / HEADER
-    ============================================================ */
-    #app-header {
-      padding: 18px 32px;
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(13,13,13,0.9);
-      backdrop-filter: blur(12px);
-    }
-    .logo {
-      font-family: var(--font-head);
-      font-size: 1.35rem;
-      color: var(--accent);
-      letter-spacing: -0.01em;
-    }
-    .logo span { color: var(--text); }
+/* Stats row */
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.stat-box {
+  background: var(--graphite); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 1rem; text-align: center;
+}
+.stat-value { font-family: var(--font-display); font-size: 1.8rem; font-weight: 300; color: var(--gold); }
+.stat-label { font-size: 0.72rem; color: var(--smoke); text-transform: uppercase; letter-spacing: 0.06em; }
 
-    /* ============================================================
-       ADMIN LAYOUT
-    ============================================================ */
-    #admin-view {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 32px 24px 80px;
-    }
+/* Empty state */
+.empty-state {
+  text-align: center; padding: 4rem 2rem;
+  color: var(--smoke);
+}
+.empty-state-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
+.empty-state-text { font-family: var(--font-display); font-size: 1.2rem; color: var(--silver); margin-bottom: 0.5rem; }
+.empty-state-sub { font-size: 0.82rem; }
 
-    .admin-tabs {
-      display: flex; gap: 4px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 4px;
-      margin-bottom: 32px;
-    }
-    .tab-btn {
-      padding: 9px 20px;
-      border: none; border-radius: 9px;
-      background: transparent;
-      color: var(--muted);
-      font-family: var(--font-body); font-size: 0.875rem; font-weight: 500;
-      cursor: pointer; transition: all 0.2s;
-      flex: 1; text-align: center;
-    }
-    .tab-btn.active {
-      background: var(--accent);
-      color: #0d0d0d;
-    }
-    .tab-btn:hover:not(.active) { color: var(--text); }
+/* =============================================
+   CLIENT VIEW — ALBUM EDITOR
+   ============================================= */
+#client-view {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 220px 1fr 260px;
+  min-height: calc(100vh - 56px);
+  overflow: hidden;
+}
 
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
+/* Left panel - photo gallery */
+.gallery-panel {
+  background: var(--void);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.panel-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.panel-title {
+  font-size: 0.72rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--smoke);
+  flex: 1;
+}
+.gallery-grid {
+  flex: 1; overflow-y: auto;
+  padding: 0.75rem;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0.5rem; align-content: start;
+}
+.gallery-photo {
+  aspect-ratio: 1; border-radius: var(--radius-sm);
+  overflow: hidden; cursor: grab; position: relative;
+  background: var(--graphite);
+  border: 1px solid transparent; transition: var(--transition);
+}
+.gallery-photo:hover { border-color: var(--gold-dim); }
+.gallery-photo.used::after {
+  content: '✓';
+  position: absolute; inset: 0;
+  background: rgba(92,158,122,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; color: var(--success);
+}
+.gallery-photo img {
+  width: 100%; height: 100%; object-fit: cover;
+  pointer-events: none; transition: var(--transition);
+}
+.gallery-photo:hover img { transform: scale(1.04); }
+.gallery-photo:active { cursor: grabbing; }
 
-    /* ============================================================
-       CLIENTS TABLE
-    ============================================================ */
-    .clients-table-wrap { overflow-x: auto; }
-    .clients-table {
-      width: 100%; border-collapse: collapse;
-      font-size: 0.875rem;
-    }
-    .clients-table th {
-      text-align: left; padding: 10px 14px;
-      color: var(--muted); font-weight: 500;
-      text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em;
-      border-bottom: 1px solid var(--border);
-    }
-    .clients-table td {
-      padding: 14px;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-      vertical-align: middle;
-    }
-    .clients-table tr:hover td { background: rgba(255,255,255,0.02); }
-    .clients-table .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+/* Center — album canvas */
+.album-canvas {
+  background: #0D0D10;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.canvas-toolbar {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 0.75rem;
+  background: var(--void); flex-wrap: wrap;
+}
+.page-nav {
+  display: flex; align-items: center; gap: 0.5rem;
+  flex: 1;
+}
+.page-nav-btn {
+  background: var(--graphite); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 0.3rem 0.6rem;
+  color: var(--silver); cursor: pointer; transition: var(--transition);
+  font-size: 0.8rem;
+}
+.page-nav-btn:hover { background: var(--slate); color: var(--ivory); }
+.page-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.page-indicator {
+  font-family: var(--font-display); font-size: 0.9rem;
+  color: var(--silver); min-width: 100px; text-align: center;
+}
 
-    /* ============================================================
-       UPLOAD AREA
-    ============================================================ */
-    .upload-drop {
-      border: 2px dashed var(--border);
-      border-radius: 14px;
-      padding: 48px 24px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
-      position: relative;
-    }
-    .upload-drop:hover, .upload-drop.drag-over {
-      border-color: var(--accent);
-      background: rgba(201,168,76,0.05);
-    }
-    .upload-drop input[type="file"] {
-      position: absolute; inset: 0; opacity: 0; cursor: pointer;
-      width: 100%; height: 100%;
-    }
-    .upload-icon { font-size: 2.5rem; margin-bottom: 12px; }
-    .upload-progress { margin-top: 20px; }
-    .progress-bar-wrap {
-      background: var(--surface2);
-      border-radius: 99px; height: 6px;
-      overflow: hidden; margin-top: 8px;
-    }
-    .progress-bar {
-      height: 100%; background: var(--accent);
-      border-radius: 99px;
-      transition: width 0.3s;
-    }
+.album-frame {
+  flex: 1; overflow: auto;
+  display: flex; align-items: center; justify-content: center;
+  padding: 2rem;
+}
 
-    /* ============================================================
-       CLIENT VIEW
-    ============================================================ */
-    #client-view {
-      min-height: 100vh;
-    }
+/* Album page */
+.album-page {
+  background: #FDFCF8;
+  border-radius: 2px;
+  box-shadow: 0 4px 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05);
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition-slow);
+}
+.album-page.cover-page {
+  width: 400px; height: 540px;
+}
+.album-page.double-page {
+  width: 720px; height: 480px;
+}
 
-    /* Sticky counter bar */
-    #counter-bar {
-      position: sticky; top: 65px; z-index: 90;
-      background: rgba(13,13,13,0.95);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      padding: 12px 24px;
-    }
-    .counter-inner {
-      max-width: 1400px;
-      margin: 0 auto;
-      display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 12px;
-    }
-    .counter-stats {
-      display: flex; gap: 24px; flex-wrap: wrap;
-    }
-    .counter-stat { display: flex; flex-direction: column; }
-    .counter-stat .val {
-      font-family: var(--font-head);
-      font-size: 1.4rem; font-weight: 700;
-      line-height: 1;
-    }
-    .counter-stat .lbl {
-      font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;
-    }
-    .counter-stat.extras .val { color: var(--accent); }
-    .counter-stat.valor .val  { color: var(--green); }
+/* Layout grids inside album page */
+.page-layout {
+  display: grid; width: 100%; height: 100%;
+  gap: 6px; padding: 12px;
+}
+.layout-1 { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+.layout-2 { grid-template-columns: 1fr 1fr; }
+.layout-3 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.layout-3 .photo-slot:first-child { grid-column: span 2; }
+.layout-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.layout-6 { grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; }
 
-    /* Client hero */
-    #client-hero {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 32px 24px 16px;
-    }
-    .client-meta {
-      display: flex; flex-wrap: wrap; gap: 8px;
-      margin-top: 8px;
-    }
-    .meta-chip {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 99px;
-      padding: 4px 14px;
-      font-size: 0.8rem; color: var(--muted);
-    }
+.photo-slot {
+  background: #EEE;
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: var(--transition);
+  border: 2px dashed transparent;
+}
+.photo-slot.drag-over {
+  border-color: var(--gold);
+  background: rgba(201,168,76,0.1);
+}
+.photo-slot.empty {
+  display: flex; align-items: center; justify-content: center;
+  color: #AAA;
+  border: 2px dashed #CCC;
+}
+.photo-slot.empty:hover { border-color: var(--gold); }
+.slot-placeholder {
+  text-align: center;
+  pointer-events: none;
+}
+.slot-placeholder-icon { font-size: 1.5rem; color: #BBB; margin-bottom: 0.25rem; }
+.slot-placeholder-text { font-size: 0.65rem; color: #BBB; }
+.photo-slot img {
+  width: 100%; height: 100%; object-fit: cover;
+  pointer-events: none;
+}
+.slot-remove {
+  position: absolute; top: 4px; right: 4px;
+  background: rgba(0,0,0,0.6); border: none; border-radius: 50%;
+  width: 20px; height: 20px;
+  color: #fff; font-size: 0.6rem;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: var(--transition);
+}
+.photo-slot:hover .slot-remove { opacity: 1; }
 
-    /* Photo grid */
-    #photo-grid-wrap {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 8px 24px 120px;
-    }
-    #photo-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 8px;
-    }
-    .photo-item {
-      position: relative;
-      aspect-ratio: 1;
-      overflow: hidden;
-      border-radius: 10px;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: border-color 0.2s, transform 0.15s;
-      user-select: none;
-    }
-    .photo-item:hover { transform: scale(1.02); }
-    .photo-item img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      display: block;
-      pointer-events: none;
-      -webkit-user-drag: none;
-      draggable: false;
-    }
-    .photo-item.selected {
-      border-color: var(--green);
-    }
-    .photo-check {
-      position: absolute; top: 8px; right: 8px;
-      width: 26px; height: 26px;
-      background: var(--green);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; transform: scale(0.6);
-      transition: all 0.2s;
-      font-size: 0.8rem;
-    }
-    .photo-item.selected .photo-check {
-      opacity: 1; transform: scale(1);
-    }
-    .photo-num {
-      position: absolute; bottom: 6px; left: 8px;
-      font-size: 0.7rem; color: rgba(255,255,255,0.5);
-    }
+/* Page spine */
+.page-spine {
+  width: 1px; background: rgba(0,0,0,0.1);
+  position: absolute; top: 0; bottom: 0; left: 50%;
+  transform: translateX(-50%); pointer-events: none;
+}
 
-    /* Bottom finalize bar */
-    #finalize-bar {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      background: rgba(13,13,13,0.97);
-      border-top: 1px solid var(--border);
-      padding: 14px 24px;
-      z-index: 90;
-      backdrop-filter: blur(12px);
-    }
-    .finalize-inner {
-      max-width: 1400px;
-      margin: 0 auto;
-      display: flex; align-items: center; justify-content: flex-end;
-      gap: 16px;
-    }
+/* Right panel - pages overview */
+.pages-panel {
+  background: var(--void);
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.layout-selector {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.layout-selector-title { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--smoke); margin-bottom: 0.75rem; }
+.layout-options {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.4rem;
+}
+.layout-option {
+  aspect-ratio: 1.2; background: var(--graphite);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm); cursor: pointer;
+  transition: var(--transition); overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  padding: 4px;
+}
+.layout-option:hover { border-color: var(--border-hover); }
+.layout-option.active { border-color: var(--gold); background: var(--gold-subtle); }
+.layout-preview {
+  width: 100%; height: 100%;
+  display: grid; gap: 2px;
+}
+.layout-preview.lp-1 { grid-template-columns: 1fr; }
+.layout-preview.lp-2 { grid-template-columns: 1fr 1fr; }
+.layout-preview.lp-3 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.layout-preview.lp-3 div:first-child { grid-column: span 2; }
+.layout-preview.lp-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.layout-preview.lp-6 { grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.layout-preview div { background: var(--slate); border-radius: 1px; }
 
-    /* PIX Area */
-    #pix-area {
-      max-width: 480px;
-      margin: 0 auto;
-    }
-    .pix-card {
-      background: linear-gradient(135deg, rgba(201,168,76,0.08), rgba(201,168,76,0.02));
-      border: 1px solid rgba(201,168,76,0.3);
-      border-radius: 16px;
-      padding: 32px;
-      text-align: center;
-    }
-    .pix-value {
-      font-family: var(--font-head);
-      font-size: 2.5rem;
-      color: var(--accent);
-      margin: 12px 0;
-    }
-    .pix-key-box {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px 18px;
-      font-size: 0.875rem;
-      word-break: break-all;
-      margin: 16px 0;
-      position: relative;
-    }
+.pages-overview { flex: 1; overflow-y: auto; padding: 0.75rem; }
+.pages-overview-title { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--smoke); margin-bottom: 0.75rem; }
+.page-thumb-item {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.5rem; border-radius: var(--radius-sm);
+  cursor: pointer; transition: var(--transition); margin-bottom: 0.25rem;
+  border: 1px solid transparent;
+}
+.page-thumb-item:hover { background: var(--graphite); border-color: var(--border); }
+.page-thumb-item.active { background: var(--graphite); border-color: var(--gold-dim); }
+.page-thumb-preview {
+  width: 60px; height: 40px; background: #FDFCF8;
+  border-radius: 2px; overflow: hidden; flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.1);
+  display: grid; gap: 2px; padding: 3px;
+}
+.page-thumb-preview.tp-1 { grid-template-columns: 1fr; }
+.page-thumb-preview.tp-2 { grid-template-columns: 1fr 1fr; }
+.page-thumb-preview.tp-3 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.page-thumb-preview.tp-3 div:first-child { grid-column: span 2; }
+.page-thumb-preview.tp-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.page-thumb-preview.tp-6 { grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.page-thumb-preview div { background: #DDD; border-radius: 1px; }
+.page-thumb-preview div.filled { background: #AAA; }
+.page-thumb-info { flex: 1; min-width: 0; }
+.page-thumb-label { font-size: 0.78rem; color: var(--ivory); }
+.page-thumb-sub { font-size: 0.7rem; color: var(--smoke); }
 
-    /* Selection already saved */
-    #already-selected-view {
-      max-width: 520px;
-      margin: 60px auto;
-      padding: 24px;
-      text-align: center;
-    }
-    .check-circle {
-      width: 72px; height: 72px;
-      background: rgba(76,175,121,0.15);
-      border: 2px solid var(--green);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 20px;
-      font-size: 2rem;
-    }
+/* Client action bar */
+.client-action-bar {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  background: var(--void);
+  display: flex; align-items: center; gap: 1rem;
+}
+.save-status { font-size: 0.75rem; color: var(--smoke); flex: 1; }
+.save-status.saved { color: var(--success); }
 
-    /* ============================================================
-       EMPTY STATES
-    ============================================================ */
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-    }
-    .empty-icon { font-size: 3rem; margin-bottom: 12px; }
-    .empty-state p { color: var(--muted); margin-top: 8px; font-size: 0.9rem; }
+/* Finalized overlay */
+.finalized-banner {
+  background: linear-gradient(135deg, var(--success-dim), rgba(92,158,122,0.08));
+  border: 1px solid rgba(92,158,122,0.3);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  display: flex; align-items: center; gap: 1rem;
+  margin: 1rem;
+}
+.finalized-banner-icon { font-size: 1.4rem; }
+.finalized-banner-text { flex: 1; }
+.finalized-banner-title { font-size: 0.9rem; color: var(--success); font-weight: 500; }
+.finalized-banner-sub { font-size: 0.78rem; color: var(--smoke); }
 
-    /* ============================================================
-       SECTION HEADERS
-    ============================================================ */
-    .section-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 20px;
-    }
-    .divider {
-      border: none; border-top: 1px solid var(--border);
-      margin: 24px 0;
-    }
+/* =============================================
+   DIVIDERS / SECTIONS
+   ============================================= */
+.section-title {
+  font-family: var(--font-display); font-size: 0.75rem;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--smoke);
+  margin-bottom: 1rem; padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.separator { height: 1px; background: var(--border); margin: 1rem 0; }
 
-    /* ============================================================
-       SELECTION DETAILS (Admin)
-    ============================================================ */
-    .selection-detail-row {
-      display: flex; justify-content: space-between;
-      padding: 10px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-      font-size: 0.875rem;
-    }
-    .selection-detail-row:last-child { border-bottom: none; }
-    .selection-detail-row .key { color: var(--muted); }
-    .selection-detail-row .val { font-weight: 500; }
+/* =============================================
+   DRAGGING STATE
+   ============================================= */
+.dragging-ghost {
+  position: fixed; z-index: 9999; pointer-events: none;
+  opacity: 0.85; transform: scale(0.9);
+  border-radius: var(--radius-sm); overflow: hidden;
+  box-shadow: var(--shadow-xl);
+}
 
-    /* ============================================================
-       CONTEXT MENU PREVENTION
-    ============================================================ */
-    img { -webkit-user-select: none; user-select: none; }
+/* =============================================
+   LANDING / AUTH
+   ============================================= */
+#landing-view {
+  min-height: calc(100vh - 56px);
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at center top, rgba(201,168,76,0.04) 0%, transparent 60%);
+}
+.landing-card {
+  background: var(--charcoal); border: 1px solid var(--border);
+  border-radius: var(--radius-xl); padding: 3rem;
+  width: 100%; max-width: 480px;
+  text-align: center;
+  box-shadow: var(--shadow-xl);
+}
+.landing-logo {
+  font-family: var(--font-display); font-size: 2.2rem; font-weight: 300;
+  color: var(--gold); letter-spacing: 0.1em; margin-bottom: 0.5rem;
+}
+.landing-tagline { font-size: 0.82rem; color: var(--smoke); margin-bottom: 2rem; }
+.landing-divider {
+  display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0;
+}
+.landing-divider::before, .landing-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.landing-divider span { font-size: 0.72rem; color: var(--smoke); }
+.landing-client-btn {
+  width: 100%; padding: 1rem;
+  background: var(--graphite); border: 1px solid var(--border);
+  border-radius: var(--radius-md); color: var(--pearl);
+  font-family: var(--font-ui); font-size: 0.85rem; cursor: pointer;
+  transition: var(--transition);
+}
+.landing-client-btn:hover { background: var(--slate); border-color: var(--border-hover); }
 
-    /* ============================================================
-       RESPONSIVE
-    ============================================================ */
-    @media (max-width: 640px) {
-      #app-header { padding: 14px 16px; }
-      #photo-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; }
-      .counter-stats { gap: 14px; }
-      .admin-tabs { flex-direction: column; }
-      .modal { padding: 20px; }
-    }
-  </style>
+/* Progress ring */
+.progress-ring { display: inline-flex; position: relative; }
+.progress-ring svg { transform: rotate(-90deg); }
+.progress-ring-text {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 0.7rem; color: var(--gold);
+}
+
+/* Completion bar at top of client view */
+.completion-header {
+  background: var(--void); border-bottom: 1px solid var(--border);
+  padding: 0.6rem 1.5rem;
+  display: flex; align-items: center; gap: 1rem;
+  font-size: 0.78rem;
+}
+.completion-bar-wrap { flex: 1; height: 3px; background: var(--slate); border-radius: 2px; overflow: hidden; }
+.completion-bar { height: 100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); border-radius: 2px; transition: width 0.5s ease; }
+.completion-label { color: var(--smoke); white-space: nowrap; }
+.completion-value { color: var(--gold); font-weight: 500; min-width: 35px; text-align: right; }
+
+/* =============================================
+   RESPONSIVE
+   ============================================= */
+@media (max-width: 1100px) {
+  #client-view { grid-template-columns: 180px 1fr 220px; }
+}
+@media (max-width: 900px) {
+  #admin-view { grid-template-columns: 1fr; }
+  .admin-sidebar { grid-row: auto; border-right: none; border-bottom: 1px solid var(--border); max-height: 200px; }
+  #client-view { grid-template-columns: 1fr; }
+  .gallery-panel, .pages-panel { display: none; }
+}
+
+/* =============================================
+   PRINT / EXPORT
+   ============================================= */
+@media print {
+  .app-header, .gallery-panel, .pages-panel, .canvas-toolbar, .client-action-bar { display: none !important; }
+  .album-canvas { background: white !important; }
+}
+</style>
 </head>
 <body>
 
-<!-- ============================================================
-     TOAST CONTAINER
-============================================================ -->
+<!-- LOADING -->
+<div id="loading-overlay">
+  <div class="loading-logo">Lumière</div>
+  <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+</div>
+
+<!-- TOAST -->
 <div id="toast-container"></div>
 
-<!-- ============================================================
-     LOADING SCREEN
-============================================================ -->
-<div id="loading-screen" class="loading-screen">
-  <div class="spinner"></div>
-  <p style="color:var(--muted);font-size:0.875rem;">Carregando...</p>
+<!-- APP -->
+<div id="app">
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="brand-mark">L</div>
+      <div class="brand-name">Lumière <span>Studio</span></div>
+    </div>
+    <div class="header-nav" id="header-nav">
+      <div class="header-info" id="header-context">Carregando…</div>
+    </div>
+  </header>
+
+  <!-- =================== LANDING VIEW =================== -->
+  <div id="landing-view" class="view active">
+    <div class="landing-card">
+      <div class="landing-logo">Lumière</div>
+      <div class="landing-tagline">Sistema Profissional de Álbum Fotográfico</div>
+      <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-bottom:1rem" onclick="enterAdmin()">
+        <span>⬡</span> Painel Administrativo
+      </button>
+      <div class="landing-divider"><span>ou acesse pelo link do cliente</span></div>
+      <div style="font-size:0.78rem;color:var(--smoke);line-height:1.8;">
+        Para acessar como cliente, utilize o link personalizado enviado pelo fotógrafo.<br>
+        Exemplo: <code style="color:var(--gold)">?projeto=ID</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== ADMIN VIEW =================== -->
+  <div id="admin-view" class="view" style="display:none">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <div class="admin-sidebar-title">Projetos</div>
+        <button class="btn btn-primary btn-sm" onclick="openNewProjectModal()" style="width:100%;justify-content:center">
+          + Novo Projeto
+        </button>
+      </div>
+      <div class="projects-list" id="projects-list">
+        <div class="empty-state" style="padding:2rem 1rem">
+          <div style="font-size:2rem;opacity:0.3">◻</div>
+          <div style="font-size:0.8rem;color:var(--smoke);margin-top:0.5rem">Nenhum projeto</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="admin-main">
+      <div class="admin-toolbar">
+        <div class="toolbar-title" id="admin-toolbar-title">Todos os Projetos</div>
+        <button class="btn btn-secondary btn-sm" onclick="loadProjects()">↺ Atualizar</button>
+        <button class="btn btn-primary btn-sm" onclick="openNewProjectModal()">+ Novo Projeto</button>
+      </div>
+      <div class="admin-content" id="admin-content">
+        <!-- Project list or detail renders here -->
+        <div id="projects-overview">
+          <div class="projects-grid" id="projects-grid">
+            <div class="empty-state" style="grid-column:1/-1;padding:3rem">
+              <div class="empty-state-icon">◻</div>
+              <div class="empty-state-text">Nenhum projeto criado</div>
+              <div class="empty-state-sub">Crie um novo projeto para começar</div>
+            </div>
+          </div>
+        </div>
+        <div id="project-detail-view" style="display:none"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- =================== CLIENT VIEW =================== -->
+  <div id="client-view" class="view" style="display:none">
+    <!-- Completion bar -->
+    <div class="completion-header" id="completion-header" style="grid-column:1/-1;display:none">
+      <span class="completion-label">Progresso do álbum</span>
+      <div class="completion-bar-wrap"><div class="completion-bar" id="completion-bar" style="width:0%"></div></div>
+      <span class="completion-value" id="completion-value">0%</span>
+    </div>
+
+    <!-- Left: Gallery -->
+    <aside class="gallery-panel">
+      <div class="panel-header">
+        <span class="panel-title">Suas Fotos</span>
+        <span id="gallery-count" style="font-size:0.7rem;color:var(--smoke)"></span>
+      </div>
+      <div class="gallery-grid" id="gallery-grid">
+        <!-- Populated by JS -->
+      </div>
+    </aside>
+
+    <!-- Center: Album canvas -->
+    <section class="album-canvas" style="display:flex;flex-direction:column">
+      <div class="canvas-toolbar">
+        <div class="page-nav">
+          <button class="page-nav-btn" id="btn-prev-page" onclick="navigatePage(-1)">◀</button>
+          <div class="page-indicator" id="page-indicator">Capa</div>
+          <button class="page-nav-btn" id="btn-next-page" onclick="navigatePage(1)">▶</button>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="clearCurrentPage()">✕ Limpar página</button>
+      </div>
+      <div class="album-frame">
+        <div class="album-page cover-page" id="album-page-canvas">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+      <!-- Actions -->
+      <div class="client-action-bar" id="client-action-bar">
+        <span class="save-status" id="save-status">Não salvo</span>
+        <button class="btn btn-secondary btn-sm" onclick="saveLayout()">💾 Salvar</button>
+        <button class="btn btn-primary btn-sm" onclick="confirmFinalize()">✓ Finalizar Álbum</button>
+      </div>
+      <div id="finalized-bar" style="display:none">
+        <div class="finalized-banner">
+          <div class="finalized-banner-icon">✦</div>
+          <div class="finalized-banner-text">
+            <div class="finalized-banner-title">Álbum Finalizado</div>
+            <div class="finalized-banner-sub">Este álbum foi concluído e está bloqueado para edição. O fotógrafo foi notificado.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Pages overview -->
+    <aside class="pages-panel">
+      <div class="panel-header">
+        <span class="panel-title">Layout da Página</span>
+      </div>
+      <div class="layout-selector">
+        <div class="layout-selector-title">Escolher Layout</div>
+        <div class="layout-options" id="layout-options">
+          <!-- 1, 2, 3, 4, 6 photos -->
+          <div class="layout-option active" data-layout="1" onclick="setLayout('1')" title="1 foto">
+            <div class="layout-preview lp-1"><div></div></div>
+          </div>
+          <div class="layout-option" data-layout="2" onclick="setLayout('2')" title="2 fotos">
+            <div class="layout-preview lp-2"><div></div><div></div></div>
+          </div>
+          <div class="layout-option" data-layout="3" onclick="setLayout('3')" title="3 fotos">
+            <div class="layout-preview lp-3"><div></div><div></div><div></div></div>
+          </div>
+          <div class="layout-option" data-layout="4" onclick="setLayout('4')" title="4 fotos">
+            <div class="layout-preview lp-4"><div></div><div></div><div></div><div></div></div>
+          </div>
+          <div class="layout-option" data-layout="6" onclick="setLayout('6')" title="6 fotos">
+            <div class="layout-preview lp-6"><div></div><div></div><div></div><div></div><div></div><div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="pages-overview">
+        <div class="pages-overview-title">Páginas do Álbum</div>
+        <div id="pages-overview-list">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </aside>
+  </div>
 </div>
 
-<!-- ============================================================
-     APP HEADER
-============================================================ -->
-<header id="app-header" class="hidden">
-  <div class="logo">Foto<span>Select</span></div>
-  <div id="header-right"></div>
-</header>
+<!-- =================== MODALS =================== -->
 
-<!-- ============================================================
-     ADMIN VIEW
-============================================================ -->
-<div id="admin-view" class="hidden">
-
-  <!-- Page title -->
-  <div style="margin-bottom:28px;">
-    <h1>Painel Administrativo</h1>
-    <p style="color:var(--muted);margin-top:6px;font-size:0.9rem;">Gerencie clientes e galerias de fotos</p>
-  </div>
-
-  <!-- Tabs -->
-  <div class="admin-tabs">
-    <button class="tab-btn active" data-tab="clients">👥 Clientes</button>
-    <button class="tab-btn" data-tab="new-client">➕ Novo Cliente</button>
-    <button class="tab-btn" data-tab="upload">📤 Upload Fotos</button>
-  </div>
-
-  <!-- TAB: Clients list -->
-  <div id="tab-clients" class="tab-panel active">
-    <div class="section-header">
-      <h2>Clientes</h2>
-      <button class="btn btn-ghost btn-sm" id="btn-refresh-clients">↻ Atualizar</button>
-    </div>
-    <div id="clients-list">
-      <div class="empty-state">
-        <div class="empty-icon">📋</div>
-        <h3>Nenhum cliente ainda</h3>
-        <p>Crie o primeiro cliente na aba "Novo Cliente"</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- TAB: New client form -->
-  <div id="tab-new-client" class="tab-panel">
-    <h2 style="margin-bottom:20px;">Novo Cliente</h2>
-    <div class="card" style="max-width:680px;">
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Nome do Cliente *</label>
-          <input type="text" id="nc-name" placeholder="Ex: Ana & João" />
-        </div>
-        <div class="form-group">
-          <label>Evento</label>
-          <input type="text" id="nc-event" placeholder="Ex: Casamento, Ensaio" />
-        </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="nc-email" placeholder="cliente@email.com" />
-        </div>
-        <div class="form-group">
-          <label>Data do Evento</label>
-          <input type="date" id="nc-date" />
-        </div>
-        <div class="form-group">
-          <label>Fotos Inclusas</label>
-          <input type="number" id="nc-included" value="20" min="1" />
-        </div>
-        <div class="form-group">
-          <label>Valor por Foto Extra (R$)</label>
-          <input type="number" id="nc-price" value="25.00" min="0" step="0.01" />
-        </div>
-      </div>
-      <hr class="divider" />
-      <button class="btn btn-primary" id="btn-create-client">Criar Cliente</button>
-    </div>
-  </div>
-
-  <!-- TAB: Upload -->
-  <div id="tab-upload" class="tab-panel">
-    <h2 style="margin-bottom:20px;">Upload de Fotos</h2>
-    <div class="card" style="max-width:680px;">
-      <div class="form-group" style="margin-bottom:20px;">
-        <label>Selecionar Cliente *</label>
-        <select id="upload-client-select">
-          <option value="">— Escolha um cliente —</option>
-        </select>
-      </div>
-
-      <div class="upload-drop" id="upload-drop">
-        <input type="file" id="upload-input" multiple accept="image/*" />
-        <div class="upload-icon">📸</div>
-        <p style="font-size:0.95rem;font-weight:500;">Clique ou arraste as fotos aqui</p>
-        <p style="color:var(--muted);font-size:0.8rem;margin-top:6px;">JPG, PNG, WEBP • Múltiplos arquivos</p>
-      </div>
-
-      <div id="upload-progress-wrap" class="upload-progress hidden">
-        <div class="flex between" style="font-size:0.85rem;margin-bottom:6px;">
-          <span id="upload-status-text">Enviando...</span>
-          <span id="upload-pct">0%</span>
-        </div>
-        <div class="progress-bar-wrap">
-          <div class="progress-bar" id="progress-bar" style="width:0%"></div>
-        </div>
-        <p id="upload-file-name" style="font-size:0.75rem;color:var(--muted);margin-top:6px;"></p>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<!-- ============================================================
-     CLIENT VIEW
-============================================================ -->
-<div id="client-view" class="hidden">
-
-  <!-- Sticky counter -->
-  <div id="counter-bar">
-    <div class="counter-inner">
-      <div class="counter-stats">
-        <div class="counter-stat">
-          <span class="val" id="cnt-selected">0</span>
-          <span class="lbl">Selecionadas</span>
-        </div>
-        <div class="counter-stat">
-          <span class="val" id="cnt-included">0</span>
-          <span class="lbl">Inclusas</span>
-        </div>
-        <div class="counter-stat extras">
-          <span class="val" id="cnt-extras">0</span>
-          <span class="lbl">Extras</span>
-        </div>
-        <div class="counter-stat valor">
-          <span class="val" id="cnt-value">R$ 0,00</span>
-          <span class="lbl">Valor extras</span>
-        </div>
-      </div>
-      <div id="counter-bar-right"></div>
-    </div>
-  </div>
-
-  <!-- Hero -->
-  <div id="client-hero">
-    <h1 id="client-title">—</h1>
-    <div class="client-meta" id="client-meta"></div>
-  </div>
-
-  <!-- Grid -->
-  <div id="photo-grid-wrap">
-    <div id="photo-grid"></div>
-    <div id="grid-loading" class="empty-state">
-      <div class="spinner"></div>
-    </div>
-  </div>
-
-  <!-- Finalize bar -->
-  <div id="finalize-bar">
-    <div class="finalize-inner">
-      <span id="finalize-hint" style="font-size:0.82rem;color:var(--muted);"></span>
-      <button class="btn btn-green btn-lg" id="btn-finalize">✓ Finalizar Seleção</button>
-    </div>
-  </div>
-
-</div>
-
-<!-- ============================================================
-     ALREADY SELECTED VIEW
-============================================================ -->
-<div id="already-selected-view" class="hidden">
-  <div class="check-circle">✓</div>
-  <h2>Seleção enviada!</h2>
-  <p style="color:var(--muted);margin-top:10px;font-size:0.9rem;" id="already-msg">
-    Você já enviou sua seleção de fotos. Obrigado!
-  </p>
-  <div id="already-detail" style="margin-top:24px;"></div>
-</div>
-
-<!-- ============================================================
-     MODAL: View Selection (Admin)
-============================================================ -->
-<div id="modal-selection" class="modal-overlay hidden">
+<!-- New Project Modal -->
+<div class="modal-overlay" id="modal-new-project">
   <div class="modal">
     <div class="modal-header">
-      <h3>Seleção do Cliente</h3>
-      <button class="modal-close" onclick="closeModal('modal-selection')">×</button>
+      <h3 class="modal-title">Novo Projeto</h3>
+      <button class="modal-close" onclick="closeModal('modal-new-project')">✕</button>
     </div>
-    <div id="modal-selection-body"></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nome do Projeto</label>
+        <input type="text" class="form-control" id="inp-project-name" placeholder="Ex: Casamento Silva & Santos">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nome do Cliente</label>
+        <input type="text" class="form-control" id="inp-client-name" placeholder="Ex: Ana Silva">
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-mail do Cliente (opcional)</label>
+        <input type="email" class="form-control" id="inp-client-email" placeholder="cliente@email.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Observações</label>
+        <textarea class="form-control" id="inp-notes" rows="2" placeholder="Notas internas sobre o projeto…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-new-project')">Cancelar</button>
+      <button class="btn btn-primary" onclick="createProject()">Criar Projeto</button>
+    </div>
   </div>
 </div>
 
-<!-- ============================================================
-     MODAL: PIX Payment
-============================================================ -->
-<div id="modal-pix" class="modal-overlay hidden">
+<!-- Confirm Finalize Modal -->
+<div class="modal-overlay" id="modal-finalize">
   <div class="modal">
     <div class="modal-header">
-      <h3>💛 Pagamento PIX</h3>
-      <button class="modal-close" onclick="closeModal('modal-pix')">×</button>
+      <h3 class="modal-title">Finalizar Álbum</h3>
+      <button class="modal-close" onclick="closeModal('modal-finalize')">✕</button>
     </div>
-    <div id="pix-area">
-      <div class="pix-card">
-        <p style="color:var(--muted);font-size:0.875rem;">Valor total a pagar</p>
-        <div class="pix-value" id="pix-value-display">R$ 0,00</div>
-        <p style="font-size:0.8rem;color:var(--muted);margin-bottom:12px;">Chave PIX:</p>
-        <div class="pix-key-box" id="pix-key-display">—</div>
-        <button class="btn btn-primary btn-full" id="btn-copy-pix">📋 Copiar Chave PIX</button>
-      </div>
-      <hr class="divider" />
-      <p style="font-size:0.85rem;color:var(--muted);text-align:center;margin-bottom:16px;">
-        Após realizar o pagamento, clique no botão abaixo:
+    <div class="modal-body">
+      <p style="color:var(--pearl);font-size:0.9rem;line-height:1.7;margin-bottom:1rem">
+        Ao finalizar o álbum, a montagem será bloqueada e o fotógrafo será notificado para produção.
       </p>
-      <button class="btn btn-green btn-full btn-lg" id="btn-paid">✓ Já paguei — Enviar Seleção</button>
+      <p style="color:var(--smoke);font-size:0.82rem">Esta ação não pode ser desfeita. Tem certeza?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-finalize')">Cancelar</button>
+      <button class="btn btn-success" onclick="finalizeAlbum()">✓ Confirmar Finalização</button>
     </div>
   </div>
 </div>
 
-<!-- ============================================================
-     MODAL: Copy Link
-============================================================ -->
-<div id="modal-link" class="modal-overlay hidden">
+<!-- Confirm Delete Modal -->
+<div class="modal-overlay" id="modal-delete">
   <div class="modal">
     <div class="modal-header">
-      <h3>🔗 Link da Galeria</h3>
-      <button class="modal-close" onclick="closeModal('modal-link')">×</button>
+      <h3 class="modal-title">Excluir Projeto</h3>
+      <button class="modal-close" onclick="closeModal('modal-delete')">✕</button>
     </div>
-    <p style="font-size:0.875rem;color:var(--muted);margin-bottom:14px;">
-      Compartilhe este link com o cliente:
-    </p>
-    <div class="pix-key-box" id="link-display">—</div>
-    <button class="btn btn-primary btn-full" id="btn-copy-link" style="margin-top:14px;">📋 Copiar Link</button>
+    <div class="modal-body">
+      <p style="color:var(--pearl);font-size:0.9rem">
+        Excluir o projeto <strong id="delete-project-name"></strong> e todas as suas fotos permanentemente?
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-delete')">Cancelar</button>
+      <button class="btn btn-danger" onclick="executeDeleteProject()">Excluir</button>
+    </div>
   </div>
 </div>
 
-<!-- ============================================================
-     JAVASCRIPT
-============================================================ -->
 <script>
-/* ================================================================
-   CONFIG
-================================================================ */
-const SUPABASE_URL  = 'https://rjyxkouegrropsarrhje.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqeXhrb3VlZ3Jyb3BzYXJyaGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NjYxNjcsImV4cCI6MjA4NTE0MjE2N30.UjNPnVBVhQcUSirXeWZ3RmYmAhDMqqbbVUChG_Mv57U';
-const BUCKET        = 'client-photos';
-const PIX_KEY       = '22992497662'; // ← substitua pela sua chave PIX
+// =============================================
+// LUMIÈRE STUDIO — APPLICATION LOGIC
+// =============================================
 
-/* ================================================================
-   STATE
-================================================================ */
+const SUPABASE_URL = 'https://rjyxkouegrropsarrhje.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqeXhrb3VlZ3Jyb3BzYXJyaGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NjYxNjcsImV4cCI6MjA4NTE0MjE2N30.UjNPnVBVhQcUSirXeWZ3RmYmAhDMqqbbVUChG_Mv57U';
+const BUCKET = 'album-fotos';
+const TOTAL_PAGES = 24; // 0=cover, 1-23=double pages
+
 let supabase;
-let currentClient  = null;
-let selectedIds    = new Set();
-let allPhotos      = [];
+let currentView = 'landing';
+let currentProjectId = null;
+let currentProject = null;
+let currentPageIndex = 0;
+let albumPages = []; // array of {page_index, layout_type, photos:[{slot,photo_url,photo_path}]}
+let projectPhotos = []; // list of uploaded photo URLs
+let deleteTargetId = null;
+let dragData = null;
+let saveTimeout = null;
+let isSaving = false;
+let isFinalized = false;
 
-/* ================================================================
-   INIT
-================================================================ */
-function initSupabase() {
-  const { createClient } = window.supabase;
-  supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+// =============================================
+// INIT
+// =============================================
+async function init() {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Check URL for project param
+  const params = new URLSearchParams(window.location.search);
+  const projectId = params.get('projeto');
+
+  if (projectId) {
+    await loadClientView(projectId);
+  } else {
+    showView('landing');
+  }
+
+  document.getElementById('loading-overlay').classList.add('hidden');
 }
 
-async function init() {
-  initSupabase();
-
-  const params   = new URLSearchParams(window.location.search);
-  const isAdmin  = params.has('admin');
-  const clientId = params.get('client');
-
-  hideEl('loading-screen');
-  showEl('app-header');
-
-  if (isAdmin) {
-    await loadAdmin();
-  } else if (clientId) {
-    await loadClient(clientId);
-  } else {
-    // Default: show admin hint
-    document.body.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;font-family:'DM Sans',sans-serif;color:#f0ede8;">
-        <div style="font-family:'Playfair Display',serif;font-size:2rem;color:#c9a84c;">FotoSelect</div>
-        <p style="color:#7a7672;">Acesse <strong>?admin</strong> para o painel administrativo</p>
-        <p style="color:#7a7672;font-size:0.85rem;">ou <strong>?client=ID</strong> para a galeria do cliente</p>
-      </div>`;
+// =============================================
+// VIEW MANAGEMENT
+// =============================================
+function showView(name) {
+  currentView = name;
+  document.querySelectorAll('.view').forEach(v => {
+    v.style.display = 'none';
+    v.classList.remove('active');
+  });
+  const el = document.getElementById(name + '-view');
+  if (el) {
+    el.style.display = '';
+    el.classList.add('active');
   }
 }
 
-/* ================================================================
-   ADMIN: LOAD
-================================================================ */
-async function loadAdmin() {
-  showEl('admin-view');
-  document.getElementById('header-right').innerHTML = `<span style="font-size:0.8rem;color:var(--muted);">Modo Admin</span>`;
-
-  // Tab switching
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-    });
-  });
-
-  document.getElementById('btn-refresh-clients').addEventListener('click', loadClientsList);
-  document.getElementById('btn-create-client').addEventListener('click', createClient);
-  setupUpload();
-  await loadClientsList();
+function enterAdmin() {
+  showView('admin');
+  document.getElementById('header-context').textContent = 'Painel Admin';
+  loadProjects();
 }
 
-/* ================================================================
-   ADMIN: LOAD CLIENTS LIST
-================================================================ */
-async function loadClientsList() {
-  const container = document.getElementById('clients-list');
-  container.innerHTML = `<div class="empty-state"><div class="spinner"></div></div>`;
+// =============================================
+// TOAST NOTIFICATIONS
+// =============================================
+function toast(msg, type = 'info', duration = 3500) {
+  const icons = { success: '✦', error: '⚠', info: '◆' };
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.innerHTML = `<span class="toast-icon">${icons[type]||'◆'}</span><span>${msg}</span>`;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('hiding');
+    setTimeout(() => el.remove(), 300);
+  }, duration);
+}
 
-  const { data: clients, error } = await supabase
-    .from('fs_clients')
-    .select('*')
-    .order('created_at', { ascending: false });
+// =============================================
+// MODAL
+// =============================================
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
-  if (error) { toast('Erro ao carregar clientes', 'error'); return; }
+// =============================================
+// ADMIN — PROJECTS
+// =============================================
+async function loadProjects() {
+  try {
+    const { data, error } = await supabase
+      .from('album_projects')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-  // Refresh upload select
-  const sel = document.getElementById('upload-client-select');
-  sel.innerHTML = '<option value="">— Escolha um cliente —</option>';
-  (clients || []).forEach(c => {
-    sel.innerHTML += `<option value="${c.id}">${c.name} — ${c.event || 'Sem evento'}</option>`;
-  });
+    if (error) throw error;
 
-  if (!clients || clients.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">📋</div>
-        <h3>Nenhum cliente ainda</h3>
-        <p>Crie o primeiro cliente na aba "Novo Cliente"</p>
-      </div>`;
+    renderProjectsSidebar(data || []);
+    renderProjectsGrid(data || []);
+  } catch (e) {
+    toast('Erro ao carregar projetos: ' + e.message, 'error');
+  }
+}
+
+function renderProjectsSidebar(projects) {
+  const el = document.getElementById('projects-list');
+  if (!projects.length) {
+    el.innerHTML = `<div class="empty-state" style="padding:2rem 1rem">
+      <div style="font-size:2rem;opacity:0.3">◻</div>
+      <div style="font-size:0.8rem;color:var(--smoke);margin-top:0.5rem">Nenhum projeto</div>
+    </div>`;
     return;
   }
-
-  // Load photos counts & selections
-  const { data: photos } = await supabase.from('fs_photos').select('client_id');
-  const { data: selections } = await supabase.from('fs_selections').select('*');
-
-  const photoCount   = {};
-  const selectionMap = {};
-  (photos || []).forEach(p => { photoCount[p.client_id] = (photoCount[p.client_id] || 0) + 1; });
-  (selections || []).forEach(s => { selectionMap[s.client_id] = s; });
-
-  const statusLabel = {
-    pending:              '<span class="badge badge-pending">Pendente</span>',
-    awaiting_confirmation:'<span class="badge badge-awaiting">Aguardando confirm.</span>',
-    paid:                 '<span class="badge badge-paid">Pago ✓</span>',
-  };
-
-  container.innerHTML = `
-    <div class="clients-table-wrap">
-      <table class="clients-table">
-        <thead>
-          <tr>
-            <th>Cliente</th>
-            <th>Evento</th>
-            <th>Data</th>
-            <th>Fotos</th>
-            <th>Seleção</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${clients.map(c => {
-            const sel = selectionMap[c.id];
-            const selStatus = sel
-              ? (statusLabel[sel.payment_status] || `<span class="badge badge-none">${sel.payment_status}</span>`)
-              : '<span class="badge badge-none">Sem seleção</span>';
-            return `
-            <tr>
-              <td><strong>${c.name}</strong></td>
-              <td>${c.event || '—'}</td>
-              <td>${c.event_date ? formatDate(c.event_date) : '—'}</td>
-              <td>${photoCount[c.id] || 0}</td>
-              <td>${selStatus}</td>
-              <td>
-                <div class="actions">
-                  <button class="btn btn-ghost btn-sm" onclick="openLink('${c.id}')">🔗 Link</button>
-                  ${sel ? `<button class="btn btn-ghost btn-sm" onclick="viewSelection('${c.id}')">👁 Seleção</button>` : ''}
-                  ${sel && sel.payment_status === 'awaiting_confirmation'
-                    ? `<button class="btn btn-green btn-sm" onclick="markPaid('${c.id}')">✓ Marcar Pago</button>` : ''}
-                  <button class="btn btn-danger btn-sm" onclick="deleteGallery('${c.id}', '${c.name}')">🗑 Deletar</button>
-                </div>
-              </td>
-            </tr>`;
-          }).join('')}
-        </tbody>
-      </table>
-    </div>`;
-}
-
-/* ================================================================
-   ADMIN: CREATE CLIENT
-================================================================ */
-async function createClient() {
-  const name     = document.getElementById('nc-name').value.trim();
-  const event    = document.getElementById('nc-event').value.trim();
-  const email    = document.getElementById('nc-email').value.trim();
-  const date     = document.getElementById('nc-date').value;
-  const included = parseInt(document.getElementById('nc-included').value) || 20;
-  const price    = parseFloat(document.getElementById('nc-price').value) || 25;
-
-  if (!name) { toast('Informe o nome do cliente', 'error'); return; }
-
-  const btn = document.getElementById('btn-create-client');
-  btn.disabled = true; btn.textContent = 'Criando...';
-
-  const { data, error } = await supabase.from('fs_clients').insert({
-    name, event, email,
-    event_date: date || null,
-    included_count: included,
-    price_per_extra: price,
-  }).select().single();
-
-  btn.disabled = false; btn.textContent = 'Criar Cliente';
-
-  if (error) { toast('Erro ao criar cliente: ' + error.message, 'error'); return; }
-
-  toast(`Cliente "${name}" criado!`, 'success');
-
-  // Clear form
-  ['nc-name','nc-event','nc-email','nc-date'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('nc-included').value = '20';
-  document.getElementById('nc-price').value = '25.00';
-
-  // Switch to clients tab
-  document.querySelector('[data-tab="clients"]').click();
-  await loadClientsList();
-}
-
-/* ================================================================
-   ADMIN: UPLOAD PHOTOS
-================================================================ */
-function setupUpload() {
-  const drop  = document.getElementById('upload-drop');
-  const input = document.getElementById('upload-input');
-
-  drop.addEventListener('dragover',  e => { e.preventDefault(); drop.classList.add('drag-over'); });
-  drop.addEventListener('dragleave', () => drop.classList.remove('drag-over'));
-  drop.addEventListener('drop', e => {
-    e.preventDefault();
-    drop.classList.remove('drag-over');
-    uploadPhotos(e.dataTransfer.files);
-  });
-  input.addEventListener('change', e => uploadPhotos(e.target.files));
-}
-
-async function uploadPhotos(files) {
-  const clientId = document.getElementById('upload-client-select').value;
-  if (!clientId) { toast('Selecione um cliente antes de fazer upload', 'error'); return; }
-  if (!files || files.length === 0) return;
-
-  const progressWrap = document.getElementById('upload-progress-wrap');
-  const bar          = document.getElementById('progress-bar');
-  const pct          = document.getElementById('upload-pct');
-  const statusTxt    = document.getElementById('upload-status-text');
-  const fileName     = document.getElementById('upload-file-name');
-
-  showEl('upload-progress-wrap');
-  const total = files.length;
-  let done = 0;
-
-  // Get current max order
-  const { data: existing } = await supabase
-    .from('fs_photos')
-    .select('photo_order')
-    .eq('client_id', clientId)
-    .order('photo_order', { ascending: false })
-    .limit(1);
-
-  let orderStart = (existing && existing[0]) ? (existing[0].photo_order + 1) : 1;
-
-  for (const file of Array.from(files)) {
-    fileName.textContent = file.name;
-    statusTxt.textContent = `Enviando ${done + 1} de ${total}...`;
-
-    const ext  = file.name.split('.').pop();
-    const safe = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-    const path = `${clientId}/${safe}`;
-
-    // Upload to storage
-    const { error: storageErr } = await supabase.storage
-      .from(BUCKET)
-      .upload(path, file, { cacheControl: '3600', upsert: false });
-
-    if (storageErr) {
-      toast(`Erro ao enviar ${file.name}`, 'error');
-      done++;
-      continue;
-    }
-
-    // Get public URL
-    const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path);
-
-    // Insert into fs_photos
-    await supabase.from('fs_photos').insert({
-      client_id:   clientId,
-      filename:    file.name,
-      storage_url: urlData.publicUrl,
-      photo_order: orderStart + done,
-    });
-
-    done++;
-    const p = Math.round((done / total) * 100);
-    bar.style.width = p + '%';
-    pct.textContent = p + '%';
-  }
-
-  statusTxt.textContent = `✓ ${done} fotos enviadas!`;
-  bar.style.width = '100%';
-  pct.textContent = '100%';
-  document.getElementById('upload-input').value = '';
-  toast(`${done} fotos enviadas com sucesso!`, 'success');
-
-  setTimeout(() => hideEl('upload-progress-wrap'), 3000);
-  await loadClientsList();
-}
-
-/* ================================================================
-   ADMIN: OPEN LINK MODAL
-================================================================ */
-function openLink(clientId) {
-  const link = `${window.location.origin}${window.location.pathname}?client=${clientId}`;
-  document.getElementById('link-display').textContent = link;
-
-  document.getElementById('btn-copy-link').onclick = () => {
-    copyToClipboard(link);
-    toast('Link copiado!', 'success');
-  };
-
-  showEl('modal-link');
-}
-
-/* ================================================================
-   ADMIN: VIEW SELECTION
-================================================================ */
-async function viewSelection(clientId) {
-  const body = document.getElementById('modal-selection-body');
-  body.innerHTML = '<div class="spinner"></div>';
-  showEl('modal-selection');
-
-  const { data: sel } = await supabase
-    .from('fs_selections')
-    .select('*')
-    .eq('client_id', clientId)
-    .single();
-
-  const { data: client } = await supabase
-    .from('fs_clients')
-    .select('*')
-    .eq('id', clientId)
-    .single();
-
-  if (!sel) { body.innerHTML = '<p style="color:var(--muted)">Sem seleção registrada.</p>'; return; }
-
-  const statusLabel = { pending: 'Pendente', awaiting_confirmation: 'Aguardando confirmação', paid: 'Pago ✓' };
-  const numSelected = (sel.selected_photo_ids || []).length;
-
-  body.innerHTML = `
-    <div>
-      <div class="selection-detail-row"><span class="key">Cliente</span><span class="val">${client?.name || '—'}</span></div>
-      <div class="selection-detail-row"><span class="key">Fotos selecionadas</span><span class="val">${numSelected}</span></div>
-      <div class="selection-detail-row"><span class="key">Fotos inclusas</span><span class="val">${client?.included_count || 0}</span></div>
-      <div class="selection-detail-row"><span class="key">Fotos extras</span><span class="val">${sel.extras_count || 0}</span></div>
-      <div class="selection-detail-row"><span class="key">Valor total</span><span class="val" style="color:var(--accent)">R$ ${fmtMoney(sel.total_value || 0)}</span></div>
-      <div class="selection-detail-row"><span class="key">Status pagamento</span><span class="val">${statusLabel[sel.payment_status] || sel.payment_status}</span></div>
-      <div class="selection-detail-row"><span class="key">Data seleção</span><span class="val">${sel.confirmed_at ? new Date(sel.confirmed_at).toLocaleString('pt-BR') : '—'}</span></div>
+  el.innerHTML = projects.map(p => `
+    <div class="project-item ${p.id === currentProjectId ? 'selected' : ''}" onclick="openProjectDetail('${p.id}')">
+      <div class="project-item-name">${esc(p.name)}</div>
+      <div class="project-item-meta">
+        <div class="project-item-dot dot-${p.status}"></div>
+        ${esc(p.client_name)} · ${fmtDate(p.created_at)}
+      </div>
     </div>
-    ${sel.payment_status === 'awaiting_confirmation' ? `
-      <hr class="divider" />
-      <button class="btn btn-green btn-full" onclick="markPaid('${clientId}');closeModal('modal-selection');">✓ Confirmar Pagamento</button>
-    ` : ''}
+  `).join('');
+}
+
+function renderProjectsGrid(projects) {
+  const grid = document.getElementById('projects-grid');
+  if (!projects.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;padding:3rem">
+      <div class="empty-state-icon">◻</div>
+      <div class="empty-state-text">Nenhum projeto criado</div>
+      <div class="empty-state-sub">Crie um novo projeto para começar</div>
+    </div>`;
+    return;
+  }
+  grid.innerHTML = projects.map(p => `
+    <div class="project-card" onclick="openProjectDetail('${p.id}')">
+      <div class="project-card-cover">
+        ${p.cover_photo
+          ? `<img src="${p.cover_photo}" alt="">`
+          : `<div class="project-card-cover-placeholder">◻</div>`}
+      </div>
+      <div class="project-card-info">
+        <div class="project-card-name">${esc(p.name)}</div>
+        <div class="project-card-client">${esc(p.client_name)}</div>
+        <div class="project-card-footer">
+          <span class="badge badge-${p.status}">${statusLabel(p.status)}</span>
+          <div class="project-card-actions" onclick="event.stopPropagation()">
+            <button class="btn btn-ghost btn-sm btn-icon" title="Copiar link" onclick="copyClientLink('${p.id}')">🔗</button>
+            <button class="btn btn-danger btn-sm btn-icon" title="Excluir" onclick="promptDelete('${p.id}','${esc(p.name)}')">✕</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openNewProjectModal() {
+  document.getElementById('inp-project-name').value = '';
+  document.getElementById('inp-client-name').value = '';
+  document.getElementById('inp-client-email').value = '';
+  document.getElementById('inp-notes').value = '';
+  openModal('modal-new-project');
+}
+
+async function createProject() {
+  const name = document.getElementById('inp-project-name').value.trim();
+  const clientName = document.getElementById('inp-client-name').value.trim();
+  const clientEmail = document.getElementById('inp-client-email').value.trim();
+  const notes = document.getElementById('inp-notes').value.trim();
+
+  if (!name || !clientName) { toast('Preencha nome e cliente', 'error'); return; }
+
+  try {
+    const { data, error } = await supabase
+      .from('album_projects')
+      .insert({ name, client_name: clientName, client_email: clientEmail || null, notes: notes || null })
+      .select().single();
+
+    if (error) throw error;
+
+    closeModal('modal-new-project');
+    toast('Projeto criado com sucesso!', 'success');
+    await loadProjects();
+    openProjectDetail(data.id);
+  } catch (e) {
+    toast('Erro ao criar projeto: ' + e.message, 'error');
+  }
+}
+
+async function openProjectDetail(projectId) {
+  currentProjectId = projectId;
+
+  // Update sidebar selection
+  document.querySelectorAll('.project-item').forEach(el => {
+    el.classList.toggle('selected', el.onclick.toString().includes(projectId));
+  });
+
+  const { data: project, error } = await supabase
+    .from('album_projects')
+    .select('*')
+    .eq('id', projectId)
+    .single();
+
+  if (error) { toast('Erro ao carregar projeto', 'error'); return; }
+
+  // Load photos from Storage
+  const photos = await loadProjectPhotos(projectId);
+
+  document.getElementById('admin-toolbar-title').textContent = project.name;
+  document.getElementById('projects-overview').style.display = 'none';
+  document.getElementById('project-detail-view').style.display = 'block';
+
+  document.getElementById('project-detail-view').innerHTML = renderProjectDetail(project, photos);
+  initUploadZone(projectId);
+}
+
+function renderProjectDetail(project, photos) {
+  const clientLink = `${window.location.origin}${window.location.pathname}?projeto=${project.id}`;
+  const totalPhotos = photos.length;
+
+  return `
+    <div class="project-detail-header">
+      <div>
+        <div class="project-detail-title">${esc(project.name)}</div>
+        <div class="project-detail-client">${esc(project.client_name)}${project.client_email ? ' · ' + esc(project.client_email) : ''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.75rem">
+        <span class="badge badge-${project.status}">${statusLabel(project.status)}</span>
+        <button class="btn btn-ghost btn-sm" onclick="showAllProjects()">← Voltar</button>
+      </div>
+    </div>
+    <div style="padding:1.5rem">
+      <div class="section-title">Link do Cliente</div>
+      <div class="link-box">
+        <div style="flex:1">
+          <span class="link-box-label">Link Exclusivo</span>
+          <div class="link-box-url" id="client-link-url">${clientLink}</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="copyClientLink('${project.id}')">Copiar</button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-value">${totalPhotos}</div>
+          <div class="stat-label">Fotos</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">${project.status === 'finalized' ? '✓' : '—'}</div>
+          <div class="stat-label">Finalizado</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">${fmtDate(project.created_at)}</div>
+          <div class="stat-label">Criado em</div>
+        </div>
+      </div>
+
+      <div class="section-title">Upload de Fotos</div>
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+        <div class="upload-zone-icon">⊕</div>
+        <div class="upload-zone-text">Clique ou arraste fotos aqui</div>
+        <div class="upload-zone-subtext">JPG, PNG, WEBP — múltiplos arquivos suportados</div>
+      </div>
+      <input type="file" id="file-input" accept="image/*" multiple onchange="handleFileUpload(event,'${project.id}')">
+
+      <div id="upload-progress-list" class="upload-progress-list"></div>
+
+      <div class="section-title" style="margin-top:1.5rem">Fotos do Projeto (${totalPhotos})</div>
+      <div id="project-thumbs">
+        ${renderThumbnails(photos, project.id)}
+      </div>
+
+      ${project.notes ? `<div class="section-title" style="margin-top:1.5rem">Observações</div>
+        <div style="font-size:0.82rem;color:var(--pearl);background:var(--graphite);border-radius:var(--radius-md);padding:0.85rem 1rem;border:1px solid var(--border)">${esc(project.notes)}</div>` : ''}
+
+      <div style="margin-top:1.5rem;display:flex;gap:0.75rem;flex-wrap:wrap">
+        ${project.status !== 'finalized' ? `<button class="btn btn-success" onclick="downloadFinalized('${project.id}')">⬇ Baixar Seleção Final</button>` : ''}
+        <button class="btn btn-danger" onclick="promptDelete('${project.id}','${esc(project.name)}')">✕ Excluir Projeto</button>
+      </div>
+    </div>
   `;
 }
 
-/* ================================================================
-   ADMIN: MARK PAID
-================================================================ */
-async function markPaid(clientId) {
-  const { error } = await supabase
-    .from('fs_selections')
-    .update({ payment_status: 'paid' })
-    .eq('client_id', clientId);
-
-  if (error) { toast('Erro ao atualizar status', 'error'); return; }
-  toast('Pagamento confirmado!', 'success');
-  await loadClientsList();
+function renderThumbnails(photos, projectId) {
+  if (!photos.length) {
+    return `<div style="color:var(--smoke);font-size:0.82rem;padding:1rem 0">Nenhuma foto ainda. Faça upload acima.</div>`;
+  }
+  return `<div class="thumbnails-grid">${photos.map(photo => `
+    <div class="thumb-item">
+      <img src="${photo.url}" alt="" loading="lazy">
+      <button class="thumb-delete" onclick="deletePhoto('${projectId}','${photo.path}',this)" title="Remover">✕</button>
+    </div>
+  `).join('')}</div>`;
 }
 
-/* ================================================================
-   ADMIN: DELETE GALLERY
-================================================================ */
-async function deleteGallery(clientId, clientName) {
-  if (!confirm(`Deseja deletar "${clientName}" e todas as fotos? Esta ação é irreversível.`)) return;
+async function loadProjectPhotos(projectId) {
+  try {
+    const { data, error } = await supabase.storage
+      .from(BUCKET)
+      .list(projectId + '/', { limit: 500 });
 
-  // 1. Buscar fotos
-  const { data: photos } = await supabase
-    .from('fs_photos')
-    .select('storage_url, filename')
-    .eq('client_id', clientId);
+    if (error) throw error;
 
-  // 2. Deletar do Storage
-  if (photos && photos.length > 0) {
-    const paths = photos.map(p => {
-      // Extract path from full URL
-      const url = new URL(p.storage_url);
-      const parts = url.pathname.split('/object/public/' + BUCKET + '/');
-      return parts[1] || p.storage_url;
+    return (data || []).filter(f => f.name && !f.name.endsWith('/')).map(f => ({
+      path: `${projectId}/${f.name}`,
+      name: f.name,
+      url: supabase.storage.from(BUCKET).getPublicUrl(`${projectId}/${f.name}`).data.publicUrl
+    }));
+  } catch (e) {
+    return [];
+  }
+}
+
+function initUploadZone(projectId) {
+  setTimeout(() => {
+    const zone = document.getElementById('upload-zone');
+    if (!zone) return;
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+      if (files.length) uploadFiles(files, projectId);
     });
+  }, 100);
+}
 
-    const chunkSize = 100;
-    for (let i = 0; i < paths.length; i += chunkSize) {
-      await supabase.storage.from(BUCKET).remove(paths.slice(i, i + chunkSize));
+async function handleFileUpload(event, projectId) {
+  const files = Array.from(event.target.files);
+  if (!files.length) return;
+  await uploadFiles(files, projectId);
+  event.target.value = '';
+}
+
+async function uploadFiles(files, projectId) {
+  const progressList = document.getElementById('upload-progress-list');
+
+  for (const file of files) {
+    const itemId = 'prog-' + Math.random().toString(36).slice(2);
+    const ext = file.name.split('.').pop();
+    const fileName = Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
+    const filePath = `${projectId}/${fileName}`;
+
+    // Add progress item
+    if (progressList) {
+      progressList.innerHTML += `
+        <div class="upload-progress-item" id="${itemId}">
+          <div class="upload-progress-name">
+            <span>${esc(file.name)}</span><span id="${itemId}-pct">0%</span>
+          </div>
+          <div class="upload-progress-bar-wrap"><div class="upload-progress-bar" id="${itemId}-bar" style="width:0%"></div></div>
+        </div>`;
+    }
+
+    try {
+      const setProgress = (pct) => {
+        const bar = document.getElementById(`${itemId}-bar`);
+        const pctEl = document.getElementById(`${itemId}-pct`);
+        if (bar) bar.style.width = pct + '%';
+        if (pctEl) pctEl.textContent = pct + '%';
+      };
+      setProgress(10);
+
+      const { error } = await supabase.storage
+        .from(BUCKET)
+        .upload(filePath, file, { contentType: file.type, upsert: false });
+
+      setProgress(100);
+
+      if (error) throw error;
+
+      setTimeout(() => {
+        const item = document.getElementById(itemId);
+        if (item) item.remove();
+      }, 1500);
+
+    } catch (e) {
+      const item = document.getElementById(itemId);
+      if (item) item.style.borderLeft = '2px solid var(--danger)';
+      toast('Erro ao enviar ' + file.name + ': ' + e.message, 'error');
     }
   }
 
-  // 3. Deletar registros em fs_photos
-  await supabase.from('fs_photos').delete().eq('client_id', clientId);
+  // Refresh photo count and update project
+  const photos = await loadProjectPhotos(projectId);
+  const thumbsEl = document.getElementById('project-thumbs');
+  if (thumbsEl) thumbsEl.innerHTML = renderThumbnails(photos, projectId);
 
-  // 4. Deletar seleção
-  await supabase.from('fs_selections').delete().eq('client_id', clientId);
+  // Update total_photos
+  await supabase.from('album_projects').update({ total_photos: photos.length }).eq('id', projectId);
 
-  // 5. Deletar cliente
-  await supabase.from('fs_clients').delete().eq('id', clientId);
+  // Set cover if first photo
+  if (photos.length > 0) {
+    const { data: proj } = await supabase.from('album_projects').select('cover_photo').eq('id', projectId).single();
+    if (!proj?.cover_photo) {
+      await supabase.from('album_projects').update({ cover_photo: photos[0].url }).eq('id', projectId);
+    }
+  }
 
-  toast(`"${clientName}" deletado com sucesso`, 'success');
-  await loadClientsList();
+  toast(`${files.length} foto(s) enviada(s)!`, 'success');
+  loadProjects();
 }
 
-/* ================================================================
-   CLIENT: LOAD
-================================================================ */
-async function loadClient(clientId) {
-  showEl('client-view');
-  hideEl('finalize-bar'); // temporarily hide
+async function deletePhoto(projectId, path, btn) {
+  try {
+    const { error } = await supabase.storage.from(BUCKET).remove([path]);
+    if (error) throw error;
+    btn.closest('.thumb-item').remove();
+    toast('Foto removida', 'success');
+    // update count
+    const photos = await loadProjectPhotos(projectId);
+    await supabase.from('album_projects').update({ total_photos: photos.length }).eq('id', projectId);
+  } catch (e) {
+    toast('Erro ao remover foto', 'error');
+  }
+}
 
-  // Check if already has selection
-  const { data: existing } = await supabase
-    .from('fs_selections')
+function showAllProjects() {
+  currentProjectId = null;
+  document.getElementById('admin-toolbar-title').textContent = 'Todos os Projetos';
+  document.getElementById('project-detail-view').style.display = 'none';
+  document.getElementById('projects-overview').style.display = 'block';
+  document.querySelectorAll('.project-item').forEach(el => el.classList.remove('selected'));
+}
+
+function copyClientLink(projectId) {
+  const link = `${window.location.origin}${window.location.pathname}?projeto=${projectId}`;
+  navigator.clipboard.writeText(link).then(() => toast('Link copiado!', 'success'));
+}
+
+function promptDelete(projectId, name) {
+  deleteTargetId = projectId;
+  document.getElementById('delete-project-name').textContent = name;
+  openModal('modal-delete');
+}
+
+async function executeDeleteProject() {
+  if (!deleteTargetId) return;
+  try {
+    // Delete storage files
+    const photos = await loadProjectPhotos(deleteTargetId);
+    if (photos.length) {
+      await supabase.storage.from(BUCKET).remove(photos.map(p => p.path));
+    }
+    // Delete DB record (cascades to layouts)
+    const { error } = await supabase.from('album_projects').delete().eq('id', deleteTargetId);
+    if (error) throw error;
+
+    closeModal('modal-delete');
+    toast('Projeto excluído', 'success');
+    showAllProjects();
+    await loadProjects();
+  } catch (e) {
+    toast('Erro ao excluir: ' + e.message, 'error');
+  }
+}
+
+async function downloadFinalized(projectId) {
+  toast('Preparando download das fotos selecionadas…', 'info');
+  const { data: layouts } = await supabase
+    .from('album_layouts')
     .select('*')
-    .eq('client_id', clientId)
-    .single();
+    .eq('project_id', projectId);
 
-  if (existing) {
-    showAlreadySelected(existing);
+  if (!layouts || !layouts.length) {
+    toast('Nenhuma montagem salva ainda', 'error');
     return;
   }
 
-  // Load client info
-  const { data: client, error: cErr } = await supabase
-    .from('fs_clients')
-    .select('*')
-    .eq('id', clientId)
-    .single();
+  const allPhotos = [];
+  layouts.forEach(page => {
+    (page.photos || []).forEach(p => {
+      if (p.photo_url) allPhotos.push(p.photo_url);
+    });
+  });
 
-  if (cErr || !client) {
-    document.body.innerHTML = `<div style="text-align:center;padding:80px 20px;font-family:'DM Sans',sans-serif;color:#f0ede8;"><h2>Galeria não encontrada</h2><p style="color:#7a7672;margin-top:10px;">Verifique o link ou contate o fotógrafo.</p></div>`;
+  const unique = [...new Set(allPhotos)];
+  if (!unique.length) {
+    toast('Nenhuma foto na montagem final', 'error');
     return;
   }
 
-  currentClient = client;
+  toast(`${unique.length} foto(s) selecionadas. Abrindo links…`, 'success');
+  // Open each photo in new tab (limitation without backend)
+  unique.slice(0, 10).forEach((url, i) => {
+    setTimeout(() => window.open(url, '_blank'), i * 300);
+  });
+}
+
+// =============================================
+// CLIENT VIEW
+// =============================================
+async function loadClientView(projectId) {
+  // Load project
+  const { data: project, error } = await supabase
+    .from('album_projects')
+    .select('*')
+    .eq('id', projectId)
+    .single();
+
+  if (error || !project) {
+    showView('landing');
+    toast('Projeto não encontrado', 'error');
+    return;
+  }
+
+  currentProject = project;
+  currentProjectId = projectId;
+  isFinalized = project.status === 'finalized';
 
   // Update header
-  document.getElementById('header-right').innerHTML = `
-    <span style="font-size:0.8rem;color:var(--muted);">Galeria do Cliente</span>`;
+  document.getElementById('header-context').textContent = project.name + ' — ' + project.client_name;
 
-  // Update hero
-  document.getElementById('client-title').textContent = client.name;
-  const meta = document.getElementById('client-meta');
-  const chips = [
-    client.event && `📅 ${client.event}`,
-    client.event_date && formatDate(client.event_date),
-    `📷 ${client.included_count} fotos inclusas`,
-    `➕ R$ ${fmtMoney(client.price_per_extra)} por foto extra`,
-  ].filter(Boolean);
-  meta.innerHTML = chips.map(c => `<span class="meta-chip">${c}</span>`).join('');
+  // Load photos from storage
+  projectPhotos = await loadProjectPhotos(projectId);
 
-  // Update counter included
-  document.getElementById('cnt-included').textContent = client.included_count;
-
-  // Load photos
-  await loadPhotos(clientId);
-
-  // Show finalize bar
-  showEl('finalize-bar');
-
-  // Prevent right click on page
-  document.addEventListener('contextmenu', e => {
-    if (e.target.tagName === 'IMG') e.preventDefault();
-  });
-
-  // Finalize button
-  document.getElementById('btn-finalize').addEventListener('click', () => handleFinalize(clientId));
-}
-
-/* ================================================================
-   CLIENT: LOAD PHOTOS
-================================================================ */
-async function loadPhotos(clientId) {
-  const grid    = document.getElementById('photo-grid');
-  const loading = document.getElementById('grid-loading');
-
-  showEl('grid-loading');
-  grid.innerHTML = '';
-
-  const { data: photos, error } = await supabase
-    .from('fs_photos')
+  // Load existing layout
+  const { data: layouts } = await supabase
+    .from('album_layouts')
     .select('*')
-    .eq('client_id', clientId)
-    .order('photo_order', { ascending: true });
+    .eq('project_id', projectId)
+    .order('page_index');
 
-  hideEl('grid-loading');
+  // Initialize albumPages array
+  albumPages = [];
+  for (let i = 0; i < TOTAL_PAGES; i++) {
+    const saved = layouts ? layouts.find(l => l.page_index === i) : null;
+    albumPages.push({
+      page_index: i,
+      layout_type: saved ? saved.layout_type : '1',
+      photos: saved ? (saved.photos || []) : []
+    });
+  }
 
-  if (error || !photos || photos.length === 0) {
-    grid.innerHTML = `
-      <div class="empty-state" style="grid-column:1/-1;">
-        <div class="empty-icon">🖼</div>
-        <h3>Nenhuma foto disponível</h3>
-        <p>As fotos ainda não foram enviadas pelo fotógrafo.</p>
-      </div>`;
+  showView('client');
+
+  if (isFinalized) {
+    document.getElementById('client-action-bar').style.display = 'none';
+    document.getElementById('finalized-bar').style.display = 'block';
+  }
+
+  renderGallery();
+  renderPagesOverview();
+  navigateToPage(0);
+  updateCompletion();
+
+  // Mark as editing
+  if (!isFinalized && project.status === 'pending') {
+    await supabase.from('album_projects').update({ status: 'editing' }).eq('id', projectId);
+  }
+}
+
+function renderGallery() {
+  const grid = document.getElementById('gallery-grid');
+  const countEl = document.getElementById('gallery-count');
+
+  if (!projectPhotos.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--smoke);font-size:0.78rem">Sem fotos</div>`;
     return;
   }
 
-  allPhotos = photos;
-  updateCounter();
+  countEl.textContent = projectPhotos.length + ' fotos';
 
-  photos.forEach(photo => {
-    const item = document.createElement('div');
-    item.className = 'photo-item';
-    item.dataset.id = photo.id;
-    item.innerHTML = `
-      <img src="${photo.storage_url}" alt="Foto ${photo.photo_order}"
-           loading="lazy"
-           draggable="false"
-           oncontextmenu="return false;" />
-      <div class="photo-check">✓</div>
-      <span class="photo-num">#${photo.photo_order}</span>
+  grid.innerHTML = projectPhotos.map((photo, idx) => `
+    <div class="gallery-photo" 
+      draggable="true"
+      data-url="${photo.url}"
+      data-path="${photo.path}"
+      data-idx="${idx}"
+      ondragstart="onGalleryDragStart(event, '${photo.url}', '${photo.path}')"
+      ondragend="onDragEnd(event)"
+    >
+      <img src="${photo.url}" alt="" loading="lazy">
+    </div>
+  `).join('');
+
+  updateUsedPhotos();
+}
+
+function updateUsedPhotos() {
+  const usedUrls = new Set();
+  albumPages.forEach(page => {
+    (page.photos || []).forEach(p => { if (p.photo_url) usedUrls.add(p.photo_url); });
+  });
+
+  document.querySelectorAll('.gallery-photo').forEach(el => {
+    el.classList.toggle('used', usedUrls.has(el.dataset.url));
+  });
+}
+
+function renderPagesOverview() {
+  const list = document.getElementById('pages-overview-list');
+  list.innerHTML = albumPages.map((page, i) => {
+    const label = i === 0 ? 'Capa' : `Páginas ${(i-1)*2+1}-${(i-1)*2+2}`;
+    const photoCount = (page.photos || []).filter(p => p.photo_url).length;
+    const maxSlots = parseInt(page.layout_type) || 1;
+    return `
+      <div class="page-thumb-item ${i === currentPageIndex ? 'active' : ''}" onclick="navigateToPage(${i})" id="page-thumb-${i}">
+        <div class="page-thumb-preview tp-${page.layout_type}">
+          ${Array.from({length: maxSlots}).map((_,s) => {
+            const filled = (page.photos||[]).find(p => p.slot === s && p.photo_url);
+            return `<div class="${filled ? 'filled' : ''}"></div>`;
+          }).join('')}
+        </div>
+        <div class="page-thumb-info">
+          <div class="page-thumb-label">${label}</div>
+          <div class="page-thumb-sub">${photoCount}/${maxSlots} fotos</div>
+        </div>
+      </div>
     `;
-    item.addEventListener('click', () => togglePhoto(photo.id, item));
-    grid.appendChild(item);
+  }).join('');
+}
+
+function navigateToPage(idx) {
+  currentPageIndex = idx;
+
+  // Update sidebar highlight
+  document.querySelectorAll('.page-thumb-item').forEach((el, i) => el.classList.toggle('active', i === idx));
+
+  // Update nav
+  document.getElementById('btn-prev-page').disabled = idx === 0;
+  document.getElementById('btn-next-page').disabled = idx === TOTAL_PAGES - 1;
+
+  const label = idx === 0 ? 'Capa' : `Páginas ${(idx-1)*2+1}–${(idx-1)*2+2}`;
+  document.getElementById('page-indicator').textContent = label;
+
+  // Update layout options
+  const page = albumPages[idx];
+  document.querySelectorAll('.layout-option').forEach(el => {
+    el.classList.toggle('active', el.dataset.layout === page.layout_type);
   });
+
+  // Render page
+  renderAlbumPage();
 }
 
-/* ================================================================
-   CLIENT: TOGGLE PHOTO
-================================================================ */
-function togglePhoto(id, el) {
-  if (selectedIds.has(id)) {
-    selectedIds.delete(id);
-    el.classList.remove('selected');
-  } else {
-    selectedIds.add(id);
-    el.classList.add('selected');
-  }
-  updateCounter();
+function navigatePage(dir) {
+  const newIdx = currentPageIndex + dir;
+  if (newIdx < 0 || newIdx >= TOTAL_PAGES) return;
+  navigateToPage(newIdx);
 }
 
-/* ================================================================
-   CLIENT: CALCULATE EXTRAS & UPDATE COUNTER
-================================================================ */
-function calculateExtras() {
-  if (!currentClient) return { extras: 0, value: 0 };
-  const selected = selectedIds.size;
-  const extras   = Math.max(0, selected - currentClient.included_count);
-  const value    = extras * currentClient.price_per_extra;
-  return { extras, value, selected };
-}
+function setLayout(layoutType) {
+  const page = albumPages[currentPageIndex];
+  if (!page) return;
 
-function updateCounter() {
-  const { extras, value, selected } = calculateExtras();
-  document.getElementById('cnt-selected').textContent = selected;
-  document.getElementById('cnt-extras').textContent   = extras;
-  document.getElementById('cnt-value').textContent    = 'R$ ' + fmtMoney(value);
+  const oldLayout = page.layout_type;
+  page.layout_type = layoutType;
 
-  const hint = document.getElementById('finalize-hint');
-  if (selected === 0) {
-    hint.textContent = 'Selecione pelo menos uma foto para finalizar';
-  } else if (extras > 0) {
-    hint.textContent = `${extras} foto(s) extra(s) • pagamento via PIX necessário`;
-  } else {
-    hint.textContent = `${selected} foto(s) selecionada(s) • dentro do pacote incluso`;
-  }
-}
+  // Trim photos if reducing slots
+  const maxSlots = parseInt(layoutType);
+  page.photos = (page.photos || []).filter(p => p.slot < maxSlots);
 
-/* ================================================================
-   CLIENT: FINALIZE
-================================================================ */
-function handleFinalize(clientId) {
-  if (selectedIds.size === 0) { toast('Selecione ao menos uma foto', 'error'); return; }
-
-  const { extras, value } = calculateExtras();
-
-  if (extras > 0) {
-    // Show PIX modal
-    document.getElementById('pix-value-display').textContent = 'R$ ' + fmtMoney(value);
-    document.getElementById('pix-key-display').textContent   = PIX_KEY;
-
-    document.getElementById('btn-copy-pix').onclick = () => {
-      copyToClipboard(PIX_KEY);
-      toast('Chave PIX copiada!', 'success');
-    };
-
-    document.getElementById('btn-paid').onclick = () => {
-      closeModal('modal-pix');
-      saveSelection(clientId, 'awaiting_confirmation', extras, value);
-    };
-
-    showEl('modal-pix');
-  } else {
-    saveSelection(clientId, 'pending', 0, 0);
-  }
-}
-
-/* ================================================================
-   CLIENT: SAVE SELECTION
-================================================================ */
-async function saveSelection(clientId, status, extrasCount, totalValue) {
-  const btn = document.getElementById('btn-finalize');
-  btn.disabled = true;
-  btn.textContent = 'Salvando...';
-
-  const { error } = await supabase.from('fs_selections').upsert({
-    client_id:         clientId,
-    selected_photo_ids: Array.from(selectedIds),
-    extras_count:       extrasCount,
-    total_value:        totalValue,
-    payment_status:     status,
-    confirmed_at:       new Date().toISOString(),
-  }, { onConflict: 'client_id' });
-
-  if (error) {
-    toast('Erro ao salvar seleção: ' + error.message, 'error');
-    btn.disabled = false;
-    btn.textContent = '✓ Finalizar Seleção';
-    return;
+  // Handle layout 3 special case
+  if (layoutType === '3') {
+    // Slots: 0=top-full, 1=bottom-left, 2=bottom-right
   }
 
-  toast('Seleção enviada com sucesso!', 'success');
-
-  // Show confirmation
-  hideEl('client-view');
-  showAlreadySelected({
-    selected_photo_ids: Array.from(selectedIds),
-    extras_count:  extrasCount,
-    total_value:   totalValue,
-    payment_status: status,
-    confirmed_at:  new Date().toISOString(),
-  }, true);
+  // Update UI
+  document.querySelectorAll('.layout-option').forEach(el => el.classList.toggle('active', el.dataset.layout === layoutType));
+  renderAlbumPage();
+  renderPagesOverview();
+  scheduleSave();
 }
 
-/* ================================================================
-   CLIENT: ALREADY SELECTED VIEW
-================================================================ */
-function showAlreadySelected(sel, justSent = false) {
-  hideEl('finalize-bar');
-  showEl('already-selected-view');
+function renderAlbumPage() {
+  const page = albumPages[currentPageIndex];
+  const canvas = document.getElementById('album-page-canvas');
+  const isCover = currentPageIndex === 0;
 
-  const statusMsg = {
-    pending:               'Sua seleção foi registrada sem custo extra.',
-    awaiting_confirmation: 'Seleção enviada! Aguardando confirmação do pagamento.',
-    paid:                  'Seleção confirmada e pagamento registrado. Obrigado!',
-  };
+  canvas.className = `album-page ${isCover ? 'cover-page' : 'double-page'}`;
 
-  document.getElementById('already-msg').textContent =
-    justSent ? 'Sua seleção foi enviada com sucesso!' : (statusMsg[sel.payment_status] || 'Seleção enviada.');
+  const maxSlots = parseInt(page.layout_type);
+  let slotsHTML = '';
 
-  const numSelected = (sel.selected_photo_ids || []).length;
-  document.getElementById('already-detail').innerHTML = `
-    <div class="card card-accent" style="max-width:360px;margin:0 auto;text-align:left;">
-      <div class="selection-detail-row"><span class="key">Fotos selecionadas</span><span class="val">${numSelected}</span></div>
-      <div class="selection-detail-row"><span class="key">Fotos extras</span><span class="val">${sel.extras_count || 0}</span></div>
-      ${(sel.total_value || 0) > 0 ? `<div class="selection-detail-row"><span class="key">Valor total</span><span class="val" style="color:var(--accent)">R$ ${fmtMoney(sel.total_value)}</span></div>` : ''}
-      <div class="selection-detail-row"><span class="key">Status</span><span class="val">${statusMsg[sel.payment_status] || sel.payment_status}</span></div>
-    </div>`;
+  for (let s = 0; s < maxSlots; s++) {
+    const photoData = (page.photos || []).find(p => p.slot === s);
+    if (photoData && photoData.photo_url) {
+      slotsHTML += `
+        <div class="photo-slot" 
+          data-slot="${s}"
+          ondragover="onSlotDragOver(event)"
+          ondragleave="onSlotDragLeave(event)"
+          ondrop="onSlotDrop(event, ${s})"
+        >
+          <img src="${photoData.photo_url}" alt="">
+          ${!isFinalized ? `<button class="slot-remove" onclick="removePhoto(${s})" title="Remover">✕</button>` : ''}
+        </div>`;
+    } else {
+      slotsHTML += `
+        <div class="photo-slot empty"
+          data-slot="${s}"
+          ondragover="onSlotDragOver(event)"
+          ondragleave="onSlotDragLeave(event)"
+          ondrop="onSlotDrop(event, ${s})"
+          onclick="onSlotClick(${s})"
+        >
+          <div class="slot-placeholder">
+            <div class="slot-placeholder-icon">⊕</div>
+            <div class="slot-placeholder-text">Arraste uma foto</div>
+          </div>
+        </div>`;
+    }
+  }
+
+  canvas.innerHTML = `
+    <div class="page-layout layout-${page.layout_type}">
+      ${slotsHTML}
+    </div>
+    ${!isCover ? '<div class="page-spine"></div>' : ''}
+  `;
 }
 
-/* ================================================================
-   MODAL HELPERS
-================================================================ */
-function closeModal(id) { hideEl(id); }
+function removePhoto(slotIndex) {
+  const page = albumPages[currentPageIndex];
+  page.photos = (page.photos || []).filter(p => p.slot !== slotIndex);
+  renderAlbumPage();
+  renderPagesOverview();
+  updateUsedPhotos();
+  updateCompletion();
+  scheduleSave();
+}
 
-// Close modal on overlay click
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-  overlay.addEventListener('click', e => {
-    if (e.target === overlay) overlay.classList.add('hidden');
+function clearCurrentPage() {
+  const page = albumPages[currentPageIndex];
+  page.photos = [];
+  renderAlbumPage();
+  renderPagesOverview();
+  updateUsedPhotos();
+  updateCompletion();
+  scheduleSave();
+}
+
+// =============================================
+// DRAG AND DROP
+// =============================================
+function onGalleryDragStart(event, photoUrl, photoPath) {
+  dragData = { url: photoUrl, path: photoPath };
+  event.dataTransfer.effectAllowed = 'copy';
+  event.dataTransfer.setData('text/plain', photoUrl);
+
+  // Ghost image
+  const ghost = document.createElement('div');
+  ghost.className = 'dragging-ghost';
+  ghost.style.cssText = `width:80px;height:80px;`;
+  ghost.innerHTML = `<img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:4px;">`;
+  document.body.appendChild(ghost);
+  event.dataTransfer.setDragImage(ghost, 40, 40);
+  setTimeout(() => ghost.remove(), 0);
+}
+
+function onDragEnd(event) {
+  dragData = null;
+}
+
+function onSlotDragOver(event) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'copy';
+  event.currentTarget.classList.add('drag-over');
+}
+
+function onSlotDragLeave(event) {
+  event.currentTarget.classList.remove('drag-over');
+}
+
+function onSlotDrop(event, slotIndex) {
+  event.preventDefault();
+  event.currentTarget.classList.remove('drag-over');
+
+  if (!dragData) return;
+  placePhotoInSlot(slotIndex, dragData.url, dragData.path);
+}
+
+function onSlotClick(slotIndex) {
+  // Show a simple prompt to select photo by clicking gallery
+  toast('Arraste uma foto da galeria para este slot', 'info', 2000);
+}
+
+function placePhotoInSlot(slotIndex, photoUrl, photoPath) {
+  const page = albumPages[currentPageIndex];
+  // Remove existing in this slot
+  page.photos = (page.photos || []).filter(p => p.slot !== slotIndex);
+  // Add new
+  page.photos.push({ slot: slotIndex, photo_url: photoUrl, photo_path: photoPath });
+
+  renderAlbumPage();
+  renderPagesOverview();
+  updateUsedPhotos();
+  updateCompletion();
+  scheduleSave();
+}
+
+// =============================================
+// SAVE / FINALIZE
+// =============================================
+function scheduleSave() {
+  if (isFinalized) return;
+  const statusEl = document.getElementById('save-status');
+  if (statusEl) { statusEl.textContent = 'Modificado…'; statusEl.className = 'save-status'; }
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(saveLayout, 3000);
+}
+
+async function saveLayout() {
+  if (isFinalized || isSaving) return;
+  isSaving = true;
+
+  const statusEl = document.getElementById('save-status');
+  if (statusEl) { statusEl.textContent = 'Salvando…'; }
+
+  try {
+    // Upsert all pages
+    const upserts = albumPages.map(page => ({
+      project_id: currentProjectId,
+      page_index: page.page_index,
+      layout_type: page.layout_type,
+      photos: page.photos || []
+    }));
+
+    // Batch upsert
+    for (const item of upserts) {
+      await supabase.from('album_layouts').upsert(item, { onConflict: 'project_id,page_index' });
+    }
+
+    if (statusEl) { statusEl.textContent = 'Salvo ✦'; statusEl.className = 'save-status saved'; }
+    setTimeout(() => {
+      if (statusEl) { statusEl.textContent = 'Salvo automaticamente'; }
+    }, 2000);
+  } catch (e) {
+    if (statusEl) { statusEl.textContent = 'Erro ao salvar'; }
+    toast('Erro ao salvar: ' + e.message, 'error');
+  } finally {
+    isSaving = false;
+  }
+}
+
+function confirmFinalize() {
+  openModal('modal-finalize');
+}
+
+async function finalizeAlbum() {
+  closeModal('modal-finalize');
+  await saveLayout();
+
+  const { error } = await supabase.from('album_projects')
+    .update({ status: 'finalized', finalized_at: new Date().toISOString() })
+    .eq('id', currentProjectId);
+
+  if (error) { toast('Erro ao finalizar', 'error'); return; }
+
+  isFinalized = true;
+  document.getElementById('client-action-bar').style.display = 'none';
+  document.getElementById('finalized-bar').style.display = 'block';
+  toast('Álbum finalizado com sucesso! O fotógrafo foi notificado.', 'success', 5000);
+}
+
+function updateCompletion() {
+  let total = 0, filled = 0;
+  albumPages.forEach(page => {
+    const max = parseInt(page.layout_type) || 1;
+    total += max;
+    filled += (page.photos || []).filter(p => p.photo_url).length;
   });
-});
 
-/* ================================================================
-   TOAST
-================================================================ */
-function toast(msg, type = 'info') {
-  const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  el.textContent = msg;
-  document.getElementById('toast-container').appendChild(el);
-  setTimeout(() => el.remove(), 3500);
+  const pct = total > 0 ? Math.round((filled / total) * 100) : 0;
+  const bar = document.getElementById('completion-bar');
+  const val = document.getElementById('completion-value');
+  const header = document.getElementById('completion-header');
+
+  if (bar) bar.style.width = pct + '%';
+  if (val) val.textContent = pct + '%';
+  if (header) header.style.display = 'flex';
 }
 
-/* ================================================================
-   HELPERS
-================================================================ */
-function showEl(id) {
-  const el = typeof id === 'string' ? document.getElementById(id) : id;
-  if (el) el.classList.remove('hidden');
-}
-function hideEl(id) {
-  const el = typeof id === 'string' ? document.getElementById(id) : id;
-  if (el) el.classList.add('hidden');
+// =============================================
+// UTILITIES
+// =============================================
+function esc(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function formatDate(d) {
-  if (!d) return '—';
-  const [y, m, day] = d.split('-');
-  return `${day}/${m}/${y}`;
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit' });
 }
 
-function fmtMoney(v) {
-  return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function statusLabel(status) {
+  return { pending: 'Pendente', editing: 'Editando', finalized: 'Finalizado' }[status] || status;
 }
 
-function copyToClipboard(text) {
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(text);
-  } else {
-    const el = document.createElement('textarea');
-    el.value = text;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-  }
-}
-
-/* ================================================================
-   BOOT
-================================================================ */
-window.addEventListener('DOMContentLoaded', init);
+// =============================================
+// START
+// =============================================
+init();
 </script>
 </body>
 </html>
