@@ -3993,23 +3993,33 @@ CREATE POLICY "mkp_fotos_auth_delete" ON storage.objects
   /* ── Aguarda supabaseClient ficar disponível ── */
   function _aguardarDb(cb, tentativas) {
     tentativas = tentativas || 0;
-    if (window.supabaseClient) { cb(window.supabaseClient); return; }
-    if (tentativas > 40) { console.warn('Leads Intel: supabaseClient não encontrado'); return; }
+    if (window.supabaseClient) { 
+      console.log('[LeadsIntel] supabaseClient encontrado na tentativa', tentativas);
+      cb(window.supabaseClient); 
+      return; 
+    }
+    if (tentativas > 40) { 
+      console.warn('[LeadsIntel] supabaseClient não encontrado após 10s');
+      return; 
+    }
     setTimeout(function() { _aguardarDb(cb, tentativas + 1); }, 250);
   }
 
   /* ── Carrega dados do Supabase ── */
   window.liCarregar = function() {
+    console.log('[LeadsIntel] liCarregar chamado');
     _aguardarDb(async function(db) {
+    console.log('[LeadsIntel] iniciando queries');
     var hoje = _hoje();
     var d7   = _d7();
 
     /* KPI: sessões hoje */
     try {
-      var { count: c1 } = await db.from('eventos_lead')
+      var { count: c1, error: e1 } = await db.from('eventos_lead')
         .select('*', {count:'exact', head:true})
         .eq('evento','sessao_inicio')
         .gte('criado_em', hoje + 'T00:00:00');
+      console.log('[LeadsIntel] sessoes hoje:', c1, 'erro:', e1);
       document.getElementById('li-hoje').textContent = c1 || 0;
     } catch(e) {}
 
