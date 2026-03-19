@@ -3991,17 +3991,31 @@ CREATE POLICY "mkp_fotos_auth_delete" ON storage.objects
     return labels[ev] || ev + (detalhe ? ': ' + detalhe : '');
   }
 
-  /* ── Aguarda supabaseClient ficar disponível ── */
+  /* ── Client Supabase próprio — independente do ADM ── */
+  var _liDb = null;
+  function _getDb() {
+    if (_liDb) return _liDb;
+    try {
+      var url = 'https://ledpqcynvqbdbccebhbo.supabase.co';
+      var key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlZHBxY3ludnFiZGJjY2ViaGJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzODc3MjgsImV4cCI6MjA4NTk2MzcyOH0.s8GOzp4woujGuDc4vK9QXIf3cWLMENUnJfE4lt_YhLg';
+      _liDb = window.supabase.createClient(url, key);
+      console.log('[LeadsIntel] client próprio criado');
+    } catch(e) {
+      console.warn('[LeadsIntel] erro ao criar client:', e);
+    }
+    return _liDb;
+  }
+
+  /* ── Aguarda supabase lib ficar disponível ── */
   function _aguardarDb(cb, tentativas) {
     tentativas = tentativas || 0;
-    if (window.supabaseClient) { 
-      console.log('[LeadsIntel] supabaseClient encontrado na tentativa', tentativas);
-      cb(window.supabaseClient); 
-      return; 
+    if (window.supabase && window.supabase.createClient) {
+      var db = _getDb();
+      if (db) { cb(db); return; }
     }
-    if (tentativas > 40) { 
-      console.warn('[LeadsIntel] supabaseClient não encontrado após 10s');
-      return; 
+    if (tentativas > 40) {
+      console.warn('[LeadsIntel] supabase lib não encontrada após 10s');
+      return;
     }
     setTimeout(function() { _aguardarDb(cb, tentativas + 1); }, 250);
   }
@@ -4019,7 +4033,7 @@ CREATE POLICY "mkp_fotos_auth_delete" ON storage.objects
       var { count: c1, error: e1 } = await db.from('eventos_lead')
         .select('*', {count:'exact', head:true})
         .eq('evento','sessao_inicio')
-        .gte('criado_em', hoje + 'T00:00:00');
+        .gte('criado_em', hoje + 'T03:00:00Z');
       console.log('[LeadsIntel] sessoes hoje:', c1, 'erro:', e1);
       document.getElementById('li-hoje').textContent = c1 || 0;
     } catch(e) {}
@@ -4029,7 +4043,7 @@ CREATE POLICY "mkp_fotos_auth_delete" ON storage.objects
       var { count: c2 } = await db.from('eventos_lead')
         .select('*', {count:'exact', head:true})
         .eq('evento','sessao_inicio')
-        .gte('criado_em', d7 + 'T00:00:00');
+        .gte('criado_em', d7 + 'T03:00:00Z');
       document.getElementById('li-semana').textContent = c2 || 0;
     } catch(e) {}
 
