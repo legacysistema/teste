@@ -3990,11 +3990,17 @@ CREATE POLICY "mkp_fotos_auth_delete" ON storage.objects
     return labels[ev] || ev + (detalhe ? ': ' + detalhe : '');
   }
 
-  /* ── Carrega dados do Supabase ── */
-  window.liCarregar = async function() {
-    var db = window.supabaseClient;
-    if (!db) return;
+  /* ── Aguarda supabaseClient ficar disponível ── */
+  function _aguardarDb(cb, tentativas) {
+    tentativas = tentativas || 0;
+    if (window.supabaseClient) { cb(window.supabaseClient); return; }
+    if (tentativas > 40) { console.warn('Leads Intel: supabaseClient não encontrado'); return; }
+    setTimeout(function() { _aguardarDb(cb, tentativas + 1); }, 250);
+  }
 
+  /* ── Carrega dados do Supabase ── */
+  window.liCarregar = function() {
+    _aguardarDb(async function(db) {
     var hoje = _hoje();
     var d7   = _d7();
 
@@ -4086,6 +4092,7 @@ CREATE POLICY "mkp_fotos_auth_delete" ON storage.objects
         }).join('');
       }
     } catch(e) {}
+    }); /* fecha _aguardarDb */
   };
 
   /* Hook removido — unificado no script principal */
