@@ -4028,22 +4028,24 @@ CREATE POLICY "mkp_fotos_auth_delete" ON storage.objects
     var hoje = _hoje();
     var d7   = _d7();
 
-    /* KPI: sessões hoje */
+    /* KPI: sessões hoje — últimas 24h */
     try {
+      var ontem = new Date(Date.now() - 24*60*60*1000).toISOString();
       var { count: c1, error: e1 } = await db.from('eventos_lead')
         .select('*', {count:'exact', head:true})
         .eq('evento','sessao_inicio')
-        .gte('criado_em', hoje + 'T03:00:00Z');
+        .gte('criado_em', ontem);
       console.log('[LeadsIntel] sessoes hoje:', c1, 'erro:', e1);
       document.getElementById('li-hoje').textContent = c1 || 0;
     } catch(e) {}
 
     /* KPI: sessões 7 dias */
     try {
+      var d7iso = new Date(Date.now() - 7*24*60*60*1000).toISOString();
       var { count: c2 } = await db.from('eventos_lead')
         .select('*', {count:'exact', head:true})
         .eq('evento','sessao_inicio')
-        .gte('criado_em', d7 + 'T03:00:00Z');
+        .gte('criado_em', d7iso);
       document.getElementById('li-semana').textContent = c2 || 0;
     } catch(e) {}
 
@@ -4055,11 +4057,12 @@ CREATE POLICY "mkp_fotos_auth_delete" ON storage.objects
       document.getElementById('li-interesses').textContent = c3 || 0;
     } catch(e) {}
 
-    /* Pacotes mais abertos */
+    /* Pacotes mais abertos — todos os registros */
     try {
       var { data: pacs } = await db.from('eventos_lead')
         .select('detalhe')
-        .eq('evento','pacote_aberto');
+        .eq('evento','pacote_aberto')
+        .gte('criado_em', new Date(Date.now() - 30*24*60*60*1000).toISOString());
       var contagem = {};
       (pacs||[]).forEach(function(r){ contagem[r.detalhe] = (contagem[r.detalhe]||0)+1; });
       var sorted = Object.entries(contagem).sort(function(a,b){return b[1]-a[1];}).slice(0,6);
