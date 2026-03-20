@@ -4028,6 +4028,12 @@ CREATE POLICY "mkp_fotos_auth_delete" ON storage.objects
     var hoje = _hoje();
     var d7   = _d7();
 
+    /* DEBUG: busca tudo sem filtro */
+    try {
+      var { data: todos, error: etodos } = await db.from('eventos_lead').select('*').limit(5);
+      console.log('[LeadsIntel] DEBUG todos (sem filtro):', todos, 'erro:', etodos);
+    } catch(e) { console.log('[LeadsIntel] DEBUG erro:', e); }
+
     /* KPI: sessões hoje — últimas 24h */
     try {
       var ontem = new Date(Date.now() - 24*60*60*1000).toISOString();
