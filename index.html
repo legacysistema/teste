@@ -2482,7 +2482,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 var _su = atob('aHR0cHM6Ly9sZWRwcWN5bnZxYmRiY2NlYmhiby5zdXBhYmFzZS5jbw==');
 var _sk = atob('ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnBjM01pT2lKemRYQmhZbUZ6WlNJc0luSmxaaUk2SW14bFpIQnhZM2x1ZG5GaVpHSmpZMlZpYUdKdklpd2ljbTlzWlNJNkltRnViMjRpTENKcFlYUWlPakUzTnpBek9EYzNNamdzSW1WNGNDSTZNakE0TlRrMk16Y3lPSDAuczhHT3pwNHdvdWpHdURjNHZLOVFYSWYzY1dMTUVOVW5KZkU0bHRfWWhMZw==');
-var _db = window.supabase.createClient(_su, _sk);
+var _db;
+try { _db = window.supabase.createClient(_su, _sk); } catch(e) { console.warn('Supabase init error:', e); _db = null; }
 window._dbPS = _db; // expõe para scripts externos
 
 var _T = {
@@ -3905,16 +3906,21 @@ document.querySelectorAll('.faq-close, .faq-overlay').forEach(function(el){
 </div>
 
 <script>
-const aiChat = {
+var aiChat = window.aiChat = {
 
   history: [],
   chipsShown: false,
   isLoading: false,
 
   open() {
-    document.getElementById('aiOverlay').classList.add('active');
+    var overlay = document.getElementById('aiOverlay');
+    if (!overlay) { alert('Erro: modal não encontrado'); return; }
+    overlay.classList.add('active');
     document.body.style.overflow = 'hidden';
-    setTimeout(() => document.getElementById('aiInput').focus(), 300);
+    setTimeout(function() {
+      var inp = document.getElementById('aiInput');
+      if (inp) inp.focus();
+    }, 300);
     if (this.history.length === 0) this._welcome();
   },
 
@@ -3978,14 +3984,19 @@ const aiChat = {
     }
 
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+
       const resp = await fetch(
         'https://rjyxkouegrropsarrhje.supabase.co/functions/v1/ai-proxy',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: payload })
+          body: JSON.stringify({ messages: payload }),
+          signal: controller.signal
         }
       );
+      clearTimeout(timeout);
 
       const data = await resp.json();
 
@@ -3997,7 +4008,10 @@ const aiChat = {
       this._addBubble('received', reply);
 
     } catch (err) {
-      this._addBubble('received', 'Tive um problema técnico. Tente novamente ou fale pelo WhatsApp! 😊');
+      var msg = err.name === 'AbortError'
+        ? 'A resposta demorou demais. Tente novamente ou fale pelo WhatsApp! 😊'
+        : 'Tive um problema técnico. Se o portal estiver offline (arquivo local), acesse via servidor. Ou fale pelo WhatsApp! 😊';
+      this._addBubble('received', msg);
     } finally {
       this.isLoading = false;
       this._setTyping(false);
