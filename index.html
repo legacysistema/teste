@@ -2042,6 +2042,7 @@ CREATE POLICY "Acesso público via token" ON public.questionarios_ia
 
         let supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         window.supabaseClient = supabaseClient;
+        window._supabase = supabaseClient; // ← FIX: módulo IA PROJECT usa window._supabase
 
         // ==================== ADMIN AUTH ====================
         const adminAuth = {
