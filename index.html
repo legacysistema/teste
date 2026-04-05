@@ -817,6 +817,10 @@
                 <i class="fas fa-calendar-check"></i> Agendamentos
                 <span id="agend-badge" style="display:none;position:absolute;top:-6px;right:-6px;background:#ff3366;color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;"></span>
             </button>
+            <button class="nav-btn" id="nav-ia-project" onclick="showSection('ia_project')" style="border-color: rgba(59,130,246,0.6); color: #3b82f6; position:relative; background: rgba(59,130,246,0.08);">
+                <i class="fas fa-robot"></i> IA PROJECT
+                <span id="ia-project-badge" style="display:none;position:absolute;top:-6px;right:-6px;background:#3b82f6;color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:700;align-items:center;justify-content:center;"></span>
+            </button>
         </div>
 
         
@@ -1075,6 +1079,39 @@
                 ">
                     <i class="fas fa-copy"></i> Copiar SQL de Agendamentos
                 </button>
+
+                <!-- Migração: agendamento_links -->
+                <div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(157,78,221,.25);">
+                  <p style="color:var(--secondary);font-size:13px;font-weight:700;margin-bottom:8px;">
+                    <i class="fas fa-database"></i> Migração — Tabela <code>agendamento_links</code> (Link Tokenizado)
+                  </p>
+                  <p style="color:var(--gray);font-size:12px;margin-bottom:10px;">
+                    Execute este SQL para adicionar as novas colunas de pacote e pagamento à tabela existente:
+                  </p>
+                  <pre id="aglink-sql-migration" style="background:rgba(0,0,0,0.5); border:1px solid rgba(157,78,221,.3); border-radius:8px; padding:16px; overflow-x:auto; font-size:12px; line-height:1.7; color:#d0aaff;">-- =============================================
+-- MIGRAÇÃO: agendamento_links — Novas colunas
+-- Execute no SQL Editor do Supabase
+-- =============================================
+
+ALTER TABLE public.agendamento_links
+  ADD COLUMN IF NOT EXISTS pacote_nome    text,
+  ADD COLUMN IF NOT EXISTS pacote_valor   numeric(10,2),
+  ADD COLUMN IF NOT EXISTS valor_reserva  numeric(10,2),
+  ADD COLUMN IF NOT EXISTS valor_restante numeric(10,2),
+  ADD COLUMN IF NOT EXISTS localizacao    text;
+
+-- Confirmar estrutura
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'agendamento_links'
+ORDER BY ordinal_position;</pre>
+                  <button class="btn btn-sm" style="margin-top:10px; background:linear-gradient(135deg,var(--secondary),var(--secondary-dark)); color:#fff; border:none; padding:8px 16px; border-radius:8px; font-weight:600; cursor:pointer;" onclick="
+                      navigator.clipboard.writeText(document.getElementById('aglink-sql-migration').innerText);
+                      showToast('SQL de migração copiado!', 'success');
+                  ">
+                      <i class="fas fa-copy"></i> Copiar SQL de Migração
+                  </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1457,10 +1494,178 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════
-         SEÇÃO: PROVA SOCIAL & ESCASSEZ
-         ═══════════════════════════════════════════════ -->
-    <div id="prova_social" class="section">
+    <!-- ══════════════════════════════════════════════════
+         SEÇÃO: IA PROJECT — GERADOR DE LINK DE QUESTIONÁRIO
+         ══════════════════════════════════════════════════ -->
+    <div id="ia_project" class="section">
+        <h1 class="section-title">
+            <i class="fas fa-robot" style="color:#3b82f6;"></i> IA PROJECT
+            <span style="font-size:14px;font-weight:400;color:var(--gray);margin-left:8px;">Gerador de Link de Questionário IA</span>
+        </h1>
+
+        <!-- Tabs internas -->
+        <div style="display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;">
+            <button id="ia-tab-btn-gerar" class="btn ia-tab-btn" onclick="iaShowTab('gerar')"
+                style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;">
+                <i class="fas fa-link"></i> Gerar Link
+            </button>
+            <button id="ia-tab-btn-painel" class="btn ia-tab-btn" onclick="iaShowTab('painel')"
+                style="background:transparent;border:1px solid var(--border);color:var(--light);">
+                <i class="fas fa-list-check"></i> Painel Admin
+            </button>
+            <button id="ia-tab-btn-sql" class="btn ia-tab-btn" onclick="iaShowTab('sql')"
+                style="background:transparent;border:1px solid var(--border);color:var(--light);">
+                <i class="fas fa-database"></i> SQL Setup
+            </button>
+        </div>
+
+        <!-- ─── TAB: GERAR LINK ─── -->
+        <div id="ia-tab-gerar">
+            <div class="glass-card" style="border-color:rgba(59,130,246,0.3);max-width:680px;">
+                <h3 style="margin-bottom:20px;color:#3b82f6;display:flex;align-items:center;gap:10px;">
+                    <i class="fas fa-wand-magic-sparkles"></i> Novo Link de Questionário
+                </h3>
+                <div class="form-group">
+                    <label class="form-label">Nome do Cliente</label>
+                    <input type="text" id="ia-cliente-nome" class="form-control" placeholder="Ex: Maria Silva">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="color:var(--gray);font-size:13px;">ID Automático</label>
+                    <div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:monospace;font-size:13px;color:#6ee7f7;" id="ia-id-preview">— gerado ao clicar em Gerar Link —</div>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+                    <button class="btn" onclick="iaGerarLink()"
+                        style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;flex:1;min-width:180px;">
+                        <i class="fas fa-magic"></i> Gerar Link
+                    </button>
+                </div>
+            </div>
+
+            <!-- Resultado do link -->
+            <div id="ia-result" style="display:none;">
+                <div class="glass-card" style="border-color:rgba(59,130,246,0.4);max-width:680px;animation:aglinkSlideIn .4s ease;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <!-- Timer ring -->
+                            <div class="aglink-timer-ring">
+                                <svg width="80" height="80" viewBox="0 0 80 80">
+                                    <circle class="ring-bg" cx="40" cy="40" r="35"/>
+                                    <circle class="ring-arc" id="ia-ring-arc" cx="40" cy="40" r="35" stroke="#3b82f6"
+                                        stroke-dasharray="220" stroke-dashoffset="0"/>
+                                </svg>
+                                <div class="aglink-timer-display" id="ia-timer-txt" style="color:#3b82f6;">15:00</div>
+                            </div>
+                            <div>
+                                <div style="font-weight:700;color:var(--light);font-size:15px;" id="ia-result-nome">—</div>
+                                <div style="font-size:12px;color:var(--gray);">Link expira em <span id="ia-expires-label">—</span></div>
+                                <div style="margin-top:4px;">
+                                    <span id="ia-expired-badge" style="display:none;background:rgba(255,51,102,.2);color:#ff3366;border:1px solid rgba(255,51,102,.4);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;">⏰ Expirado</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="aglink-progress-bar">
+                        <div class="aglink-progress-fill" id="ia-progress-fill" style="background:linear-gradient(90deg,#3b82f6,#60a5fa);"></div>
+                    </div>
+                    <div class="aglink-link-box" style="margin:14px 0;">
+                        <i class="fas fa-link" style="color:#3b82f6;flex-shrink:0;"></i>
+                        <span id="ia-link-text" style="flex:1;word-break:break-all;"></span>
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button class="btn btn-sm" onclick="iaCopiarLink()" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;">
+                            <i class="fas fa-copy"></i> Copiar Link
+                        </button>
+                        <button class="btn btn-sm" onclick="iaEnviarWA()" style="background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        </button>
+                        <button class="btn btn-sm" onclick="iaNovoLink()" style="background:transparent;border:1px solid var(--border);color:var(--gray);">
+                            <i class="fas fa-refresh"></i> Novo Link
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Histórico de links IA -->
+            <div class="glass-card" style="border-color:rgba(59,130,246,0.2);max-width:680px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                    <h4 style="color:#3b82f6;"><i class="fas fa-history"></i> Histórico de Links</h4>
+                    <button onclick="iaCarregarHistorico()" style="background:transparent;border:1px solid var(--border);color:var(--gray);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;">
+                        <i class="fas fa-sync"></i> Atualizar
+                    </button>
+                </div>
+                <div id="ia-historico"><p style="color:var(--gray);font-size:13px;text-align:center;padding:20px;">Carregando...</p></div>
+            </div>
+        </div>
+
+        <!-- ─── TAB: PAINEL ADMIN ─── -->
+        <div id="ia-tab-painel" style="display:none;">
+            <div class="glass-card" style="border-color:rgba(59,130,246,0.2);">
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+                    <h3 style="color:#3b82f6;"><i class="fas fa-list-check"></i> Questionários Recebidos</h3>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <select id="ia-filtro-status" class="form-control" style="max-width:160px;font-size:13px;" onchange="iaCarregarPainel()">
+                            <option value="">Todos</option>
+                            <option value="pendente">Pendente</option>
+                            <option value="respondido">Respondido</option>
+                            <option value="visualizado">Visualizado</option>
+                        </select>
+                        <button onclick="iaCarregarPainel()" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">
+                            <i class="fas fa-sync"></i> Atualizar
+                        </button>
+                    </div>
+                </div>
+                <div id="ia-painel-lista"><p style="color:var(--gray);font-size:13px;text-align:center;padding:30px;">Carregando...</p></div>
+            </div>
+        </div>
+
+        <!-- ─── TAB: SQL SETUP ─── -->
+        <div id="ia-tab-sql" style="display:none;">
+            <div class="glass-card" style="border-color:rgba(59,130,246,0.3);">
+                <h3 style="color:#3b82f6;margin-bottom:12px;"><i class="fas fa-database"></i> Setup SQL — Tabela <code>questionarios_ia</code></h3>
+                <p style="color:var(--gray);font-size:14px;margin-bottom:14px;">Execute no <strong>SQL Editor</strong> do Supabase para criar a tabela do módulo IA PROJECT:</p>
+                <pre id="ia-sql-block" style="background:rgba(0,0,0,0.5);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:16px;overflow-x:auto;font-size:12px;line-height:1.7;color:#93c5fd;">-- =============================================
+-- IA PROJECT — Tabela questionarios_ia
+-- Execute no SQL Editor do Supabase
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS public.questionarios_ia (
+  id             uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  token          text NOT NULL UNIQUE,
+  nome_cliente   text,
+  respostas      jsonb,
+  prompt_gerado  text,
+  imagem_url     text,
+  status         text DEFAULT 'pendente' CHECK (status IN ('pendente','respondido','visualizado')),
+  expires_at     timestamptz,
+  created_at     timestamptz DEFAULT now()
+);
+
+-- Índices
+CREATE INDEX IF NOT EXISTS idx_questionarios_ia_token  ON public.questionarios_ia(token);
+CREATE INDEX IF NOT EXISTS idx_questionarios_ia_status ON public.questionarios_ia(status);
+
+-- RLS (Row Level Security)
+ALTER TABLE public.questionarios_ia ENABLE ROW LEVEL SECURITY;
+
+-- Policy: leitura e escrita pública (via token) — ajuste conforme sua política
+CREATE POLICY "Acesso público via token" ON public.questionarios_ia
+  FOR ALL USING (true) WITH CHECK (true);
+
+-- =============================================
+-- SETUP CONCLUÍDO ✓ — Tabela: questionarios_ia
+-- =============================================</pre>
+                <button class="btn btn-sm" style="margin-top:10px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;" onclick="
+                    navigator.clipboard.writeText(document.getElementById('ia-sql-block').innerText);
+                    showToast('SQL copiado!','success');
+                ">
+                    <i class="fas fa-copy"></i> Copiar SQL
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- ══ FIM SEÇÃO IA PROJECT ══ -->
+
+
         <h1 class="section-title">
             <i class="fab fa-google" style="color:#4285F4;"></i> Depoimentos Google &amp; Escassez
         </h1>
@@ -6529,6 +6734,60 @@ function _dinAcModalWA(agend, linhas, tipo, opcional) {
         <div class="aglink-pacote-chips" id="aglink-chips"></div>
       </div>
 
+      <!-- Separador -->
+      <div style="margin-top:24px;border-top:1px solid rgba(157,78,221,.2);padding-top:20px;">
+        <div style="font-size:13px;font-weight:700;color:var(--secondary);margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+          <i class="fas fa-receipt"></i> Informações do Pacote e Pagamento
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+          <!-- Nome do Pacote -->
+          <div class="form-group" style="margin:0;grid-column:1/-1;">
+            <label class="form-label"><i class="fas fa-tag" style="color:var(--secondary);"></i> Nome do Pacote *</label>
+            <input type="text" id="aglink-pacote-nome" class="form-control"
+              placeholder="Ex: Pacote Família Premium, Smash the Cake Completo…"
+              autocomplete="off">
+          </div>
+
+          <!-- Valor Total -->
+          <div class="form-group" style="margin:0;">
+            <label class="form-label"><i class="fas fa-dollar-sign" style="color:var(--secondary);"></i> Valor Total do Pacote (R$) *</label>
+            <input type="number" id="aglink-pacote-valor" class="form-control"
+              placeholder="0,00" min="0" step="0.01"
+              oninput="window.aglinkCalcRestante()">
+          </div>
+
+          <!-- Valor da Reserva -->
+          <div class="form-group" style="margin:0;">
+            <label class="form-label"><i class="fas fa-hand-holding-usd" style="color:var(--warning);"></i> Valor da Reserva / Entrada (R$) *</label>
+            <input type="number" id="aglink-valor-reserva" class="form-control"
+              placeholder="0,00" min="0" step="0.01"
+              oninput="window.aglinkCalcRestante()">
+          </div>
+
+          <!-- Valor Restante (calculado automaticamente) -->
+          <div class="form-group" style="margin:0;grid-column:1/-1;">
+            <label class="form-label"><i class="fas fa-calculator" style="color:var(--success);"></i> Valor Restante (calculado automaticamente)</label>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <input type="number" id="aglink-valor-restante" class="form-control"
+                placeholder="—" readonly
+                style="background:rgba(0,204,136,.07);border-color:rgba(0,204,136,.3);color:var(--success);font-weight:700;cursor:default;">
+              <span id="aglink-restante-badge" style="display:none;font-size:12px;font-weight:700;padding:6px 12px;border-radius:8px;white-space:nowrap;"></span>
+            </div>
+            <span id="aglink-valor-erro" style="display:none;font-size:12px;color:var(--danger);margin-top:4px;"><i class="fas fa-exclamation-triangle"></i> A reserva não pode ser maior que o valor total do pacote.</span>
+          </div>
+
+          <!-- Localização -->
+          <div class="form-group" style="margin:0;grid-column:1/-1;">
+            <label class="form-label"><i class="fas fa-map-marker-alt" style="color:var(--secondary);"></i> Localização do Ensaio *</label>
+            <input type="text" id="aglink-localizacao" class="form-control"
+              placeholder="Ex: Estúdio Rodrigo Costa – Rua das Flores, 123, Araruama/RJ"
+              autocomplete="off">
+          </div>
+
+        </div>
+      </div>
+
       <!-- Observação -->
       <div class="form-group" style="margin-top:20px;margin-bottom:0;">
         <label class="form-label"><i class="fas fa-comment" style="color:var(--gray);"></i> Observação (opcional)</label>
@@ -6680,33 +6939,88 @@ function _dinAcModalWA(agend, linhas, tipo, opcional) {
   };
 
   /* ════════════════════════════════════════
+     CÁLCULO AUTOMÁTICO DO VALOR RESTANTE
+  ════════════════════════════════════════ */
+  window.aglinkCalcRestante = function() {
+    const total    = parseFloat(document.getElementById('aglink-pacote-valor')?.value) || 0;
+    const reserva  = parseFloat(document.getElementById('aglink-valor-reserva')?.value) || 0;
+    const restEl   = document.getElementById('aglink-valor-restante');
+    const badge    = document.getElementById('aglink-restante-badge');
+    const erroEl   = document.getElementById('aglink-valor-erro');
+
+    if (!restEl) return;
+
+    if (reserva > total && total > 0) {
+      // Erro: reserva maior que total
+      restEl.value = '';
+      if (erroEl)  { erroEl.style.display = 'block'; }
+      if (badge)   { badge.style.display = 'none'; }
+      restEl.style.borderColor = 'rgba(255,51,102,.5)';
+      restEl.style.color       = 'var(--danger)';
+    } else {
+      if (erroEl) erroEl.style.display = 'none';
+      restEl.style.borderColor = 'rgba(0,204,136,.3)';
+      restEl.style.color       = 'var(--success)';
+
+      if (total > 0) {
+        const restante = total - reserva;
+        restEl.value = restante.toFixed(2);
+        if (badge) {
+          badge.style.display = 'inline-flex';
+          badge.textContent   = `R$ ${restante.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} restante`;
+          badge.style.background = restante === 0
+            ? 'rgba(0,204,136,.15)'
+            : 'rgba(255,170,0,.15)';
+          badge.style.color = restante === 0 ? 'var(--success)' : 'var(--warning)';
+        }
+      } else {
+        restEl.value = '';
+        if (badge) badge.style.display = 'none';
+      }
+    }
+  };
+
+  /* ════════════════════════════════════════
      GERAR LINK
   ════════════════════════════════════════ */
   window.aglinkGerar = async function() {
-    const mes      = document.getElementById('aglink-mes').value;
-    const ano      = document.getElementById('aglink-ano').value;
-    const leadNome = document.getElementById('aglink-lead').value.trim();
-    const obs      = document.getElementById('aglink-obs').value.trim();
-    const msg      = document.getElementById('aglink-gerar-msg');
+    const mes          = document.getElementById('aglink-mes').value;
+    const ano          = document.getElementById('aglink-ano').value;
+    const leadNome     = document.getElementById('aglink-lead').value.trim();
+    const obs          = document.getElementById('aglink-obs').value.trim();
+    const pacoteNome   = document.getElementById('aglink-pacote-nome').value.trim();
+    const pacoteValor  = parseFloat(document.getElementById('aglink-pacote-valor').value) || 0;
+    const valorReserva = parseFloat(document.getElementById('aglink-valor-reserva').value) || 0;
+    const localizacao  = document.getElementById('aglink-localizacao').value.trim();
+    const msg          = document.getElementById('aglink-gerar-msg');
 
+    // Validações
     if (!mes)                     { _flash(msg,'Selecione o mês de referência.','#ff9966'); return; }
     if (!leadNome)                { _flash(msg,'Digite o nome do lead/cliente.','#ff9966'); return; }
     if (_selecionados.size === 0) { _flash(msg,'Selecione ao menos um pacote.','#ff9966'); return; }
+    if (!pacoteNome)              { _flash(msg,'Informe o nome do pacote.','#ff9966'); return; }
+    if (!pacoteValor || pacoteValor <= 0) { _flash(msg,'Informe o valor total do pacote.','#ff9966'); return; }
+    if (!valorReserva || valorReserva <= 0) { _flash(msg,'Informe o valor da reserva.','#ff9966'); return; }
+    if (valorReserva > pacoteValor) { _flash(msg,'A reserva não pode ser maior que o valor total do pacote.','var(--danger)'); return; }
+    if (!localizacao)             { _flash(msg,'Informe a localização do ensaio.','#ff9966'); return; }
 
     _flash(msg,'<i class="fas fa-spinner fa-spin"></i> Gerando link…', 'var(--gray)');
 
-    const pacotes = Array.from(_selecionados);
-    const mesRef  = `${MESES_OPTS[+mes-1]}/${ano}`;
+    const pacotes       = Array.from(_selecionados);
+    const mesRef        = `${MESES_OPTS[+mes-1]}/${ano}`;
+    const valorRestante = parseFloat((pacoteValor - valorReserva).toFixed(2));
+
+    const payload = { leadNome, mesRef, pacotes, obs, pacoteNome, pacoteValor, valorReserva, valorRestante, localizacao };
 
     try {
-      const token = await _gerarViaEdgeFunction({ leadNome, mesRef, pacotes, obs });
-      _exibirLink(token, leadNome, pacotes, mesRef);
+      const token = await _gerarViaEdgeFunction(payload);
+      _exibirLink(token);
       _flash(msg,'✅ Link gerado com sucesso!','var(--success)');
       setTimeout(() => _flash(msg,'',''), 3000);
     } catch(e) {
       try {
-        const token = await _gerarViaSupabase({ leadNome, mesRef, pacotes, obs });
-        _exibirLink(token, leadNome, pacotes, mesRef);
+        const token = await _gerarViaSupabase(payload);
+        _exibirLink(token);
         _flash(msg,'✅ Link gerado (modo direto).','var(--success)');
         setTimeout(() => _flash(msg,'',''), 3000);
       } catch(e2) {
@@ -6715,7 +7029,7 @@ function _dinAcModalWA(agend, linhas, tipo, opcional) {
     }
   };
 
-  async function _gerarViaEdgeFunction({ leadId, mesRef, pacotes, obs }) {
+  async function _gerarViaEdgeFunction({ leadNome, mesRef, pacotes, obs, pacoteNome, pacoteValor, valorReserva, valorRestante, localizacao }) {
     const db = _getDb();
     const { data: { session } } = await db.auth.getSession();
     const authToken = session?.access_token || SUPABASE_KEY;
@@ -6731,7 +7045,12 @@ function _dinAcModalWA(agend, linhas, tipo, opcional) {
         lead_nome: leadNome,
         mes: mesRef,
         pacotes,
-        observacao: obs
+        observacao: obs,
+        pacote_nome: pacoteNome,
+        pacote_valor: pacoteValor,
+        valor_reserva: valorReserva,
+        valor_restante: valorRestante,
+        localizacao
       })
     });
 
@@ -6745,7 +7064,7 @@ function _dinAcModalWA(agend, linhas, tipo, opcional) {
     return data.token;
   }
 
-  async function _gerarViaSupabase({ leadNome, mesRef, pacotes, obs }) {
+  async function _gerarViaSupabase({ leadNome, mesRef, pacotes, obs, pacoteNome, pacoteValor, valorReserva, valorRestante, localizacao }) {
     const db = _getDb();
     if (!db) throw new Error('Supabase não disponível');
 
@@ -6755,12 +7074,17 @@ function _dinAcModalWA(agend, linhas, tipo, opcional) {
 
     const { error } = await db.from('agendamento_links').insert({
       token,
-      lead_nome: leadNome || null,
+      lead_nome:      leadNome || null,
       mes_referencia: mesRef,
       pacotes,
-      observacao: obs || null,
-      expires_at: expiresAt.toISOString(),
-      status: 'ativo'
+      observacao:     obs || null,
+      pacote_nome:    pacoteNome || null,
+      pacote_valor:   pacoteValor || null,
+      valor_reserva:  valorReserva || null,
+      valor_restante: valorRestante || null,
+      localizacao:    localizacao || null,
+      expires_at:     expiresAt.toISOString(),
+      status:         'ativo'
     });
 
     if (error) throw new Error(error.message);
@@ -6894,7 +7218,7 @@ function _dinAcModalWA(agend, linhas, tipo, opcional) {
     try {
       const { data, error } = await db
         .from('agendamento_links')
-        .select('id, token, mes_referencia, pacotes, status, expires_at, created_at, lead_nome')
+        .select('id, token, mes_referencia, pacotes, status, expires_at, created_at, lead_nome, pacote_nome, pacote_valor, valor_reserva, valor_restante, localizacao')
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -6911,12 +7235,28 @@ function _dinAcModalWA(agend, linhas, tipo, opcional) {
         const link = `${window.location.origin}/agendamento?t=${row.token}`;
         const pacs = Array.isArray(row.pacotes) ? row.pacotes.join(', ') : (row.pacotes || '—');
         const criado = new Date(row.created_at).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+        const fmtBRL = v => v != null ? `R$ ${parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : null;
+        const valorInfo = row.pacote_valor != null
+          ? `<span style="color:var(--success);font-size:11px;margin-top:2px;display:block;">
+               💰 Total: <strong>${fmtBRL(row.pacote_valor)}</strong>
+               · Entrada: <strong style="color:var(--warning);">${fmtBRL(row.valor_reserva)}</strong>
+               · Restante: <strong>${fmtBRL(row.valor_restante)}</strong>
+             </span>`
+          : '';
+        const locInfo = row.localizacao
+          ? `<span style="color:var(--gray);font-size:11px;display:block;margin-top:2px;"><i class="fas fa-map-marker-alt" style="color:var(--secondary);font-size:10px;"></i> ${row.localizacao}</span>`
+          : '';
+        const nomePacote = row.pacote_nome
+          ? `<span style="color:var(--secondary);font-size:11px;font-weight:600;"> · 📦 ${row.pacote_nome}</span>`
+          : '';
 
         return `
         <div class="aglink-hist-row">
           <div>
-            <div style="font-weight:600;font-size:13px;color:var(--light);">${row.mes_referencia || '—'} ${row.lead_nome ? `· <span style="color:var(--secondary);">${row.lead_nome}</span>` : ''}</div>
+            <div style="font-weight:600;font-size:13px;color:var(--light);">${row.mes_referencia || '—'} ${row.lead_nome ? `· <span style="color:var(--secondary);">${row.lead_nome}</span>` : ''}${nomePacote}</div>
             <div style="font-size:11px;color:var(--gray);margin-top:2px;">${pacs} · ${criado}</div>
+            ${valorInfo}
+            ${locInfo}
             ${row.status === 'ativo' ? `<div style="font-size:10px;color:#a0e8ff;font-family:monospace;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:320px;">${link}</div>` : ''}
           </div>
           <span class="aglink-status-chip ${statusCls}">${statusLbl}</span>
@@ -6975,6 +7315,892 @@ function _dinAcModalWA(agend, linhas, tipo, opcional) {
 })();
 </script>
 <!-- ══ FIM PARTE 1: AGENDAMENTO COM LINK TOKENIZADO ══ -->
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODAL: VER PROMPT / RESPOSTAS (IA PROJECT)
+══════════════════════════════════════════════════════════════ -->
+<div id="ia-prompt-modal" class="modal">
+    <div class="modal-content" style="max-width:760px;">
+        <div class="modal-header">
+            <h2 style="color:#3b82f6;display:flex;align-items:center;gap:10px;">
+                <i class="fas fa-robot"></i> Prompt Gerado
+            </h2>
+            <button class="close-modal" onclick="document.getElementById('ia-prompt-modal').classList.remove('active')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Info do cliente -->
+        <div id="ia-modal-cliente-info" style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:10px;padding:14px;margin-bottom:18px;">
+            <div style="font-weight:700;font-size:15px;color:var(--light);" id="ia-modal-nome">—</div>
+            <div style="font-size:12px;color:var(--gray);margin-top:4px;" id="ia-modal-data">—</div>
+        </div>
+
+        <!-- Respostas -->
+        <div style="margin-bottom:18px;">
+            <h4 style="color:var(--gray);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Respostas do Cliente</h4>
+            <div id="ia-modal-respostas" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+        </div>
+
+        <!-- Imagem de referência -->
+        <div id="ia-modal-img-wrap" style="display:none;margin-bottom:18px;">
+            <h4 style="color:var(--gray);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Foto de Referência</h4>
+            <img id="ia-modal-img" src="" alt="Foto de referência" style="max-width:200px;max-height:200px;border-radius:10px;border:1px solid rgba(59,130,246,0.4);object-fit:cover;">
+        </div>
+
+        <!-- Prompt final -->
+        <div>
+            <h4 style="color:#3b82f6;font-size:13px;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+                <i class="fas fa-wand-magic-sparkles"></i> Prompt Final
+            </h4>
+            <div id="ia-modal-prompt" style="background:rgba(0,0,0,0.4);border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:16px;font-size:13px;line-height:1.8;color:#e2e8f0;white-space:pre-wrap;max-height:320px;overflow-y:auto;"></div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;">
+            <button class="btn btn-sm" onclick="iaCopiarPrompt()" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;flex:1;">
+                <i class="fas fa-copy"></i> Copiar Prompt
+            </button>
+            <button class="btn btn-sm" onclick="document.getElementById('ia-prompt-modal').classList.remove('active')" style="background:transparent;border:1px solid var(--border);color:var(--gray);">
+                Fechar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PÁGINA PÚBLICA DO QUESTIONÁRIO (overlay quando ?type=questionario)
+══════════════════════════════════════════════════════════════ -->
+<div id="ia-questionario-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at 30% 20%,#0f1b35 0%,#050509 100%);z-index:30000;overflow-y:auto;padding:30px 20px;">
+    <div style="max-width:640px;margin:0 auto;">
+        <!-- Header público -->
+        <div style="text-align:center;margin-bottom:32px;">
+            <div style="font-size:2.8rem;margin-bottom:8px;">✨</div>
+            <h1 style="font-size:1.8rem;font-weight:800;background:linear-gradient(135deg,#3b82f6,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Questionário de Ensaio IA</h1>
+            <p style="color:#94a3b8;font-size:14px;margin-top:6px;">Preencha para gerar seu prompt personalizado</p>
+            <div id="ia-q-nome-display" style="margin-top:12px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:20px;display:inline-block;padding:6px 18px;font-size:14px;color:#93c5fd;font-weight:600;"></div>
+        </div>
+
+        <!-- Form Questionário -->
+        <div class="glass-card" style="border-color:rgba(59,130,246,0.3);" id="ia-q-form-card">
+            <!-- Tipo de uso -->
+            <div class="form-group">
+                <label class="form-label"><i class="fas fa-bullseye" style="color:#3b82f6;margin-right:6px;"></i> Tipo de Uso</label>
+                <select id="ia-q-tipo" class="form-control" onchange="iaQAtualizarPoses()">
+                    <option value="">Selecione...</option>
+                    <option value="Consultório / Atendimento">🛋️ Consultório / Atendimento</option>
+                    <option value="Mesa de trabalho / Estudos">📚 Mesa de trabalho / Estudos</option>
+                    <option value="Ambiente natural / Lifestyle">🌿 Ambiente natural / Lifestyle</option>
+                    <option value="Palestras e eventos corporativos">🎤 Palestras e eventos corporativos</option>
+                    <option value="Conteúdo digital / Gravação de vídeos">☕ Conteúdo digital / Vídeos</option>
+                    <option value="Retrato editorial / Branding pessoal">💫 Retrato editorial / Branding</option>
+                </select>
+            </div>
+
+            <!-- Estilo -->
+            <div class="form-group">
+                <label class="form-label"><i class="fas fa-palette" style="color:#3b82f6;margin-right:6px;"></i> Estilo</label>
+                <select id="ia-q-estilo" class="form-control">
+                    <option value="">Selecione...</option>
+                    <option value="Social">👔 Social</option>
+                    <option value="Casual">👕 Casual</option>
+                    <option value="Elegante">✨ Elegante</option>
+                    <option value="Esportivo">🏃 Esportivo</option>
+                </select>
+            </div>
+
+            <!-- Roupa -->
+            <div class="form-group">
+                <label class="form-label"><i class="fas fa-shirt" style="color:#3b82f6;margin-right:6px;"></i> Roupa / Look</label>
+                <select id="ia-q-roupa" class="form-control">
+                    <option value="">Selecione o estilo primeiro...</option>
+                </select>
+            </div>
+
+            <!-- Ambiente -->
+            <div class="form-group">
+                <label class="form-label"><i class="fas fa-image" style="color:#3b82f6;margin-right:6px;"></i> Ambiente / Cenário</label>
+                <select id="ia-q-ambiente" class="form-control" onchange="iaQToggleAmbienteInput()">
+                    <option value="">Selecione...</option>
+                    <option value="Escritório moderno">🏢 Escritório moderno</option>
+                    <option value="Natureza / Jardim">🌿 Natureza / Jardim</option>
+                    <option value="Estúdio fotográfico">📷 Estúdio fotográfico</option>
+                    <option value="Quarto / Home office">🏠 Quarto / Home office</option>
+                    <option value="Café / Bistrô">☕ Café / Bistrô</option>
+                    <option value="Varanda / Terraço">🌅 Varanda / Terraço</option>
+                    <option value="cenario_criativo">✍️ Cenário criativo (personalizado)</option>
+                </select>
+                <input type="text" id="ia-q-ambiente-custom" class="form-control" placeholder="Descreva seu cenário criativo..." style="display:none;margin-top:8px;">
+            </div>
+
+            <!-- Detalhes do ambiente -->
+            <div class="form-group">
+                <label class="form-label"><i class="fas fa-leaf" style="color:#3b82f6;margin-right:6px;"></i> Detalhes do Ambiente</label>
+                <select id="ia-q-detalhes" class="form-control" onchange="iaQToggleDetalhesInput()">
+                    <option value="">Selecione...</option>
+                    <option value="Mesa de trabalho">🪑 Mesa de trabalho</option>
+                    <option value="Plantas decorativas">🌱 Plantas decorativas</option>
+                    <option value="Janela com luz natural">🪟 Janela com luz natural</option>
+                    <option value="Luz do sol suave">☀️ Luz do sol suave</option>
+                    <option value="Decoração minimalista">🏛️ Decoração minimalista</option>
+                    <option value="Livros e objetos de estudo">📚 Livros e objetos de estudo</option>
+                    <option value="Poltrona confortável">🛋️ Poltrona confortável</option>
+                    <option value="detalhes_custom">✍️ Personalizar detalhes</option>
+                </select>
+                <input type="text" id="ia-q-detalhes-custom" class="form-control" placeholder="Descreva os detalhes do ambiente..." style="display:none;margin-top:8px;">
+            </div>
+
+            <!-- Expressão -->
+            <div class="form-group">
+                <label class="form-label"><i class="fas fa-face-smile" style="color:#3b82f6;margin-right:6px;"></i> Expressão</label>
+                <select id="ia-q-expressao" class="form-control">
+                    <option value="">Selecione...</option>
+                    <option value="Sorriso natural e acolhedor">😊 Sorriso natural e acolhedor</option>
+                    <option value="Expressão confiante e serena">😌 Confiante e serena</option>
+                    <option value="Olhar empático e atencioso">🤝 Empático e atencioso</option>
+                    <option value="Expressão pensativa e reflexiva">🤔 Pensativa e reflexiva</option>
+                    <option value="Olhar direto e profissional">💼 Direto e profissional</option>
+                    <option value="Expressão animada e envolvente">✨ Animada e envolvente</option>
+                </select>
+            </div>
+
+            <!-- Pose -->
+            <div class="form-group">
+                <label class="form-label"><i class="fas fa-person" style="color:#3b82f6;margin-right:6px;"></i> Pose</label>
+                <select id="ia-q-pose" class="form-control" onchange="iaQTogglePoseInput()">
+                    <option value="">Selecione o tipo de uso primeiro...</option>
+                </select>
+                <input type="text" id="ia-q-pose-custom" class="form-control" placeholder="Descreva uma pose personalizada..." style="display:none;margin-top:8px;">
+            </div>
+
+            <!-- Nível de realismo -->
+            <div class="form-group">
+                <label class="form-label"><i class="fas fa-sliders" style="color:#3b82f6;margin-right:6px;"></i> Nível de Realismo</label>
+                <select id="ia-q-realismo" class="form-control">
+                    <option value="">Selecione...</option>
+                    <option value="Hiper-realista (máximo detalhe fotográfico)">🔬 Hiper-realista (máximo detalhe)</option>
+                    <option value="Fotorrealista (qualidade DSLR profissional)">📷 Fotorrealista (qualidade DSLR)</option>
+                    <option value="Editorial (estilo revista, levemente editado)">📰 Editorial (estilo revista)</option>
+                </select>
+            </div>
+
+            <!-- Upload de imagem -->
+            <div class="form-group">
+                <label class="form-label"><i class="fas fa-camera" style="color:#3b82f6;margin-right:6px;"></i> Foto de Referência (Selfie)</label>
+                <div id="ia-q-upload-area" style="border:2px dashed rgba(59,130,246,0.4);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all .3s;" onclick="document.getElementById('ia-q-file').click()" ondragover="event.preventDefault();this.style.borderColor='#3b82f6'" ondragleave="this.style.borderColor='rgba(59,130,246,0.4)'" ondrop="iaQHandleDrop(event)">
+                    <div id="ia-q-upload-preview">
+                        <i class="fas fa-cloud-upload-alt" style="font-size:2rem;color:#3b82f6;margin-bottom:8px;display:block;"></i>
+                        <p style="color:#94a3b8;font-size:14px;">Clique ou arraste sua foto aqui</p>
+                        <p style="color:#64748b;font-size:12px;margin-top:4px;">JPG, PNG, WEBP — máx. 5MB</p>
+                    </div>
+                </div>
+                <input type="file" id="ia-q-file" accept="image/*" style="display:none;" onchange="iaQHandleFile(this.files[0])">
+            </div>
+
+            <!-- Botão enviar -->
+            <div style="margin-top:8px;">
+                <button class="btn" onclick="iaQEnviar()" id="ia-q-btn-enviar"
+                    style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;width:100%;justify-content:center;padding:14px 24px;font-size:16px;">
+                    <i class="fas fa-paper-plane"></i> Enviar Respostas
+                </button>
+            </div>
+        </div>
+
+        <!-- Sucesso -->
+        <div id="ia-q-sucesso" style="display:none;text-align:center;padding:40px 20px;">
+            <div style="font-size:4rem;margin-bottom:16px;">🎉</div>
+            <h2 style="color:#3b82f6;font-size:1.6rem;margin-bottom:10px;">Respostas Enviadas!</h2>
+            <p style="color:#94a3b8;font-size:15px;">Seu questionário foi registrado com sucesso.<br>Em breve você receberá seu ensaio personalizado.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ══ ESTILOS IA PROJECT ══ -->
+<style>
+.ia-tab-btn { transition: all 0.3s ease; }
+.ia-resposta-chip {
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+}
+.ia-resposta-chip .ia-chip-label {
+    display: block;
+    color: #60a5fa;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 3px;
+}
+.ia-resposta-chip .ia-chip-val {
+    color: var(--light);
+    font-weight: 500;
+}
+.ia-painel-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: rgba(20,20,30,.5);
+    border: 1px solid rgba(59,130,246,0.15);
+    margin-bottom: 8px;
+    transition: background .2s;
+}
+.ia-painel-row:hover { background: rgba(59,130,246,0.06); }
+.ia-s-pendente   { background: rgba(255,170,0,0.15);    color: var(--warning); border:1px solid rgba(255,170,0,0.3);    padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+.ia-s-respondido { background: rgba(59,130,246,0.15);   color: #60a5fa;        border:1px solid rgba(59,130,246,0.35);  padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+.ia-s-visualizado{ background: rgba(0,204,136,0.15);    color: var(--success); border:1px solid rgba(0,204,136,0.3);    padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+
+/* Histórico IA */
+.ia-hist-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    border-radius: 9px;
+    background: rgba(20,20,30,.45);
+    border: 1px solid rgba(59,130,246,0.12);
+    margin-bottom: 7px;
+    font-size: 13px;
+}
+.ia-hist-row:hover { background: rgba(59,130,246,0.05); }
+</style>
+
+<!-- ══ JAVASCRIPT IA PROJECT ══ -->
+<script>
+/* ════════════════════════════════════════════════════════════════
+   MÓDULO: IA PROJECT — GERADOR DE LINK DE QUESTIONÁRIO
+   Reutiliza: Supabase já configurado pelo sistema (window._supabase)
+════════════════════════════════════════════════════════════════ */
+(function() {
+  'use strict';
+
+  const IA_TOKEN_MINS = 15;
+  let _iaLinkAtual   = null;
+  let _iaExpiresAt   = null;
+  let _iaTimerInt    = null;
+  let _iaImagemB64   = null;
+  let _iaPromptAtual = '';
+
+  /* ── helpers ────────────────────────────────────────────── */
+  function _db() {
+    return window._supabase || null;
+  }
+
+  function _gerarToken() {
+    const arr = new Uint8Array(24);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  function _toast(msg, type) {
+    if (typeof showToast === 'function') showToast(msg, type);
+  }
+
+  /* ── Rota pública: detecta ?type=questionario ────────────── */
+  function _detectarModoPublico() {
+    const params = new URLSearchParams(window.location.search);
+    const type   = params.get('type');
+    const token  = params.get('token');
+    if (type === 'questionario' && token) {
+      _abrirQuestionarioPublico(token);
+    }
+  }
+
+  async function _abrirQuestionarioPublico(token) {
+    const overlay = document.getElementById('ia-questionario-overlay');
+    if (!overlay) return;
+
+    // Esconde toda a UI admin
+    document.querySelectorAll('.header,.container').forEach(el => el.style.display = 'none');
+    document.getElementById('admin-login-overlay')  && (document.getElementById('admin-login-overlay').style.display  = 'none');
+    document.getElementById('admin-intro-screen')   && (document.getElementById('admin-intro-screen').style.display   = 'none');
+    overlay.style.display = 'block';
+
+    // Carrega dados do questionário
+    const db = _db();
+    if (!db) return;
+    const { data, error } = await db.from('questionarios_ia').select('*').eq('token', token).single();
+    if (error || !data) {
+      overlay.innerHTML = '<div style="text-align:center;padding:80px 20px;color:#ff3366;"><div style="font-size:3rem;margin-bottom:16px;">⚠️</div><h2>Link inválido ou expirado</h2></div>';
+      return;
+    }
+    if (data.status === 'respondido' || data.status === 'visualizado') {
+      document.getElementById('ia-q-form-card').style.display   = 'none';
+      document.getElementById('ia-q-sucesso').style.display = 'block';
+      return;
+    }
+    if (data.expires_at && new Date(data.expires_at) < new Date()) {
+      overlay.innerHTML = '<div style="text-align:center;padding:80px 20px;color:#ff3366;"><div style="font-size:3rem;margin-bottom:16px;">⏰</div><h2>Link expirado</h2><p style="color:#94a3b8;margin-top:8px;">Solicite um novo link ao administrador.</p></div>';
+      return;
+    }
+    // Mostra nome
+    const nomeEl = document.getElementById('ia-q-nome-display');
+    if (nomeEl && data.nome_cliente) nomeEl.textContent = '👋 Olá, ' + data.nome_cliente + '!';
+    // Guarda token ativo
+    window._iaTokenAtivo = token;
+  }
+
+  /* ── Gerar Link (admin) ──────────────────────────────────── */
+  window.iaGerarLink = async function() {
+    const db = _db();
+    if (!db) { _toast('Banco não conectado.', 'danger'); return; }
+
+    const nome = document.getElementById('ia-cliente-nome').value.trim();
+    if (!nome) { _toast('Informe o nome do cliente.', 'warning'); return; }
+
+    const token     = _gerarToken();
+    const expiresAt = new Date(Date.now() + IA_TOKEN_MINS * 60 * 1000);
+
+    document.getElementById('ia-id-preview').textContent = token.substring(0,16) + '…';
+
+    const { error } = await db.from('questionarios_ia').insert([{
+      token,
+      nome_cliente : nome,
+      status       : 'pendente',
+      expires_at   : expiresAt.toISOString()
+    }]);
+
+    if (error) { _toast('Erro ao salvar: ' + error.message, 'danger'); return; }
+
+    _iaLinkAtual = token;
+    _iaExpiresAt = expiresAt;
+    _exibirLinkIA(token, nome);
+    _toast('Link gerado com sucesso! ✅', 'success');
+    setTimeout(iaCarregarHistorico, 600);
+  };
+
+  function _exibirLinkIA(token, nome) {
+    const base = window.location.origin + window.location.pathname;
+    const link = `${base}?token=${token}&type=questionario`;
+
+    const result = document.getElementById('ia-result');
+    if (result) result.style.display = 'block';
+
+    const linkTxt = document.getElementById('ia-link-text');
+    if (linkTxt) linkTxt.textContent = link;
+
+    const nomeEl = document.getElementById('ia-result-nome');
+    if (nomeEl) nomeEl.textContent = nome;
+
+    const expLabel = document.getElementById('ia-expires-label');
+    if (expLabel && _iaExpiresAt) {
+      expLabel.textContent = _iaExpiresAt.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+    }
+
+    const expBadge = document.getElementById('ia-expired-badge');
+    if (expBadge) expBadge.style.display = 'none';
+
+    _iniciarTimerIA();
+  }
+
+  function _iniciarTimerIA() {
+    if (_iaTimerInt) clearInterval(_iaTimerInt);
+    const totalMs  = IA_TOKEN_MINS * 60 * 1000;
+    const arc      = document.getElementById('ia-ring-arc');
+    const timerTxt = document.getElementById('ia-timer-txt');
+    const fill     = document.getElementById('ia-progress-fill');
+    const expBadge = document.getElementById('ia-expired-badge');
+    const CIRC     = 2 * Math.PI * 35;
+
+    function tick() {
+      const remaining = _iaExpiresAt - Date.now();
+      if (remaining <= 0) {
+        clearInterval(_iaTimerInt);
+        if (timerTxt)  timerTxt.textContent  = '00:00';
+        if (arc)       { arc.style.strokeDashoffset = CIRC; arc.style.stroke = '#ff3366'; }
+        if (fill)      { fill.style.width = '0%'; }
+        if (expBadge)  expBadge.style.display = 'inline-flex';
+        return;
+      }
+      const pct  = remaining / totalMs;
+      const mins = Math.floor(remaining / 60000);
+      const secs = Math.floor((remaining % 60000) / 1000);
+      if (timerTxt) timerTxt.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+      let color = '#3b82f6';
+      if (pct < 0.5) color = '#ffaa00';
+      if (pct < 0.2) color = '#ff3366';
+      if (arc)  { arc.style.strokeDashoffset = CIRC * (1 - pct); arc.style.stroke = color; }
+      if (fill) { fill.style.width = (pct * 100) + '%'; }
+      if (timerTxt) timerTxt.style.color = color;
+    }
+    tick();
+    _iaTimerInt = setInterval(tick, 1000);
+  }
+
+  window.iaCopiarLink = function() {
+    if (!_iaLinkAtual) return;
+    const base = window.location.origin + window.location.pathname;
+    const link = `${base}?token=${_iaLinkAtual}&type=questionario`;
+    navigator.clipboard.writeText(link).then(() => _toast('Link copiado!', 'success'));
+  };
+
+  window.iaEnviarWA = function() {
+    if (!_iaLinkAtual) return;
+    const base = window.location.origin + window.location.pathname;
+    const link = `${base}?token=${_iaLinkAtual}&type=questionario`;
+    const msg  = encodeURIComponent(
+      `🤖 *Questionário de Ensaio IA*\n\nOlá! Acesse o link abaixo para preencher seu questionário personalizado:\n\n🔗 ${link}\n\n⏱️ *Atenção:* o link é válido por 15 minutos.\n\nQualquer dúvida, estou à disposição! 📸`
+    );
+    window.open(`https://wa.me/55?text=${msg}`, '_blank', 'noopener');
+  };
+
+  window.iaNovoLink = function() {
+    const result = document.getElementById('ia-result');
+    if (result) result.style.display = 'none';
+    if (_iaTimerInt) clearInterval(_iaTimerInt);
+    _iaLinkAtual = null;
+    _iaExpiresAt = null;
+    document.getElementById('ia-cliente-nome').value = '';
+    document.getElementById('ia-id-preview').textContent = '— gerado ao clicar em Gerar Link —';
+    const timerTxt = document.getElementById('ia-timer-txt');
+    if (timerTxt) { timerTxt.textContent = '15:00'; timerTxt.style.color = '#3b82f6'; }
+    const fill = document.getElementById('ia-progress-fill');
+    if (fill) fill.style.width = '100%';
+  };
+
+  /* ── Histórico (admin) ───────────────────────────────────── */
+  window.iaCarregarHistorico = async function() {
+    const db = _db(); if (!db) return;
+    const container = document.getElementById('ia-historico');
+    if (!container) return;
+
+    // Expirar automaticamente
+    try {
+      await db.from('questionarios_ia').update({ status: 'expirado' })
+        .lt('expires_at', new Date().toISOString()).eq('status', 'pendente');
+    } catch(e) {}
+
+    try {
+      const { data, error } = await db.from('questionarios_ia')
+        .select('id,token,nome_cliente,status,expires_at,created_at')
+        .order('created_at', { ascending: false }).limit(20);
+      if (error) throw error;
+      if (!data || !data.length) {
+        container.innerHTML = '<p style="color:var(--gray);font-size:13px;text-align:center;padding:20px;">Nenhum link gerado ainda.</p>';
+        return;
+      }
+      container.innerHTML = data.map(row => {
+        const statusCls = { pendente:'ia-s-pendente', respondido:'ia-s-respondido', visualizado:'ia-s-visualizado' }[row.status] || 'ia-s-pendente';
+        const statusLbl = { pendente:'⏳ Pendente', respondido:'✅ Respondido', visualizado:'👁️ Visualizado' }[row.status] || row.status;
+        const base = window.location.origin + window.location.pathname;
+        const link = `${base}?token=${row.token}&type=questionario`;
+        const criado = new Date(row.created_at).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+        return `
+        <div class="ia-hist-row">
+          <div>
+            <div style="font-weight:600;font-size:13px;color:var(--light);">${row.nome_cliente || '—'}</div>
+            <div style="font-size:11px;color:var(--gray);margin-top:2px;">${criado}</div>
+            ${row.status === 'pendente' ? `<div style="font-size:10px;color:#6ee7f7;font-family:monospace;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px;">${link}</div>` : ''}
+          </div>
+          <span class="${statusCls}">${statusLbl}</span>
+          ${row.status === 'pendente' ? `
+            <button onclick="navigator.clipboard.writeText('${link}');showToast('Copiado!','success')"
+              style="background:transparent;border:1px solid rgba(59,130,246,.35);color:#3b82f6;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;">
+              <i class="fas fa-copy"></i>
+            </button>` : '<span></span>'}
+          <button onclick="window._iaExcluirLink('${row.id}')"
+            style="background:transparent;border:1px solid rgba(255,51,102,.3);color:var(--danger);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>`;
+      }).join('');
+    } catch(e) {
+      container.innerHTML = `<p style="color:var(--danger);font-size:13px;padding:16px;">Erro: ${e.message}</p>`;
+    }
+  };
+
+  window._iaExcluirLink = async function(id) {
+    if (!confirm('Excluir este link?')) return;
+    const db = _db(); if (!db) return;
+    await db.from('questionarios_ia').delete().eq('id', id);
+    iaCarregarHistorico();
+  };
+
+  /* ── Painel admin ────────────────────────────────────────── */
+  window.iaCarregarPainel = async function() {
+    const db = _db(); if (!db) return;
+    const container = document.getElementById('ia-painel-lista');
+    if (!container) return;
+    container.innerHTML = '<p style="color:var(--gray);font-size:13px;text-align:center;padding:20px;">Carregando...</p>';
+
+    const filtro = document.getElementById('ia-filtro-status').value;
+    let q = db.from('questionarios_ia').select('*').order('created_at', { ascending: false });
+    if (filtro) q = q.eq('status', filtro);
+
+    try {
+      const { data, error } = await q;
+      if (error) throw error;
+      if (!data || !data.length) {
+        container.innerHTML = '<p style="color:var(--gray);font-size:13px;text-align:center;padding:30px;">Nenhum questionário encontrado.</p>';
+        return;
+      }
+      // Badge de contagem
+      const respondidos = data.filter(r => r.status === 'respondido').length;
+      const badge = document.getElementById('ia-project-badge');
+      if (badge) { badge.textContent = respondidos; badge.style.display = respondidos > 0 ? 'flex' : 'none'; }
+
+      container.innerHTML = data.map(row => {
+        const statusCls = { pendente:'ia-s-pendente', respondido:'ia-s-respondido', visualizado:'ia-s-visualizado' }[row.status] || 'ia-s-pendente';
+        const statusLbl = { pendente:'⏳ Pendente', respondido:'✅ Respondido', visualizado:'👁️ Visualizado' }[row.status] || row.status;
+        const criado = new Date(row.created_at).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+        const temPrompt = !!row.prompt_gerado;
+        return `
+        <div class="ia-painel-row">
+          <div>
+            <div style="font-weight:700;font-size:14px;color:var(--light);">${row.nome_cliente || '—'}</div>
+            <div style="font-size:11px;color:var(--gray);margin-top:2px;">${criado}</div>
+          </div>
+          <span class="${statusCls}">${statusLbl}</span>
+          ${temPrompt ? `
+            <button onclick="iaVerPrompt('${row.id}')"
+              style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;border:none;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;">
+              <i class="fas fa-eye"></i> Ver Prompt
+            </button>` : `<span style="color:var(--gray);font-size:12px;">—</span>`}
+          <button onclick="window._iaExcluirLink('${row.id}')"
+            style="background:transparent;border:1px solid rgba(255,51,102,.3);color:var(--danger);padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px;">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>`;
+      }).join('');
+    } catch(e) {
+      container.innerHTML = `<p style="color:var(--danger);font-size:13px;padding:16px;">Erro: ${e.message}</p>`;
+    }
+  };
+
+  window.iaVerPrompt = async function(id) {
+    const db = _db(); if (!db) return;
+    const { data, error } = await db.from('questionarios_ia').select('*').eq('id', id).single();
+    if (error || !data) { _toast('Erro ao carregar.', 'danger'); return; }
+
+    // Atualiza status para visualizado
+    if (data.status === 'respondido') {
+      await db.from('questionarios_ia').update({ status: 'visualizado' }).eq('id', id);
+    }
+
+    // Preenche modal
+    const r = data.respostas || {};
+    document.getElementById('ia-modal-nome').textContent  = data.nome_cliente || '—';
+    document.getElementById('ia-modal-data').textContent  = 'Respondido em: ' + new Date(data.created_at).toLocaleString('pt-BR');
+    _iaPromptAtual = data.prompt_gerado || '';
+    document.getElementById('ia-modal-prompt').textContent = _iaPromptAtual;
+
+    // Imagem
+    const imgWrap = document.getElementById('ia-modal-img-wrap');
+    const imgEl   = document.getElementById('ia-modal-img');
+    if (data.imagem_url) { imgEl.src = data.imagem_url; imgWrap.style.display = 'block'; }
+    else imgWrap.style.display = 'none';
+
+    // Respostas
+    const campos = [
+      { label: 'Tipo de Uso',       val: r.tipo },
+      { label: 'Estilo',            val: r.estilo },
+      { label: 'Roupa / Look',      val: r.roupa },
+      { label: 'Ambiente',          val: r.ambiente },
+      { label: 'Detalhes Ambiente', val: r.detalhes },
+      { label: 'Expressão',         val: r.expressao },
+      { label: 'Pose',              val: r.pose },
+      { label: 'Nível de Realismo', val: r.realismo },
+    ];
+    document.getElementById('ia-modal-respostas').innerHTML = campos.map(c =>
+      `<div class="ia-resposta-chip">
+        <span class="ia-chip-label">${c.label}</span>
+        <span class="ia-chip-val">${c.val || '—'}</span>
+      </div>`
+    ).join('');
+
+    document.getElementById('ia-prompt-modal').classList.add('active');
+    iaCarregarPainel();
+  };
+
+  window.iaCopiarPrompt = function() {
+    navigator.clipboard.writeText(_iaPromptAtual).then(() => _toast('Prompt copiado! ✅', 'success'));
+  };
+
+  /* ── Tabs internas ───────────────────────────────────────── */
+  window.iaShowTab = function(tab) {
+    ['gerar','painel','sql'].forEach(t => {
+      const el  = document.getElementById('ia-tab-' + t);
+      const btn = document.getElementById('ia-tab-btn-' + t);
+      if (!el || !btn) return;
+      el.style.display = t === tab ? 'block' : 'none';
+      if (t === tab) {
+        btn.style.background = 'linear-gradient(135deg,#3b82f6,#1d4ed8)';
+        btn.style.color      = '#fff';
+        btn.style.border     = 'none';
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.color      = 'var(--light)';
+        btn.style.border     = '1px solid var(--border)';
+      }
+    });
+    if (tab === 'painel') iaCarregarPainel();
+    if (tab === 'gerar')  iaCarregarHistorico();
+  };
+
+  /* ── Formulário público (questionário) ───────────────────── */
+
+  // Roupas por estilo
+  const _roupasPorEstilo = {
+    'Social': [
+      'Camisa social branca com calça de alfaiataria',
+      'Blazer estruturado com camiseta interna e calça slim',
+      'Conjunto de duas peças (blusa + calça) em tom neutro',
+      'Vestido midi social em cores sólidas',
+      'Tailleur clássico (paletó + calça)'
+    ],
+    'Casual': [
+      'Camiseta básica com calça jeans e tênis branco',
+      'Blusa de linho com calça de brim e sandálias',
+      'Vestido floral leve com sandálias rasteiras',
+      'Conjunto cropped com saia midi',
+      'Moletom oversized com calça cargo'
+    ],
+    'Elegante': [
+      'Vestido longo em tom champanhe ou vinho',
+      'Conjunto de seda com blazer sobreposto',
+      'Calça pantalona de cetim com blusa delicada',
+      'Vestido de veludo midi com decote elegante',
+      'Smoking feminino / Terno completo feminino'
+    ],
+    'Esportivo': [
+      'Legging + top esportivo + jaqueta de corrida',
+      'Conjunto de treino monocromático',
+      'Shorts dry-fit com camiseta técnica',
+      'Conjunto de yoga (legging + regata alinhada)',
+      'Agasalho completo estilo athleisure'
+    ]
+  };
+
+  // Poses por tipo
+  const _posesPorTipo = {
+    'Consultório / Atendimento': [
+      'Sentada na poltrona, perna cruzada, caderno ou caneta na mão',
+      'Levemente inclinada para frente, ouvindo com atenção (olhar empático)',
+      'Anotando algo no bloco, sorriso discreto',
+      'De lado, olhando pela janela, expressão pensativa',
+      'Encostada no braço da poltrona, expressão calma e acolhedora',
+      'Pose personalizada...'
+    ],
+    'Mesa de trabalho / Estudos': [
+      'Escrevendo ou digitando, rosto levemente voltado para a câmera',
+      'Mão no queixo, olhar concentrado',
+      'Rindo naturalmente enquanto segura uma caneca',
+      'De frente para o notebook, expressão profissional e tranquila',
+      'Folheando um livro, corpo levemente inclinado',
+      'Pose personalizada...'
+    ],
+    'Ambiente natural / Lifestyle': [
+      'Sorrindo olhando para o lado, cabelo ao vento',
+      'Sentada com caneca nas mãos, olhar reflexivo',
+      'Caminhando devagar, olhar confiante',
+      'De pé entre plantas, expressão calma e inspirada',
+      'De costas, olhando por cima do ombro, sorriso leve',
+      'Pose personalizada...'
+    ],
+    'Palestras e eventos corporativos': [
+      'Em pé, mãos abertas em gesto de fala',
+      'Olhando para o público, expressão de liderança',
+      'Mão sobre o peito em gesto de empatia',
+      'Rosto iluminado, expressão de autoridade e gentileza',
+      'De perfil, falando com firmeza e serenidade',
+      'Pose personalizada...'
+    ],
+    'Conteúdo digital / Gravação de vídeos': [
+      'Sentada, falando naturalmente, sorriso leve',
+      'Mãos em movimento, expressão envolvente',
+      'Olhando direto para a câmera, semblante acolhedor',
+      'De lado, gesticulando ao explicar algo',
+      'Usando caneta ou bloco como apoio visual',
+      'Pose personalizada...'
+    ],
+    'Retrato editorial / Branding pessoal': [
+      'Braços cruzados suavemente, expressão confiante',
+      'Mão no queixo ou no cabelo, olhar direto',
+      'Meio perfil, olhar suave, foco no olhar',
+      'Sentada, corpo levemente inclinado para frente',
+      'Rosto em close, sorriso natural e empático',
+      'Pose personalizada...'
+    ]
+  };
+
+  window.iaQAtualizarPoses = function() {
+    const tipo  = document.getElementById('ia-q-tipo').value;
+    const poses = _posesPorTipo[tipo] || [];
+    const sel   = document.getElementById('ia-q-pose');
+    sel.innerHTML = poses.length
+      ? poses.map(p => `<option value="${p === 'Pose personalizada...' ? 'custom' : p}">${p}</option>`).join('')
+      : '<option value="">Selecione o tipo de uso primeiro...</option>';
+    iaQTogglePoseInput();
+  };
+
+  window.iaQTogglePoseInput = function() {
+    const sel   = document.getElementById('ia-q-pose');
+    const input = document.getElementById('ia-q-pose-custom');
+    if (!input) return;
+    input.style.display = sel.value === 'custom' ? 'block' : 'none';
+  };
+
+  // Atualizar roupas quando muda estilo
+  document.getElementById('ia-q-estilo')?.addEventListener('change', function() {
+    const roupas = _roupasPorEstilo[this.value] || [];
+    const sel    = document.getElementById('ia-q-roupa');
+    sel.innerHTML = roupas.length
+      ? '<option value="">Selecione...</option>' + roupas.map(r => `<option value="${r}">${r}</option>`).join('')
+      : '<option value="">Selecione o estilo primeiro...</option>';
+  });
+
+  window.iaQToggleAmbienteInput = function() {
+    const sel   = document.getElementById('ia-q-ambiente');
+    const input = document.getElementById('ia-q-ambiente-custom');
+    if (input) input.style.display = sel.value === 'cenario_criativo' ? 'block' : 'none';
+  };
+
+  window.iaQToggleDetalhesInput = function() {
+    const sel   = document.getElementById('ia-q-detalhes');
+    const input = document.getElementById('ia-q-detalhes-custom');
+    if (input) input.style.display = sel.value === 'detalhes_custom' ? 'block' : 'none';
+  };
+
+  // Upload de imagem
+  window.iaQHandleFile = function(file) {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { _toast('Imagem muito grande (máx 5MB).', 'warning'); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      _iaImagemB64 = e.target.result;
+      document.getElementById('ia-q-upload-preview').innerHTML = `
+        <img src="${e.target.result}" style="max-height:120px;border-radius:8px;object-fit:cover;max-width:100%;" alt="Preview">
+        <p style="color:#60a5fa;font-size:13px;margin-top:8px;">✅ ${file.name}</p>
+      `;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  window.iaQHandleDrop = function(e) {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) iaQHandleFile(file);
+    document.getElementById('ia-q-upload-area').style.borderColor = 'rgba(59,130,246,0.4)';
+  };
+
+  /* ── Montar prompt final ─────────────────────────────────── */
+  function _montarPrompt(r) {
+    const look     = r.roupa     || '[ look não informado ]';
+    const ambiente = r.ambiente  || '[ ambiente não informado ]';
+    const detalhes = r.detalhes  || '[ detalhes não informados ]';
+    const pose     = r.pose      || '[ pose não informada ]';
+    const expressao= r.expressao || '[ expressão não informada ]';
+    const realismo = r.realismo  || 'Hiper-realista';
+
+    return `EDITE a foto de referência da modelo em anexo para criar uma foto realista, com o **rosto, traços físicos e corporais o mais fiel possível da foto em anexo**.  
+- Alta definição, realismo fotográfico extremo, textura de pele autêntica, sem efeito plástico ou suavização exagerada.  
+- Ajuste iluminação, cenário e roupas para parecer ensaio profissional, respeitando proporções naturais da modelo. 
+"Manter o cabelo da foto de referência intacto." "Não alterar o penteado, cor ou textura do cabelo original." "O cabelo deve ser idêntico ao da imagem fornecida." "Absolutamente nenhuma modificação no cabelo."
+[**hiper-realista, ultra detalhado, texturas naturais, iluminação cinematográfica, estilo foto DSLR.**] 
+**********Cabelo NÃO ALTERE O CABELO DA PESSOA EM ANEXO AO SER GERADA, textura autêntica, sem brilho plástico.***********
+**Look completo:** ${look}
+**luz ambiente**: aberta clara
+**Ambiente / cenário:** ${ambiente}, incluindo ${detalhes} e iluminação natural, mantendo realismo e coerência com o ambiente do tema.  
+**Pose e expressão:** ${pose}, com expressão de ${expressao}, condizente com o contexto do ensaio, destacando interação, postura e olhar da modelo.
+**condições** **********Cabelo NÃO ALTERE O CABELO DA PESSOA EM ANEXO AO SER GERADA, textura autêntica, sem brilho plástico.***********[NÃO ALETERE O SORRISO] [não altere o cabelo do modelo em anexo] [não faça embelezamentos] [não altere a boca nem os traços da criança em anexo] [não suavize a pele para combinar com o ambiente] [textura real de pele] [não gere a pele da criança lisa como cera] [Transforme esta cena em uma fotografia realista. remova as texturas de videogame/desenho. Substitua por texturas fotográficas naturais, iluminação realista, tons de pele e detalhes reais de tecido. O ambiente deve parecer um local encantado real inspirado no ambiente sugerido, com tudo ultra natural, ultra realista, toda a ambientação ultra realista realista, mantendo a atmosfera divertida. ] **[ambiente interno simulando o ambiente externo]**
+Estilo: ${realismo}, ultra detalhado, texturas naturais, iluminação cinematográfica, estilo foto DSLR.`;
+  }
+
+  /* ── Enviar questionário (público) ───────────────────────── */
+  window.iaQEnviar = async function() {
+    const db    = _db();
+    const token = window._iaTokenAtivo;
+    if (!token) { _toast('Token inválido.', 'danger'); return; }
+
+    const sel = id => document.getElementById(id)?.value || '';
+    const ambienteVal  = sel('ia-q-ambiente')  === 'cenario_criativo'  ? (sel('ia-q-ambiente-custom')  || sel('ia-q-ambiente'))  : sel('ia-q-ambiente');
+    const detalhesVal  = sel('ia-q-detalhes')  === 'detalhes_custom'   ? (sel('ia-q-detalhes-custom')  || sel('ia-q-detalhes'))  : sel('ia-q-detalhes');
+    const poseVal      = sel('ia-q-pose')      === 'custom'            ? (sel('ia-q-pose-custom')       || 'Pose personalizada') : sel('ia-q-pose');
+
+    const respostas = {
+      tipo      : sel('ia-q-tipo'),
+      estilo    : sel('ia-q-estilo'),
+      roupa     : sel('ia-q-roupa'),
+      ambiente  : ambienteVal,
+      detalhes  : detalhesVal,
+      expressao : sel('ia-q-expressao'),
+      pose      : poseVal,
+      realismo  : sel('ia-q-realismo'),
+    };
+
+    // Validação básica
+    const obrigatorios = ['tipo','estilo','roupa','ambiente','expressao','pose','realismo'];
+    for (const campo of obrigatorios) {
+      if (!respostas[campo]) {
+        _toast('Preencha todos os campos obrigatórios.', 'warning');
+        return;
+      }
+    }
+
+    const btn = document.getElementById('ia-q-btn-enviar');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...'; }
+
+    const promptGerado = _montarPrompt(respostas);
+
+    const payload = {
+      respostas     : respostas,
+      prompt_gerado : promptGerado,
+      status        : 'respondido',
+      imagem_url    : _iaImagemB64 || null
+    };
+
+    if (db) {
+      const { error } = await db.from('questionarios_ia').update(payload).eq('token', token);
+      if (error) {
+        _toast('Erro ao salvar: ' + error.message, 'danger');
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Respostas'; }
+        return;
+      }
+    }
+
+    // Mostra sucesso
+    document.getElementById('ia-q-form-card').style.display   = 'none';
+    document.getElementById('ia-q-sucesso').style.display = 'block';
+  };
+
+  /* ── Inicialização ───────────────────────────────────────── */
+  function _init() {
+    _detectarModoPublico();
+
+    // Carregar histórico quando aba IA PROJECT for ativada
+    const origShowSection = window.showSection;
+    if (typeof origShowSection === 'function') {
+      window.showSection = function(id) {
+        origShowSection(id);
+        if (id === 'ia_project') {
+          iaCarregarHistorico();
+          // Atualizar badge painel
+          const db = _db();
+          if (db) {
+            db.from('questionarios_ia').select('id').eq('status','respondido').then(({ data }) => {
+              const badge = document.getElementById('ia-project-badge');
+              if (badge) { badge.textContent = data?.length || 0; badge.style.display = (data?.length||0) > 0 ? 'flex' : 'none'; }
+            });
+          }
+        }
+      };
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _init);
+  } else {
+    setTimeout(_init, 600);
+  }
+
+})();
+</script>
+<!-- ══ FIM MÓDULO IA PROJECT ══ -->
 
 </body>
 </html>
